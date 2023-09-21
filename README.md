@@ -1,1 +1,4 @@
-First commit
+HouseMate Backend
+-
+Port: 8080 <br>
+Java 17
