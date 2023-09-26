@@ -6,16 +6,23 @@ package housemate.entities;
 
 import jakarta.persistence.*;
 import java.security.Timestamp;
+import lombok.*;
 
 /**
  *
  * @author ThanhF
  */
 @Entity
-@Table(name = "User_Account")
+@Table(name = "UserAccount")
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@ToString
 public class UserAccount {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private int userId;
 
@@ -58,22 +65,9 @@ public class UserAccount {
     @Column(name = "recovery_token_time")
     private Timestamp recoveryTokenTime;
 
-    public UserAccount(int userId, String role, String fullName, int phoneNumber, String loginName, String passwordHash, String emailAddress, String confirmationToken, Timestamp tokenGenerationTime, String emailValidationStatus, String authenticationProviderName, String authenticationProviderToken, String passwordRecoveryToken, Timestamp recoveryTokenTime) {
-        this.userId = userId;
-        this.role = role;
+    public UserAccount(String fullName, String emailAddress, String emailValidationStatus) {
         this.fullName = fullName;
-        this.phoneNumber = phoneNumber;
-        this.loginName = loginName;
-        this.passwordHash = passwordHash;
         this.emailAddress = emailAddress;
-        this.confirmationToken = confirmationToken;
-        this.tokenGenerationTime = tokenGenerationTime;
         this.emailValidationStatus = emailValidationStatus;
-        this.authenticationProviderName = authenticationProviderName;
-        this.authenticationProviderToken = authenticationProviderToken;
-        this.passwordRecoveryToken = passwordRecoveryToken;
-        this.recoveryTokenTime = recoveryTokenTime;
     }
-
-    
 }
