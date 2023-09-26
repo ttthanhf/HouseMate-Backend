@@ -5,7 +5,7 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
-import java.security.Timestamp;
+import java.time.LocalDateTime;
 import lombok.*;
 
 /**
@@ -48,7 +48,7 @@ public class UserAccount {
     private String confirmationToken;
 
     @Column(name = "token_generation_time")
-    private Timestamp tokenGenerationTime;
+    private LocalDateTime tokenGenerationTime;
 
     @Column(name = "email_validation_status")
     private String emailValidationStatus;
@@ -63,7 +63,7 @@ public class UserAccount {
     private String passwordRecoveryToken;
 
     @Column(name = "recovery_token_time")
-    private Timestamp recoveryTokenTime;
+    private LocalDateTime recoveryTokenTime;
 
     public UserAccount(String fullName, String emailAddress, String emailValidationStatus) {
         this.fullName = fullName;
