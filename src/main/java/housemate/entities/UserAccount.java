@@ -32,42 +32,22 @@ public class UserAccount {
     @Column(name = "full_name")
     private String fullName;
 
-    @Column(name = "phone_number", unique = true)
-    private int phoneNumber;
+    @Column(name = "phone_number", nullable = true)
+    private String phoneNumber;
 
-    @Column(name = "login_name", unique = true)
-    private String loginName;
-
-    @Column(name = "password_hash")
+    @Column(name = "password_hash", nullable = true)
     private String passwordHash;
 
     @Column(name = "email_address", unique = true)
     private String emailAddress;
 
-    @Column(name = "confirmation_token")
-    private String confirmationToken;
-
-    @Column(name = "token_generation_time")
-    private LocalDateTime tokenGenerationTime;
-
     @Column(name = "email_validation_status")
     private String emailValidationStatus;
 
-    @Column(name = "authentication_provider_name")
-    private String authenticationProviderName;
-
-    @Column(name = "authentication_provider_token")
-    private String authenticationProviderToken;
-
-    @Column(name = "password_recovery_token")
-    private String passwordRecoveryToken;
-
-    @Column(name = "recovery_token_time")
-    private LocalDateTime recoveryTokenTime;
-
-    public UserAccount(String fullName, String emailAddress, String emailValidationStatus) {
+    public UserAccount(String fullName, String emailAddress, String emailValidationStatus, String role) {
         this.fullName = fullName;
         this.emailAddress = emailAddress;
         this.emailValidationStatus = emailValidationStatus;
+        this.role = role;
     }
 }

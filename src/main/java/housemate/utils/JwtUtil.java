@@ -14,15 +14,17 @@ import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author ThanhF
  */
+@Component
 public class JwtUtil {
 
     @Value("${application.security.jwt.secret-key}")
-    private String secretKey;
+    private final String secretKey = "thisisverysuperhashkeyforsuperjwtkeyveryverybigkey";
     @Value("${application.security.jwt.expiration}")
     private long jwtExpiration;
     @Value("${application.security.jwt.refresh-token.expiration}")
