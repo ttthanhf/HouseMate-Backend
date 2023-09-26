@@ -1,2 +1,7 @@
 ### VS Code ###
 .vscode/
+
+### OWN ###
+target/
+.git/
+src/test/

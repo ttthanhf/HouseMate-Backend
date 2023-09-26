@@ -2,12 +2,14 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package housemate.repositories;
+package housemate.constants;
 
 /**
  *
- * @author ThanhF
+ * @author hdang09
  */
-public class repositories {
-    
+public enum Role {
+    CUSTOMER,
+    STAFF,
+    ADMIN
 }
