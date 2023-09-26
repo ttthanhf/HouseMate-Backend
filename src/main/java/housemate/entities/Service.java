@@ -4,56 +4,60 @@
  */
 package housemate.entities;
 
+import java.time.LocalDateTime;
+
+import housemate.entities.enums.SaleStatus;
+import housemate.entities.enums.UnitOfMeasure;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  *
  * @author ThanhF
  */
 @Entity
+@Getter
+@Setter
+@Builder
 @Table(name = "Service")
 public class Service {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(value = AccessLevel.NONE)
     @Column(name = "service_id")
     private int id;
 
     @Column(name = "title_name", unique = true)
     private String titleName;
 
-    @Column(name = "unit_of_measure")
-    private String unitOfMeasure;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unit_of_measure", nullable = false)
+    private UnitOfMeasure unitOfMeasure;
 
-    @Column(name = "sale_price")
+    @Column(name = "sale_price", nullable = false)
     private int salePrice;
 
-    @Column(name = "description", length = 5000)
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "sale_status")
-    private String saleStatus;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sale_status", nullable = false)
+    private SaleStatus saleStatus;
 
-    @Column(name = "rating")
+    @Column(name = "rating", nullable = true)
     private float rating;
 
-    @Column(name = "creator_id")
+    //not yet building relationship
+    @Column(name = "creator_id", nullable = false) 
     private int creatorId;
 
-    @Column(name = "created_at")
-    private int createdAt;
+    @Column(name = "created_at", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime createdAt;
 
-    public Service(int id, String titleName, String unitOfMeasure, int salePrice, String description, String saleStatus, float rating, int creatorId, int createdAt) {
-        this.id = id;
-        this.titleName = titleName;
-        this.unitOfMeasure = unitOfMeasure;
-        this.salePrice = salePrice;
-        this.description = description;
-        this.saleStatus = saleStatus;
-        this.rating = rating;
-        this.creatorId = creatorId;
-        this.createdAt = createdAt;
-    }
-
-    
 }
 
