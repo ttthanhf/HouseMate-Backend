@@ -6,6 +6,7 @@ package housemate.repositories;
 
 import housemate.entities.UserAccount;
 import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 
 /**
  *
@@ -13,7 +14,7 @@ import org.springframework.data.jpa.repository.*;
  */
 public interface UserRepository extends JpaRepository<UserAccount, Integer> {
 
-    // @Query("SELECT u FROM UserAccount u WHERE u.email_address = :emailAddress")
-    // UserAccount findByEmailAddress(@Param("emailAddress") String emailAddress);
+     @Query("SELECT u FROM UserAccount u WHERE u.emailAddress = :emailAddress")
+     UserAccount findByEmailAddress(@Param("emailAddress") String emailAddress);
 
 }

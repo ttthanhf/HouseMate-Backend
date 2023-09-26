@@ -7,6 +7,7 @@ package housemate.configs;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -21,9 +22,10 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests
                         -> authorizeRequests
-                        .requestMatchers("/api/**").authenticated()
+//                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
-                );
+                )
+                .csrf(AbstractHttpConfigurer::disable);
 //                .oauth2Login(oauth2Login -> oauth2Login
 //                .defaultSuccessUrl("/callback/google/user", true));
 //                .logout(logout -> logout

@@ -37,10 +37,7 @@ public class UserAccount {
     private String fullName;
 
     @Column(name = "phone_number", unique = true)
-    private String phoneNumber;
-
-//    @Column(name = "login_name", unique = true)
-//    private String loginName;
+    private int phoneNumber;
 
     @Column(name = "password_hash")
     private String passwordHash;
@@ -48,26 +45,8 @@ public class UserAccount {
     @Column(name = "email_address", unique = true)
     private String emailAddress;
 
-//    @Column(name = "confirmation_token")
-//    private String confirmationToken;
-
-//    @Column(name = "token_generation_time")
-//    private LocalDateTime tokenGenerationTime;
-
     @Column(name = "email_validation_status")
     private boolean emailValidationStatus;
-
-//    @Column(name = "authentication_provider_name")
-//    private String authenticationProviderName;
-//
-//    @Column(name = "authentication_provider_token")
-//    private String authenticationProviderToken;
-//
-//    @Column(name = "password_recovery_token")
-//    private String passwordRecoveryToken;
-
-//    @Column(name = "recovery_token_time")
-//    private LocalDateTime recoveryTokenTime;
 
     public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus) {
         this.fullName = fullName;
@@ -76,19 +55,24 @@ public class UserAccount {
     }
 
     public UserAccount fromRegisterAccountDTO(RegisterAccountDTO registerAccountDTO) {
-        final int LOG_ROUNDS = 12;
+        
         UserAccount userAccount = new UserAccount();
 
         userAccount.setEmailAddress(registerAccountDTO.getEmail());
         userAccount.setFullName(registerAccountDTO.getFullName());
         userAccount.setPhoneNumber(registerAccountDTO.getPhoneNumber());
-        
-        String hash = BCrypt.hashpw(registerAccountDTO.getPassword(), BCrypt.gensalt(LOG_ROUNDS));
-        userAccount.setPasswordHash(hash);
-        
+        userAccount.setToPasswordHash(registerAccountDTO.getPassword());
         userAccount.setRole(Role.CUSTOMER);
         userAccount.setEmailValidationStatus(false);
         
         return  userAccount;
     }
+    
+    public void setToPasswordHash(String password) {
+        final int LOG_ROUNDS = 12;
+        String hash = BCrypt.hashpw(password, BCrypt.gensalt(LOG_ROUNDS));
+        
+        this.passwordHash = hash;
+    }
+    
 }
