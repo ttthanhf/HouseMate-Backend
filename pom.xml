@@ -11,7 +11,7 @@
     <groupId>housemate</groupId>
     <artifactId>backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Housemate Server</name>
+    <name>Housemate Server (Test)</name>
     <description>HouseMate Backend With Java SpringBoot</description>
     <properties>
         <java.version>17</java.version>
@@ -127,6 +127,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <finalName>housemate</finalName>
     </build>
 
 </project>
