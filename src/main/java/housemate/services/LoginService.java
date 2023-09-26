@@ -8,6 +8,7 @@ import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
 import housemate.repositories.UserRepository;
 import housemate.utils.JwtUtil;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +24,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class LoginService {
 
-    private final UserRepository userRepository;
-
     @Autowired
-    public LoginService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private UserRepository userRepository;
 
     public String loginWithGoogle(Map<String, Object> userOAuth) {
         String email = (String) userOAuth.get("email");
@@ -47,5 +44,10 @@ public class LoginService {
         Map<String, Object> payload = jwtPayload.toMap();
         String token = jwtUtil.generateToken(payload);
         return token;
+    }
+    
+    // TODO: Delete this
+    public List<UserAccount> getAll() {
+        return userRepository.findAll();
     }
 }
