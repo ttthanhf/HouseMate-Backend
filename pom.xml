@@ -11,7 +11,7 @@
     <groupId>housemate</groupId>
     <artifactId>backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Housemate Server (Test)</name>
+    <name>Housemate Server</name>
     <description>HouseMate Backend With Java SpringBoot</description>
     <properties>
         <java.version>17</java.version>
@@ -110,6 +110,13 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.mindrot/jbcrypt -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
+
     </dependencies>
 
     <build>
