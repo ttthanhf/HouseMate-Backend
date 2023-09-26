@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping
 public class LoginController {
 
-    @Autowired(required=true)
-    private LoginService loginService;
+    @Autowired
+    LoginService loginService;
 
     @GetMapping("/callback/google/user")
     public Object loginSuccessWithGoogle(OAuth2AuthenticationToken oAuth2AuthenticationToken) {

@@ -23,12 +23,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class LoginService {
 
-    private final UserRepository userRepository;
-
     @Autowired
-    public LoginService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private UserRepository userRepository;
 
     public String loginWithGoogle(Map<String, Object> userOAuth) {
         String email = (String) userOAuth.get("email");
@@ -36,7 +32,7 @@ public class LoginService {
         String userId = (String) userOAuth.get("sub");
         String emailVerified = (String) userOAuth.get("email_verified").toString();
         String imgURL = (String) userOAuth.get("picture");
-        Optional<UserAccount> userAccount = userRepository.findById(1);
+//        Optional<UserAccount> userAccount = userRepository.findById(1);
 //        UserAccount userAccount = userRepository.findByEmailAddress(email);
 //        if (userAccount == null) {
 //            UserAccount newUser = new UserAccount(fullName, email, emailVerified);
