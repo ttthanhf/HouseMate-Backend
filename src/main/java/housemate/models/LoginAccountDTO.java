@@ -21,12 +21,15 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class LoginAccountDTO {
-    @Pattern(regexp = "[a-zA-Z ]*", message = "Please enter a valid email!")
+//   @Pattern(
+//           regexp = "/^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$/", 
+//           message = "Please enter a valid email!"
+//    )
     public String email;
     
-    @Pattern(
-            regexp = "/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$/", 
-            message = "Must be at least 8 characters, include a number, an uppercase letter, and a lowercase letter."
-    )
+//   @Pattern(
+//           regexp = "/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$/", 
+//           message = "Must be at least 8 characters, include a number, an uppercase letter, and a lowercase letter."
+//   )
     public String password;
 }

@@ -13,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,12 +38,22 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@RequestBody LoginAccountDTO account) {
+    public ResponseEntity<String> login(@RequestBody LoginAccountDTO account) {
         return service.login(account);
     }
     
     @PostMapping("/register")
-    public ResponseEntity<String> register (@RequestBody RegisterAccountDTO account) {
+    public ResponseEntity<UserAccount> register(@RequestBody RegisterAccountDTO account) {
         return service.register(account);
+    }
+    
+    @PostMapping("/forgot-password/{email}")
+    public ResponseEntity<String> forgotPassword(@PathVariable String email) {
+        return service.forgotPassword(email);
+    }
+    
+    @PutMapping("/set-new-password")
+    public ResponseEntity<String> setNewPassword(@RequestBody LoginAccountDTO account) {
+        return service.setNewPassword(account);
     }
 }
