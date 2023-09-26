@@ -2,8 +2,6 @@ package housemate;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.context.ApplicationContext;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -13,7 +11,7 @@ import org.springframework.context.ApplicationContext;
  *
  * @author ThanhF
  */
-@SpringBootApplication(scanBasePackages = "housemate", exclude = {DataSourceAutoConfiguration.class})
+@SpringBootApplication
 public class HouseMateApplication {
 
     /**

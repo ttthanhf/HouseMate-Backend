@@ -4,10 +4,11 @@
  */
 package housemate.configs;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -17,6 +18,12 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
+    private final String redirectUri;
+
+    public SecurityConfig(@Value("${application.setting.google.redirect-uri}") String redirectUri) {
+        this.redirectUri = redirectUri;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -25,12 +32,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
+                .csrf(AbstractHttpConfigurer::disable)
                 .oauth2Login(oauth2Login -> oauth2Login
-                .defaultSuccessUrl("/callback/google/user", true));
-//                .logout(logout -> logout
-//                .logoutUrl("/logout")
-//                .logoutSuccessUrl("/")
-//                );
+                .defaultSuccessUrl(redirectUri, true));
         return http.build();
     }
 }
