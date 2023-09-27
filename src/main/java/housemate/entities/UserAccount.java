@@ -35,10 +35,10 @@ public class UserAccount {
     @Column(name = "full_name")
     private String fullName;
 
-    @Column(name = "phone_number", unique = true)
+    @Column(name = "phone_number", nullable = true, unique=true)
     private int phoneNumber;
 
-    @Column(name = "password_hash")
+    @Column(name = "password_hash", nullable = true)
     private String passwordHash;
 
     @Column(name = "email_address", unique = true)
@@ -54,7 +54,7 @@ public class UserAccount {
     }
 
     public UserAccount fromRegisterAccountDTO(RegisterAccountDTO registerAccountDTO) {
-        
+
         UserAccount userAccount = new UserAccount();
 
         userAccount.setEmailAddress(registerAccountDTO.getEmail());
@@ -63,15 +63,15 @@ public class UserAccount {
         userAccount.setToPasswordHash(registerAccountDTO.getPassword());
         userAccount.setRole(Role.CUSTOMER);
         userAccount.setEmailValidationStatus(false);
-        
-        return  userAccount;
+
+        return userAccount;
     }
-    
+
     public void setToPasswordHash(String password) {
         final int LOG_ROUNDS = 12;
         String hash = BCrypt.hashpw(password, BCrypt.gensalt(LOG_ROUNDS));
-        
+
         this.passwordHash = hash;
     }
-    
+
 }

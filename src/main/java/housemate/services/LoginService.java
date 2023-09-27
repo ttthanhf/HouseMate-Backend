@@ -8,10 +8,12 @@ import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
 import housemate.repositories.UserRepository;
 import housemate.utils.JwtUtil;
-import java.util.List;
+import java.net.URI;
 import java.util.Map;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 /**
@@ -24,26 +26,25 @@ public class LoginService {
     @Autowired
     private UserRepository userRepository;
 
-    public String loginWithGoogle(Map<String, Object> userOAuth) {
+    @Value("${application.setting.google.redirect-uri}") 
+    private String redirectUri;
+
+    public ResponseEntity<String> loginWithGoogle(Map<String, Object> userOAuth) {
         String email = (String) userOAuth.get("email");
         String fullName = (String) userOAuth.get("name");
-        String userId = (String) userOAuth.get("sub");
-        String emailVerified = (String) userOAuth.get("email_verified").toString();
-        String imgURL = (String) userOAuth.get("picture");
-        Optional<UserAccount> userAccount = userRepository.findById(1);
-//        UserAccount userAccount = userRepository.findByEmailAddress(email);
-//        if (userAccount == null) {
-//            UserAccount newUser = new UserAccount(fullName, email, emailVerified);
-//            userAccount = userRepository.save(newUser);
-//        }
+        boolean emailVerified = (boolean) userOAuth.get("email_verified");
+        UserAccount userAccount = userRepository.findByEmailAddress(email);
+        if (userAccount == null) {
+            UserAccount newUser = new UserAccount(fullName, email, emailVerified);
+            userAccount = userRepository.save(newUser);
+        }
         JwtUtil jwtUtil = new JwtUtil();
-        JwtPayload jwtPayload = new JwtPayload(123, fullName, email, "customer");
+        JwtPayload jwtPayload = new JwtPayload(userAccount.getUserId(), fullName, email, userAccount.getRole().toString());
         Map<String, Object> payload = jwtPayload.toMap();
         String token = jwtUtil.generateToken(payload);
-        return token;
-    }
-    
-    public List<UserAccount> getAll() {
-        return userRepository.findAll();
+
+        String url = redirectUri + "/" + "?success=true&token=" + token;
+        URI uri = URI.create(url);
+        return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
     }
 }
