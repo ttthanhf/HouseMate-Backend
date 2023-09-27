@@ -56,6 +56,13 @@ public class AuthService {
     }
 
     public ResponseEntity<String> register(RegisterAccountDTO registerAccountDTO) {
+        UserAccount accountDB = userRepository.findByEmailAddress(registerAccountDTO.getEmail());
+        
+        // Check email exists database
+        if (accountDB != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email have been created before");
+        }
+        
         // Insert to database
         UserAccount userAccount = new UserAccount().fromRegisterAccountDTO(registerAccountDTO);
         userAccount = userRepository.save(userAccount);
@@ -66,7 +73,7 @@ public class AuthService {
         Map<String, Object> payload = jwtPayload.toMap();
         String token = jwtUtil.generateToken(payload);
         
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(token);
+        return ResponseEntity.status(HttpStatus.OK).body(token);
     }
 
     public ResponseEntity<String> forgotPassword(String email) {
@@ -81,8 +88,9 @@ public class AuthService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't created");
         }
 
+        // Set new password
         accountDB.setToPasswordHash(loginAccountDTO.getPassword());
         userRepository.save(accountDB);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Set new password successfully!");
+        return ResponseEntity.status(HttpStatus.OK).body("Set new password successfully!");
     }
 }
