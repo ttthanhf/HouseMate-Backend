@@ -10,8 +10,11 @@ import housemate.entities.enums.SaleStatus;
 import housemate.entities.enums.UnitOfMeasure;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -19,8 +22,9 @@ import lombok.Setter;
  * @author ThanhF
  */
 @Entity
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @Table(name = "Service")
 public class Service {
@@ -59,5 +63,6 @@ public class Service {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createdAt;
 
+    
 }
 

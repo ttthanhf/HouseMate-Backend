@@ -4,7 +4,7 @@ public enum SaleStatus {
 	
 	NOT_AVAILABLE("not available for sale"),
 	AVAILABLE("available for sale"),
-	DISCONTITNUED("discontinued");
+	DISCONTINUED("discontinued");
 	
 	private String saleStatus;
 	

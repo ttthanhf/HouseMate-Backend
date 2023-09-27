@@ -17,12 +17,12 @@ import housemate.entities.enums.SaleStatus;
 @org.springframework.stereotype.Service
 public interface IService {
     //READ LIST
-	public List<Service> viewAll();
+	public List<Service> getAll();
 	public List<Service> searchByName(String keyword);
-	public List<Service> sortByOneField(String fieldName, String orderRequire);
+	//public List<Service> sortByOneField(String fieldName, String orderRequire);
 	public List<Service> filterBySaleStatus(SaleStatus saleStatus);
 	//READ ONE
-	public Service viewOne(int serviceId);
+	public Service getOne(int serviceId);
 	//CREATE
 	public Service createNew(Service service);
 	//UPDATE
