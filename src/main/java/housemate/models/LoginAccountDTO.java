@@ -5,6 +5,7 @@
 package housemate.models;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,17 +24,14 @@ import lombok.ToString;
 @ToString
 public class LoginAccountDTO {
 
-    @Pattern(
-            regexp = "/^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$/",
-            message = "Please enter a valid email!"
-    )
+    @Email(message = "Please enter a valid email")
     @Schema(example = "example@gmail.com", description = "Email of an account")
     public String email;
 
     @Pattern(
-            regexp = "/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$/",
-            message = "Must be at least 8 characters, include a number, an uppercase letter, and a lowercase letter."
+            regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,16}$",
+            message = "Must be 8 to 16 characters, include a number, an uppercase letter, and a lowercase letter"
     )
-    @Schema(example = "Example123", description = "Password of an account")
+    @Schema(example = "Password123", description = "Password of an account")
     public String password;
 }
