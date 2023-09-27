@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.security.core.context.SecurityContextHolder;
-//import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
-//import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.stereotype.Service;
 
 /**
@@ -46,7 +43,6 @@ public class LoginService {
         return token;
     }
     
-    // TODO: Delete this
     public List<UserAccount> getAll() {
         return userRepository.findAll();
     }
