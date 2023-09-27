@@ -8,6 +8,8 @@ import java.util.List;
 
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import housemate.entities.Service;
@@ -30,9 +32,4 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	
 	List<Service> findBySaleStatus(SaleStatus saleStatus);
 	
-//	//@Query("SELECT s FROM Service s ORDER BY :fieldName :requireOrder")
-//    //List<Service> sortByOneField(@Param("fieldName") String fieldName, @Param("requireOrder") String requireOrder);
-//    List<Service> sortByOneField( String fieldName, String requireOrder);
-//	
-	//sort by multiple field 
-}
+	}

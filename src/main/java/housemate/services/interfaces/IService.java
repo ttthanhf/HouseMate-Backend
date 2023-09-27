@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package housemate.services;
+package housemate.services.interfaces;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public interface IService {
     //READ LIST
 	public List<Service> getAll();
 	public List<Service> searchByName(String keyword);
-	//public List<Service> sortByOneField(String fieldName, String orderRequire);
+	public List<Service> sortByOneField(String fieldName, String orderRequire);
 	public List<Service> filterBySaleStatus(SaleStatus saleStatus);
 	//READ ONE
 	public Service getOne(int serviceId);

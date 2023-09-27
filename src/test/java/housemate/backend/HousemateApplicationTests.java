@@ -2,13 +2,18 @@ package housemate.backend;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Sort;
+
+import housemate.entities.Service;
 import housemate.repositories.ServiceRepository;
 import housemate.services.TheService;
 
-@SpringBootTest(classes = HousemateApplicationTests.class)
+@SpringBootTest
 class HousemateApplicationTests {
 
 	@Autowired
@@ -22,6 +27,17 @@ class HousemateApplicationTests {
 		assertThat(serviceRepo).isNotNull();
 		assertThat(serviceDao).isNotNull();
 		
+	}
+	
+	@Test
+	public void testOrderByDynamicFieldname() {
+		List<Service> list =  serviceDao.sortByOneField("salePrice", "DESC");
+		
+		assertThat(list).isNotEmpty();
+		
+		for (Service service : list) {
+			System.out.println(service.toString() + "/n");
+		}
 	}
 
 }
