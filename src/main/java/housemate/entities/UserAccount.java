@@ -4,9 +4,11 @@
  */
 package housemate.entities;
 
+import housemate.constants.Role;
+import housemate.models.RegisterAccountDTO;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import lombok.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 /**
  *
@@ -27,13 +29,14 @@ public class UserAccount {
     private int userId;
 
     @Column(name = "role")
-    private String role;
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.CUSTOMER;
 
     @Column(name = "full_name")
     private String fullName;
 
     @Column(name = "phone_number", nullable = true)
-    private String phoneNumber;
+    private int phoneNumber;
 
     @Column(name = "password_hash", nullable = true)
     private String passwordHash;
@@ -42,12 +45,34 @@ public class UserAccount {
     private String emailAddress;
 
     @Column(name = "email_validation_status")
-    private String emailValidationStatus;
+    private boolean emailValidationStatus;
 
-    public UserAccount(String fullName, String emailAddress, String emailValidationStatus, String role) {
+    public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus) {
         this.fullName = fullName;
         this.emailAddress = emailAddress;
         this.emailValidationStatus = emailValidationStatus;
         this.role = role;
     }
+
+    public UserAccount fromRegisterAccountDTO(RegisterAccountDTO registerAccountDTO) {
+
+        UserAccount userAccount = new UserAccount();
+
+        userAccount.setEmailAddress(registerAccountDTO.getEmail());
+        userAccount.setFullName(registerAccountDTO.getFullName());
+        userAccount.setPhoneNumber(registerAccountDTO.getPhoneNumber());
+        userAccount.setToPasswordHash(registerAccountDTO.getPassword());
+        userAccount.setRole(Role.CUSTOMER);
+        userAccount.setEmailValidationStatus(false);
+
+        return userAccount;
+    }
+
+    public void setToPasswordHash(String password) {
+        final int LOG_ROUNDS = 12;
+        String hash = BCrypt.hashpw(password, BCrypt.gensalt(LOG_ROUNDS));
+
+        this.passwordHash = hash;
+    }
+
 }

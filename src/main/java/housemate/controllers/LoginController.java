@@ -4,6 +4,7 @@
  */
 package housemate.controllers;
 
+import housemate.entities.UserAccount;
 import housemate.services.LoginService;
 import java.util.*;
 import org.springframework.beans.factory.annotation.*;
@@ -35,5 +36,11 @@ public class LoginController {
     public ResponseEntity<String> loginSuccessWithGoogle(OAuth2AuthenticationToken oAuth2AuthenticationToken) {
         Map<String, Object> user = oAuth2AuthenticationToken.getPrincipal().getAttributes();
         return loginService.loginWithGoogle(user);
+    }
+
+    // TODO: Delete this
+    @GetMapping("/test")
+    public List<UserAccount> getAll() {
+        return loginService.getAll();
     }
 }
