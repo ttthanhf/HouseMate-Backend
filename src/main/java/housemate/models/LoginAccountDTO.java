@@ -1,9 +1,12 @@
 package housemate.models;
 
+<<<<<<< HEAD
 import housemate.constants.RegexConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
+=======
+>>>>>>> 0cbd3bf (Merge pull request #4 from ttthanhf/feature/loginWithGoogle)
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

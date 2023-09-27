@@ -36,9 +36,13 @@ build/
 ### OWN ###
 src/main/resources/application.properties
 <<<<<<< HEAD
+<<<<<<< HEAD
 **/src/test/
 **src/test/
 =======
 nbactions.xml
 nb-configuration.xml
 >>>>>>> origin/dev
+=======
+nbactions.xml
+>>>>>>> 0cbd3bf (Merge pull request #4 from ttthanhf/feature/loginWithGoogle)

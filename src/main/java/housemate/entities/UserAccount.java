@@ -34,8 +34,13 @@ public class UserAccount {
     @Column(name = "full_name")
     private String fullName;
 
+<<<<<<< HEAD
     @Column(name = "phone_number", nullable = true, unique = true)
     private String phoneNumber;
+=======
+    @Column(name = "phone_number", nullable = true, unique=true)
+    private int phoneNumber;
+>>>>>>> 0cbd3bf (Merge pull request #4 from ttthanhf/feature/loginWithGoogle)
 
     @Column(name = "password_hash", nullable = true)
     private String passwordHash;
