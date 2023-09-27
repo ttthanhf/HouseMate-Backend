@@ -4,10 +4,10 @@
  */
 package housemate.controllers;
 
-import housemate.entities.UserAccount;
 import housemate.services.LoginService;
 import java.util.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,21 +17,15 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping
+@CrossOrigin
 public class LoginController {
 
     @Autowired
     LoginService loginService;
 
-    @GetMapping("/callback/google/user")
-    public Object loginSuccessWithGoogle(OAuth2AuthenticationToken oAuth2AuthenticationToken) {
+    @GetMapping("/callback/google/redirect")
+    public ResponseEntity<String> loginSuccessWithGoogle(OAuth2AuthenticationToken oAuth2AuthenticationToken) {
         Map<String, Object> user = oAuth2AuthenticationToken.getPrincipal().getAttributes();
-        String token = loginService.loginWithGoogle(user);
-        return token;
-    }
-    
-    // TODO: Delete this
-    @GetMapping("/test")
-    public List<UserAccount> getAll() {
-        return loginService.getAll();
+        return loginService.loginWithGoogle(user);
     }
 }
