@@ -43,16 +43,11 @@ public class LoginService {
             userAccount = userRepository.save(newUser);
         }
         JwtUtil jwtUtil = new JwtUtil();
-        JwtPayload jwtPayload = new JwtPayload(123, fullName, email, "customer");
+        JwtPayload jwtPayload = new JwtPayload(userAccount.getUserId(), fullName, email, userAccount.getRole().toString());
         Map<String, Object> payload = jwtPayload.toMap();
         String token = jwtUtil.generateToken(payload);
         String url = redirectUri + "/" + "?success=true&token=" + token;
         URI uri = URI.create(url);
         return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
-    }
-
-    // TODO: Delete this
-    public List<UserAccount> getAll() {
-        return userRepository.findAll();
     }
 }
