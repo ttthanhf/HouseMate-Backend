@@ -4,12 +4,11 @@
  */
 package housemate.services;
 
-import housemate.constants.Role;
+
 import housemate.entities.UserAccount;
 import housemate.models.LoginAccountDTO;
 import housemate.models.RegisterAccountDTO;
 import housemate.repositories.UserRepository;
-import java.net.URI;
 import java.util.List;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
