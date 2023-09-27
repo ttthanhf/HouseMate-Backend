@@ -5,9 +5,13 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+
 import housemate.entities.Service;
 import housemate.entities.enums.SaleStatus;
 import housemate.repositories.ServiceRepository;
+import housemate.services.interfaces.IService;
+import jakarta.xml.bind.PropertyException;
 
 @org.springframework.stereotype.Service
 public class TheService implements IService {
@@ -29,12 +33,24 @@ public class TheService implements IService {
 		return serviceRepo.findByTitleNameContaining(keyword);
 	}
 
-//	@Override
-//	public List<Service> sortByOneField(String fieldName, String orderRequire) {
-//
-//		// orderRequire: A-Z = asc, Z-A = desc
-//		return serviceRepo.sortByOneField(fieldName.trim().toLowerCase(), orderRequire.trim().toLowerCase());
-//	}
+	@Override
+	public List<Service> sortByOneField(String fieldName, String orderRequire) {
+
+		// orderRequire: A-Z = asc, Z-A = desc
+		
+		List<Service> service;
+		try {
+			Sort nameSort = Sort.by(fieldName.trim());
+			if(orderRequire.equalsIgnoreCase("asc")) service = serviceRepo.findAll(nameSort.ascending());
+			else service = serviceRepo.findAll(nameSort.descending());
+		}catch (Exception e) {
+			service = null;
+			e.printStackTrace();
+		}
+			
+			return service;
+
+	}
 
 	@Override
 	public List<Service> filterBySaleStatus(SaleStatus saleStatus) {

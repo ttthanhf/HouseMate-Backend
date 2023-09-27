@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import housemate.entities.Service;
@@ -35,10 +36,19 @@ public class ServiceController {
 		return ResponseEntity.ok(serviceList); 
 	}
 	
+	@GetMapping("/sort")
+	public ResponseEntity<?> getServiceListSort(@RequestParam String fieldname, @RequestParam String requireOrder){
+		List<Service> serviceList = serviceDao.sortByOneField(fieldname, requireOrder);
+		if(serviceList == null)
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Sorry The List Is Empty Or You Input Wrong Field!!");
+		
+		return ResponseEntity.ok(serviceList); 
+	}
+	
 	@GetMapping("/keyname-search")
 	public ResponseEntity<?> getServiceListByKeywordName(String keyword){
 		List<Service> serviceList = serviceDao.searchByName(keyword.trim());
-		if(serviceList.isEmpty())
+		if(serviceList.isEmpty() || serviceList == null )
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Not Found Any Service Match The Keyword");
 		
 		return ResponseEntity.ok(serviceList);
@@ -48,7 +58,7 @@ public class ServiceController {
 	@GetMapping("/sale-status-filter")
 	public ResponseEntity<?> filterBySaleStatus(SaleStatus saleStatus){
 		List<Service> serviceList = serviceDao.filterBySaleStatus(saleStatus);
-		if(serviceList.isEmpty())
+		if(serviceList.isEmpty() || serviceList == null )
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Sorry The List Is Empty");
 			
 		return ResponseEntity.ok(serviceList);
