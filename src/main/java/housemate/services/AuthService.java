@@ -58,9 +58,7 @@ public class AuthService {
     public ResponseEntity<String> register(RegisterAccountDTO registerAccountDTO) {
         // Insert to database
         UserAccount userAccount = new UserAccount().fromRegisterAccountDTO(registerAccountDTO);
-        System.out.println("1");
         userAccount = userRepository.save(userAccount);
-        System.out.println("2");
         
         // Generate token
         JwtUtil jwtUtil = new JwtUtil();
