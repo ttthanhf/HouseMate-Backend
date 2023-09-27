@@ -124,6 +124,7 @@
             <version>2.1.0</version>
         </dependency>
     </dependencies>
+<<<<<<< HEAD
 	<build>
 		<plugins>
 			<plugin>
@@ -157,4 +158,24 @@
 		</plugins>
 		<finalName>housemate</finalName>
 	</build>
+=======
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+        <finalName>housemate</finalName>
+    </build>
+>>>>>>> 0cbd3bf (Merge pull request #4 from ttthanhf/feature/loginWithGoogle)
 </project>
