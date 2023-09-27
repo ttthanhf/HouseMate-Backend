@@ -33,14 +33,7 @@ public class LoginController {
 
     @GetMapping("/callback/google/redirect")
     public ResponseEntity<String> loginSuccessWithGoogle(OAuth2AuthenticationToken oAuth2AuthenticationToken) {
-        if (oAuth2AuthenticationToken != null) {
-            Map<String, Object> user = oAuth2AuthenticationToken.getPrincipal().getAttributes();
-            String token = loginService.loginWithGoogle(user);
-            String url = redirectUri + "/" + "?success=true&token=" + token;
-            URI uri = URI.create(url);
-            return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-        }
+        Map<String, Object> user = oAuth2AuthenticationToken.getPrincipal().getAttributes();
+        return loginService.loginWithGoogle(user);
     }
 }
