@@ -29,7 +29,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests
                         -> authorizeRequests
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/callback/google/redirect").authenticated()
                         .anyRequest().permitAll()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
