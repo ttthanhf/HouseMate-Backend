@@ -49,7 +49,6 @@ public class AuthService {
         String token = exampleToken;
         return ResponseEntity.status(HttpStatus.OK).body(token);
 
-
     }
 
     public ResponseEntity<List<UserAccount>> getAll() {
@@ -66,7 +65,7 @@ public class AuthService {
         // TODO: Integrate forgot password
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("This feature will be upgraded soon...");
     }
-    
+
     public ResponseEntity<String> setNewPassword(LoginAccountDTO loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
 
@@ -74,7 +73,7 @@ public class AuthService {
         if (accountDB == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't created");
         }
-        
+
         accountDB.setToPasswordHash(loginAccountDTO.getPassword());
         userRepository.save(accountDB);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Set new password successfully!");
