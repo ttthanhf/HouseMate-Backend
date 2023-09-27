@@ -51,7 +51,6 @@ public class UserAccount {
         this.fullName = fullName;
         this.emailAddress = emailAddress;
         this.emailValidationStatus = emailValidationStatus;
-        this.role = role;
     }
 
     public UserAccount fromRegisterAccountDTO(RegisterAccountDTO registerAccountDTO) {
