@@ -26,7 +26,7 @@ public class LoginService {
     @Autowired
     private UserRepository userRepository;
 
-    @Value("${application.setting.google.redirect-uri}") 
+    @Value("${application.setting.google.redirect-uri}")
     private String redirectUri;
 
     public ResponseEntity<String> loginWithGoogle(Map<String, Object> userOAuth) {
