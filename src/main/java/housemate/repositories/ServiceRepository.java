@@ -22,6 +22,7 @@ import jakarta.transaction.Transactional;
  * @author ThanhF
  */
 @Transactional
+@Repository
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	
 	List<Service> findByTitleNameContaining(String keyword);
@@ -30,10 +31,11 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	
 	Service findByTitleNameIgnoreCase(String titleName);
 	
-	List<Service> findBySaleStatus(String saleStatus);
+	List<Service> findBySaleStatus(SaleStatus saleStatus);
 	
-	@Query("SELECT s FROM Service s ORDER BY :fieldName :requireOrder")
-    List<Service> sortByOneField(@Param("fieldName") String fieldName, @Param("requireOrder") String requireOrder);
-	
+//	//@Query("SELECT s FROM Service s ORDER BY :fieldName :requireOrder")
+//    //List<Service> sortByOneField(@Param("fieldName") String fieldName, @Param("requireOrder") String requireOrder);
+//    List<Service> sortByOneField( String fieldName, String requireOrder);
+//	
 	//sort by multiple field 
 }

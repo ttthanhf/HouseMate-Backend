@@ -13,12 +13,12 @@ import housemate.repositories.ServiceRepository;
 public class TheService implements IService {
 
 	@Autowired
-	ServiceRepository serviceRepo ;
+	ServiceRepository serviceRepo;
 
 	private static final Logger logger = LoggerFactory.getLogger(TheService.class);
 
 	@Override
-	public List<Service> viewAll() {
+	public List<Service> getAll() {
 
 		return serviceRepo.findAll();
 	}
@@ -29,21 +29,21 @@ public class TheService implements IService {
 		return serviceRepo.findByTitleNameContaining(keyword);
 	}
 
-	@Override
-	public List<Service> sortByOneField(String fieldName, String orderRequire) {
-
-		// orderRequire: A-Z = asc, Z-A = desc
-		return serviceRepo.sortByOneField(fieldName.trim().toLowerCase(), orderRequire.trim().toLowerCase());
-	}
+//	@Override
+//	public List<Service> sortByOneField(String fieldName, String orderRequire) {
+//
+//		// orderRequire: A-Z = asc, Z-A = desc
+//		return serviceRepo.sortByOneField(fieldName.trim().toLowerCase(), orderRequire.trim().toLowerCase());
+//	}
 
 	@Override
 	public List<Service> filterBySaleStatus(SaleStatus saleStatus) {
 
-		return serviceRepo.findBySaleStatus(saleStatus.name());
+		return serviceRepo.findBySaleStatus(saleStatus);
 	}
 
 	@Override
-	public Service viewOne(int serviceId) {
+	public Service getOne(int serviceId) {
 
 		return serviceRepo.findById(serviceId).orElse(null);
 	}
@@ -58,6 +58,7 @@ public class TheService implements IService {
 			LocalDateTime currentDateTime = LocalDateTime.now();
 			service.setCreatorId(0001);
 			service.setCreatedAt(currentDateTime);
+			service.setSaleStatus(SaleStatus.NOT_AVAILABLE);
 			service = serviceRepo.save(service);
 			return serviceRepo.findById(service.getId()).orElse(null);
 		} catch (Exception ex) {
@@ -68,14 +69,28 @@ public class TheService implements IService {
 
 	@Override
 	public Service updateInfo(int serviceId, Service newServiceInfo) {
-		// TODO Auto-generated method stub
-		return null;
+		Service service = serviceRepo.findById(serviceId).orElse(null);
+		try {
+
+			if (service == null) {
+				logger.warn("The Service Not Exists To Update !");
+				throw new Exception("The service with the ID: " + serviceId + "Not Exist !");
+
+			}
+			service.setTitleName(newServiceInfo.getTitleName().trim());
+			service.setDescription(newServiceInfo.getTitleName().trim());
+			service.setSalePrice(newServiceInfo.getSalePrice());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return service;
 	}
 
 	@Override
 	public Service updateSaleStatus(int serviceId, SaleStatus saleStatus) {
 		Service service = serviceRepo.findById(serviceId).orElse(null);
-		if(service != null) {
+		if (service != null) {
 			service.setSaleStatus(saleStatus);
 			service = serviceRepo.save(service);
 			return service;
@@ -87,8 +102,8 @@ public class TheService implements IService {
 	public void removeOne(int serviceId) {
 		try {
 			if (serviceRepo.findById(serviceId) == null) {
-				logger.warn("The Service Not Exists To Remove !");
-				throw new Exception("The service with the ID: " + serviceId + "Not Exists !");
+				logger.warn("The Service Not Exist To Remove !");
+				throw new Exception("The service with the ID: " + serviceId + "Not Exist !");
 			}
 			serviceRepo.deleteById(serviceId);
 		} catch (Exception e) {
