@@ -4,16 +4,16 @@
  */
 package housemate.services;
 
-import housemate.constants.Role;
+import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
 import housemate.models.LoginAccountDTO;
 import housemate.models.RegisterAccountDTO;
 import housemate.repositories.UserRepository;
-import java.net.URI;
+import housemate.utils.JwtUtil;
 import java.util.List;
+import java.util.Map;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,9 +27,6 @@ public class AuthService {
 
     @Autowired
     UserRepository userRepository;
-
-    @Value("${url.client}")
-    String URL_CLIENT;
 
     public ResponseEntity<String> login(LoginAccountDTO loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
@@ -45,9 +42,11 @@ public class AuthService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email or password not correct");
         }
 
-        // TODO: Generate token
-        String exampleToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-        String token = exampleToken;
+        // Generate token
+        JwtUtil jwtUtil = new JwtUtil();
+        JwtPayload jwtPayload = new JwtPayload().fromUserAccount(accountDB);
+        Map<String, Object> payload = jwtPayload.toMap();
+        String token = jwtUtil.generateToken(payload);
         return ResponseEntity.status(HttpStatus.OK).body(token);
 
     }
@@ -56,15 +55,24 @@ public class AuthService {
         return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
     }
 
-    public ResponseEntity<UserAccount> register(RegisterAccountDTO registerAccountDTO) {
+    public ResponseEntity<String> register(RegisterAccountDTO registerAccountDTO) {
+        // Insert to database
         UserAccount userAccount = new UserAccount().fromRegisterAccountDTO(registerAccountDTO);
+        System.out.println("1");
         userAccount = userRepository.save(userAccount);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(userAccount);
+        System.out.println("2");
+        
+        // Generate token
+        JwtUtil jwtUtil = new JwtUtil();
+        JwtPayload jwtPayload = new JwtPayload().fromUserAccount(userAccount);
+        Map<String, Object> payload = jwtPayload.toMap();
+        String token = jwtUtil.generateToken(payload);
+        
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(token);
     }
 
     public ResponseEntity<String> forgotPassword(String email) {
-        // TODO: Integrate forgot password
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("This feature will be upgraded soon...");
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body("This feature will be upgraded soon!");
     }
 
     public ResponseEntity<String> setNewPassword(LoginAccountDTO loginAccountDTO) {

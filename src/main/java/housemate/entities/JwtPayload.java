@@ -29,4 +29,15 @@ public class JwtPayload {
         map.put("payload", this);
         return map;
     }
+    
+    public JwtPayload fromUserAccount(UserAccount account) {
+        JwtPayload jwtPayload = new JwtPayload();
+
+        jwtPayload.setId(account.getUserId());
+        jwtPayload.setEmail(account.getEmailAddress());
+        jwtPayload.setFullName(account.getFullName());
+        jwtPayload.setRole(account.getRole().toString());
+        
+        return jwtPayload;
+    }
 }
