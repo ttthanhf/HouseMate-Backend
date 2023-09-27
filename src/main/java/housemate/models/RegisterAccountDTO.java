@@ -33,7 +33,7 @@ public class RegisterAccountDTO {
     @Schema(example = "Example", description = "Full name of an account")
     private String fullName;
 
-    @Schema(example = "0866123456 or +84866123456", description = "Phone number of an account")
+    @Schema(example = "0866123456", description = "Phone number of an account")
     @Pattern(regexp = "^(0|\\+?84)(3|5|7|8|9)[0-9]{8}$", message = "Invalid phone number format")
     private String phoneNumber;
 
