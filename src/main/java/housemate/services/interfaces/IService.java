@@ -6,8 +6,8 @@ package housemate.services.interfaces;
 
 import java.util.List;
 
+import housemate.constants.SaleStatus;
 import housemate.entities.Service;
-import housemate.entities.enums.SaleStatus;
 
 /**
  *

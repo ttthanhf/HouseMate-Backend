@@ -12,8 +12,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import housemate.constants.SaleStatus;
 import housemate.entities.Service;
-import housemate.entities.enums.SaleStatus;
 import jakarta.transaction.Transactional;
 
 /**

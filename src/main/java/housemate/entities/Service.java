@@ -6,8 +6,8 @@ package housemate.entities;
 
 import java.time.LocalDateTime;
 
-import housemate.entities.enums.SaleStatus;
-import housemate.entities.enums.UnitOfMeasure;
+import housemate.constants.SaleStatus;
+import housemate.constants.UnitOfMeasure;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
