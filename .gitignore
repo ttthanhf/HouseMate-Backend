@@ -36,3 +36,4 @@ build/
 ### OWN ###
 src/main/resources/application.properties
 nbactions.xml
+nb-configuration.xml

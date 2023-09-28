@@ -4,6 +4,7 @@
  */
 package housemate.models;
 
+import housemate.constants.Regex;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
@@ -29,7 +30,7 @@ public class LoginAccountDTO {
     public String email;
 
     @Pattern(
-            regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,16}$",
+            regexp = Regex.PASSWORD,
             message = "Must be 8 to 16 characters, include a number, an uppercase letter, and a lowercase letter"
     )
     @Schema(example = "Password123", description = "Password of an account")

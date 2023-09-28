@@ -54,6 +54,7 @@ public class AuthController {
         return service.forgotPassword(email);
     }
     
+    // TODO: Fix route mapping
     @PutMapping("/set-new-password")
     public ResponseEntity<String> setNewPassword(@Valid @RequestBody LoginAccountDTO account) {
         return service.setNewPassword(account);
