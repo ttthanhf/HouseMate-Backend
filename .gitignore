@@ -35,4 +35,4 @@ build/
 
 ### OWN ###
 src/main/resources/application.properties
-nbactions.xml
+**/src/test/
