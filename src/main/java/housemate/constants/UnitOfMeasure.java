@@ -1,4 +1,4 @@
-package housemate.entities.enums;
+package housemate.constants;
 
 public enum UnitOfMeasure {
 

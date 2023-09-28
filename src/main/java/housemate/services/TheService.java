@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 
+import housemate.constants.SaleStatus;
 import housemate.entities.Service;
-import housemate.entities.enums.SaleStatus;
 import housemate.repositories.ServiceRepository;
 import housemate.services.interfaces.IService;
 import jakarta.xml.bind.PropertyException;
