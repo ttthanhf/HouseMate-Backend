@@ -27,7 +27,7 @@ public class AuthService {
 
     @Autowired
     UserRepository userRepository;
-
+    
     public ResponseEntity<String> login(LoginAccountDTO loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
 
@@ -43,10 +43,10 @@ public class AuthService {
         }
 
         // Generate token
-        JwtUtil jwtUtil = new JwtUtil();
-        JwtPayload jwtPayload = new JwtPayload().fromUserAccount(accountDB);
+        JwtPayload jwtPayload = fromUserAccount(accountDB);
         Map<String, Object> payload = jwtPayload.toMap();
-        String token = jwtUtil.generateToken(payload);
+        String token = new JwtUtil().generateToken(payload);
+        
         return ResponseEntity.status(HttpStatus.OK).body(token);
 
     }
@@ -68,10 +68,9 @@ public class AuthService {
         userAccount = userRepository.save(userAccount);
         
         // Generate token
-        JwtUtil jwtUtil = new JwtUtil();
-        JwtPayload jwtPayload = new JwtPayload().fromUserAccount(userAccount);
+        JwtPayload jwtPayload = fromUserAccount(userAccount);
         Map<String, Object> payload = jwtPayload.toMap();
-        String token = jwtUtil.generateToken(payload);
+        String token = new JwtUtil().generateToken(payload);
         
         return ResponseEntity.status(HttpStatus.OK).body(token);
     }
@@ -92,5 +91,16 @@ public class AuthService {
         accountDB.setToPasswordHash(loginAccountDTO.getPassword());
         userRepository.save(accountDB);
         return ResponseEntity.status(HttpStatus.OK).body("Set new password successfully!");
+    }
+    
+    public JwtPayload fromUserAccount(UserAccount account) {
+        JwtPayload jwtPayload = new JwtPayload();
+
+        jwtPayload.setId(account.getUserId());
+        jwtPayload.setEmail(account.getEmailAddress());
+        jwtPayload.setFullName(account.getFullName());
+        jwtPayload.setRole(account.getRole().toString());
+        
+        return jwtPayload;
     }
 }
