@@ -48,7 +48,20 @@ class HousemateApplicationTests {
 		assertThat(list).isNotEmpty();
 		
 		for (Service service : list) {
-			System.out.println(service.toString() + "/n");
+			System.out.println(service.getServiceId() + " -avgRating- " + service.getAvgRating() + "\n");
+			
+		}
+	}
+	
+	@Test
+	public void testUpdateNumberOfSold() {
+		serviceRepo.updatetheNumberOfSold();
+		List<Service> list =  serviceDao.getAll();
+
+		assertThat(list).isNotEmpty();
+		
+		for (Service service : list) {
+			System.out.println(service.getServiceId() + " -avgRating- " + service.getAvgRating() + " -numberOfSold- " + service.getNumberOfSold() + "\n");
 		}
 	}
 

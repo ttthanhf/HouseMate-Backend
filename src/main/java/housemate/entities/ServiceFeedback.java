@@ -19,12 +19,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "Service Feedback")
+@Table(name = "service_feedback")
 public class ServiceFeedback {
 
     @Id
     @Column(name = "service_feedback_id")
-    private int id;
+    private int serviceFeedbackId;
 
     @Column(name = "task_id")
     private int taskId;
