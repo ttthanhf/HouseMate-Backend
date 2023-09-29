@@ -82,7 +82,7 @@ public class TheService implements IService {
 			service.setCreatedAt(currentDateTime);
 			service.setSaleStatus(SaleStatus.NOT_AVAILABLE);
 			service = serviceRepo.save(service);
-			return serviceRepo.findById(service.getId()).orElse(null);
+			return serviceRepo.findById(service.getServiceId()).orElse(null);
 			
 		} catch (Exception ex) {
 			ex.printStackTrace();

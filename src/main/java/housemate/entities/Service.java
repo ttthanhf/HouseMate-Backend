@@ -5,16 +5,15 @@
 package housemate.entities;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.hibernate.annotations.Formula;
 import org.springframework.beans.factory.annotation.Configurable;
-import org.springframework.stereotype.Component;
-import org.springframework.ui.context.ThemeSource;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import housemate.constants.SaleStatus;
 import housemate.constants.UnitOfMeasure;
-import housemate.repositories.ServiceRepository;
-import housemate.services.TheService;
 import jakarta.persistence.*;
 import jakarta.persistence.Id;
 import lombok.AccessLevel;
@@ -33,8 +32,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Configurable(preConstruction = true)
-@Table(name = "Service")
+@Table(name = "service")
 
 
 public class Service {
@@ -43,7 +41,7 @@ public class Service {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Setter(value = AccessLevel.NONE)
     @Column(name = "service_id")
-    private int id;
+    private int serviceId;
 
     @Column(name = "title_name", unique = true)
     private String titleName;
@@ -53,7 +51,7 @@ public class Service {
     private UnitOfMeasure unitOfMeasure;
 
     @Column(name = "original_price", nullable = false)
-    private int original_price;
+    private int originalPrice;
     
     @Column(name = "sale_price", nullable = false)
     private int salePrice;
@@ -67,7 +65,7 @@ public class Service {
 
     
     @Column(name = "avg_rating", nullable = true, columnDefinition = "float default 0")
-    private Float avg_rating;
+    private Float avgRating;
 
     //not yet building relationship
     @Column(name = "creator_id", nullable = false) 
@@ -77,8 +75,15 @@ public class Service {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createdAt;
     
-    @Transient
-    private int number_of_sold;
+    //@Transient
+    //@Formula("SELECT DISTINCT COUNT(soi.service_order_item_id) FROM service_order_item soi WHERE soi.service_id = service_id")
+    @Column(name = "number_of_sold", columnDefinition = "integer default 0")
+    private Integer numberOfSold;
+    
+    @OneToMany(mappedBy = "service")
+    @JsonIgnore
+    private List<ServiceOrderItem> serviceOrderItemList;
+    
     
 
 

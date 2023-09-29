@@ -35,5 +35,10 @@ build/
 
 ### OWN ###
 src/main/resources/application.properties
+<<<<<<< HEAD
 **/src/test/
 **src/test/
+=======
+nbactions.xml
+nb-configuration.xml
+>>>>>>> origin/dev

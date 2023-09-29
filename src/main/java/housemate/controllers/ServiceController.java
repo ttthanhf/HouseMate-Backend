@@ -43,16 +43,16 @@ public class ServiceController {
 		return ResponseEntity.ok(serviceList);
 	}
 	
-	@GetMapping("/servic-feedbacks")
-	public ResponseEntity<?> getFeedback() {
-		List<ServiceFeedback> serviceList = serviceFeedbackRepo.findAll();
-		if (serviceList.isEmpty())
-			// throw new ApiServicesRequestException("Sorry The List Is Empty Now");
-			return ResponseEntity.status(HttpStatus.NO_CONTENT)
-					.body("Sorry The Feedback Is Empty Or You Input Wrong Field !");
-
-		return ResponseEntity.ok(serviceList);
-	}
+//	@GetMapping("/servic-feedbacks")
+//	public ResponseEntity<?> getFeedback() {
+//		List<ServiceFeedback> serviceList = serviceFeedbackRepo.findAll();
+//		if (serviceList.isEmpty())
+//			// throw new ApiServicesRequestException("Sorry The List Is Empty Now");
+//			return ResponseEntity.status(HttpStatus.NO_CONTENT)
+//					.body("Sorry The Feedback Is Empty Or You Input Wrong Field !");
+//
+//		return ResponseEntity.ok(serviceList);
+//	}
 
 	@GetMapping("/sort")
 	public ResponseEntity<?> getServiceListSort(@RequestParam String fieldname, 
