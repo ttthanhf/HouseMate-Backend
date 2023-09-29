@@ -4,7 +4,12 @@
  */
 package housemate.models;
 
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  *
@@ -12,75 +17,35 @@ import java.time.LocalDateTime;
  */
 public class CommentDTO {
 
+    @Getter
+    @Setter
     public static class Add {
 
+        @Positive
         private int serviceId;
+
+        @Positive
         private int userId;
+
+        @Size(min = 1, max = 50000)
         private String text;
+
+        @PastOrPresent
         private LocalDateTime date;
-
-        public int getServiceId() {
-            return serviceId;
-        }
-
-        public void setServiceId(int serviceId) {
-            this.serviceId = serviceId;
-        }
-
-        public int getUserId() {
-            return userId;
-        }
-
-        public void setUserId(int userId) {
-            this.userId = userId;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
-        }
-
-        public LocalDateTime getDate() {
-            return date;
-        }
-
-        public void setDate(LocalDateTime date) {
-            this.date = date;
-        }
 
     }
 
+    @Getter
+    @Setter
     public static class Remove {
 
+        @Positive
         private int id;
+
+        @Positive
         private int serviceId;
+
+        @Positive
         private int userId;
-
-        public int getId() {
-            return id;
-        }
-
-        public void setId(int id) {
-            this.id = id;
-        }
-
-        public int getServiceId() {
-            return serviceId;
-        }
-
-        public void setServiceId(int serviceId) {
-            this.serviceId = serviceId;
-        }
-
-        public int getUserId() {
-            return userId;
-        }
-
-        public void setUserId(int userId) {
-            this.userId = userId;
-        }
     }
 }
