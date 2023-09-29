@@ -4,8 +4,11 @@
  */
 package housemate.services;
 
+import housemate.constants.Role;
 import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
+import housemate.mappers.AccountMapper;
+import housemate.mappers.JwtPayloadMapper;
 import housemate.models.LoginAccountDTO;
 import housemate.models.RegisterAccountDTO;
 import housemate.repositories.UserRepository;
@@ -43,7 +46,7 @@ public class AuthService {
         }
 
         // Generate token
-        JwtPayload jwtPayload = fromUserAccount(accountDB);
+        JwtPayload jwtPayload = new JwtPayloadMapper().mapFromUserAccount(accountDB);
         Map<String, Object> payload = jwtPayload.toMap();
         String token = new JwtUtil().generateToken(payload);
         
@@ -64,11 +67,11 @@ public class AuthService {
         }
         
         // Insert to database
-        UserAccount userAccount = new UserAccount().fromRegisterAccountDTO(registerAccountDTO);
+        UserAccount userAccount = new AccountMapper().mapToEntity(registerAccountDTO);
         userAccount = userRepository.save(userAccount);
         
         // Generate token
-        JwtPayload jwtPayload = fromUserAccount(userAccount);
+        JwtPayload jwtPayload = new JwtPayloadMapper().mapFromUserAccount(userAccount);
         Map<String, Object> payload = jwtPayload.toMap();
         String token = new JwtUtil().generateToken(payload);
         
@@ -91,16 +94,5 @@ public class AuthService {
         accountDB.setToPasswordHash(loginAccountDTO.getPassword());
         userRepository.save(accountDB);
         return ResponseEntity.status(HttpStatus.OK).body("Set new password successfully!");
-    }
-    
-    public JwtPayload fromUserAccount(UserAccount account) {
-        JwtPayload jwtPayload = new JwtPayload();
-
-        jwtPayload.setId(account.getUserId());
-        jwtPayload.setEmail(account.getEmailAddress());
-        jwtPayload.setFullName(account.getFullName());
-        jwtPayload.setRole(account.getRole().toString());
-        
-        return jwtPayload;
     }
 }
