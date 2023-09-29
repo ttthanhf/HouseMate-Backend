@@ -29,10 +29,22 @@ class HousemateApplicationTests {
 		
 	}
 	
-	@Test
+	//@Test
 	public void testOrderByDynamicFieldname() {
 		List<Service> list =  serviceDao.sortByOneField("salePrice", "DESC");
 		
+		assertThat(list).isNotEmpty();
+		
+		for (Service service : list) {
+			System.out.println(service.toString() + "/n");
+		}
+	}
+	
+	@Test
+	public void testUpdateRating() {
+		serviceRepo.updateAvgRating();
+		List<Service> list =  serviceDao.getAll();
+
 		assertThat(list).isNotEmpty();
 		
 		for (Service service : list) {

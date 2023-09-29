@@ -29,7 +29,7 @@ public interface IService {
 	public Service updateInfo(int serviceId, Service newServiceInfo);
 	public Service updateSaleStatus(int serviceId, SaleStatus saleStatus);
 	//DELETE
-	public void removeOne(int serviceId );
+	public Service removeOne(int serviceId );
 	//public void removeMulti(Service service);
 	
 	
