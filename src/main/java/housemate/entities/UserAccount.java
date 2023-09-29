@@ -4,6 +4,7 @@
  */
 package housemate.entities;
 
+import housemate.constants.Role;
 import housemate.models.RegisterAccountDTO;
 import jakarta.persistence.*;
 import lombok.*;
