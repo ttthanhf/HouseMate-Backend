@@ -7,6 +7,7 @@ package housemate.controllers;
 import housemate.entities.ServiceComment;
 import housemate.models.CommentDTO;
 import housemate.services.CommentService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -31,17 +32,17 @@ public class CommentController {
     CommentService commentService;
 
     @GetMapping("/services/{serviceId}")
-    public ResponseEntity<List<ServiceComment>> getAllCommentByServiceId(@PathVariable int serviceId) {
+    public ResponseEntity<List<ServiceComment>> getAllCommentByServiceId(@Valid @PathVariable int serviceId) {
         return commentService.getAllCommentByServiceId(serviceId);
     }
 
     @PostMapping("/add")
-    public ResponseEntity<ServiceComment> addComment(@RequestBody CommentDTO.Add commentAdd) {
+    public ResponseEntity<ServiceComment> addComment(@Valid @RequestBody CommentDTO.Add commentAdd) {
         return commentService.addComment(commentAdd);
     }
 
     @PostMapping("/remove")
-    public ResponseEntity<Void> removeComment(@RequestBody CommentDTO.Remove commentRemove) {
+    public ResponseEntity<Void> removeComment(@Valid @RequestBody CommentDTO.Remove commentRemove) {
         return commentService.removeComment(commentRemove);
     }
 }
