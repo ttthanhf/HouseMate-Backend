@@ -11,7 +11,7 @@ import housemate.constants.SaleStatus;
 import housemate.entities.Service;
 import housemate.repositories.ServiceRepository;
 import housemate.services.interfaces.IService;
-import jakarta.xml.bind.PropertyException;
+import jakarta.persistence.PostLoad;
 
 @org.springframework.stereotype.Service
 public class TheService implements IService {
@@ -21,6 +21,13 @@ public class TheService implements IService {
 
 	private static final Logger logger = LoggerFactory.getLogger(TheService.class);
 
+
+	//serviceRepo.updateAvgRating();
+//@PostLoad
+//public void updateRating () {
+//	serviceRepo.updateAvgRating();
+//}
+//	
 	@Override
 	public List<Service> getAll() {
 
@@ -46,8 +53,7 @@ public class TheService implements IService {
 		}catch (Exception e) {
 			service = null;
 			e.printStackTrace();
-		}
-			
+		}			
 			return service;
 
 	}
@@ -77,6 +83,7 @@ public class TheService implements IService {
 			service.setSaleStatus(SaleStatus.NOT_AVAILABLE);
 			service = serviceRepo.save(service);
 			return serviceRepo.findById(service.getId()).orElse(null);
+			
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -115,16 +122,18 @@ public class TheService implements IService {
 	}
 
 	@Override
-	public void removeOne(int serviceId) {
+	public Service removeOne(int serviceId) {
+		Service delService = serviceRepo.findById(serviceId).orElse(null);
 		try {
-			if (serviceRepo.findById(serviceId) == null) {
-				logger.warn("The Service Not Exist To Remove !");
-				throw new Exception("The service with the ID: " + serviceId + "Not Exist !");
-			}
-			serviceRepo.deleteById(serviceId);
-		} catch (Exception e) {
+			if (delService == null) 
+				throw new IllegalArgumentException("The service with the ID: " + serviceId + "Do Not Exist !");
+				serviceRepo.deleteById(serviceId);
+		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
+			logger.warn("The Service Not Exist To Remove !");
+			return null;
 		}
+		return delService;
 	}
 
 	public boolean duplicateTitleName(String titleName) {
