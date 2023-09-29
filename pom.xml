@@ -15,6 +15,7 @@
     <description>HouseMate Backend With Java SpringBoot</description>
     <properties>
         <java.version>17</java.version>
+        <start-class>housemate.HouseMateApplication</start-class>
     </properties>
     <dependencies>
         <dependency>

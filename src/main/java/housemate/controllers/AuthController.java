@@ -8,6 +8,7 @@ import housemate.entities.UserAccount;
 import housemate.models.LoginAccountDTO;
 import housemate.models.RegisterAccountDTO;
 import housemate.services.AuthService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -38,22 +39,24 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginAccountDTO account) {
+    public ResponseEntity<String> login(@Valid @RequestBody LoginAccountDTO account) {
         return service.login(account);
     }
     
     @PostMapping("/register")
-    public ResponseEntity<UserAccount> register(@RequestBody RegisterAccountDTO account) {
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterAccountDTO account) {
         return service.register(account);
     }
     
+    // TODO: Integrate forgot password
     @PostMapping("/forgot-password/{email}")
-    public ResponseEntity<String> forgotPassword(@PathVariable String email) {
+    public ResponseEntity<String> forgotPassword(@Valid @PathVariable String email) {
         return service.forgotPassword(email);
     }
     
+    // TODO: Fix route mapping
     @PutMapping("/set-new-password")
-    public ResponseEntity<String> setNewPassword(@RequestBody LoginAccountDTO account) {
+    public ResponseEntity<String> setNewPassword(@Valid @RequestBody LoginAccountDTO account) {
         return service.setNewPassword(account);
     }
 }
