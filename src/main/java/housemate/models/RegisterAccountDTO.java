@@ -30,7 +30,7 @@ public class RegisterAccountDTO {
     @Schema(example = "example@gmail.com", description = "Email of an account")
     private String email;
 
-    @Size(min = 2, max = 50, message = "Name must be between 2 and 50 character")
+    @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
     @Schema(example = "Example", description = "Full name of an account")
     private String fullName;
 
@@ -39,8 +39,8 @@ public class RegisterAccountDTO {
     private String phoneNumber;
 
     @Pattern(
-            regexp = RegexConstants.PASSWORD_REGEX,
-            message = "Must be 8 to 16 characters, include a number, an uppercase letter, and a lowercase letter"
+            regexp = RegexConstants.PASSWORD_REGEX, 
+            message = "Must be 8 to 16 characters, including a number, an uppercase letter, and a lowercase letter"
     )
     @Schema(example = "Password123", description = "Password of an account")
     private String password;
