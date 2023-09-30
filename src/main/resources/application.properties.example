@@ -1,0 +1,16 @@
+
+# Port
+server.port=
+
+# Database
+spring.datasource.url=jdbc:mysql://
+spring.datasource.username= 
+spring.datasource.password= 
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# Security
+spring.security.user.name=
+spring.security.user.password=
+
+# Other
+url.client=http://localhost:5173
