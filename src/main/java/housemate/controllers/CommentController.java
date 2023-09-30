@@ -7,11 +7,14 @@ package housemate.controllers;
 import housemate.entities.ServiceComment;
 import housemate.models.CommentDTO;
 import housemate.services.CommentService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,13 +39,15 @@ public class CommentController {
         return commentService.getAllCommentByServiceId(serviceId);
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<ServiceComment> addComment(@Valid @RequestBody CommentDTO.Add commentAdd) {
-        return commentService.addComment(commentAdd);
+    @PostMapping("/")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<String> addComment(HttpServletRequest request, @Valid @RequestBody CommentDTO.Add commentAdd) {
+        return commentService.addComment(request, commentAdd);
     }
 
-    @PostMapping("/remove")
-    public ResponseEntity<Void> removeComment(@Valid @RequestBody CommentDTO.Remove commentRemove) {
-        return commentService.removeComment(commentRemove);
+    @DeleteMapping("/")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<String> removeComment(HttpServletRequest request, @Valid @RequestBody CommentDTO.Remove commentRemove) {
+        return commentService.removeComment(request, commentRemove);
     }
 }
