@@ -4,6 +4,7 @@
  */
 package housemate.models;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -24,7 +25,7 @@ public class CommentDTO {
         @Positive
         private int serviceId;
 
-        @Positive
+        @Hidden
         private int userId;
 
         @Size(min = 1, max = 50000)
@@ -40,12 +41,9 @@ public class CommentDTO {
     public static class Remove {
 
         @Positive
-        private int id;
+        private int commentId;
 
-        @Positive
-        private int serviceId;
-
-        @Positive
+        @Hidden
         private int userId;
     }
 }

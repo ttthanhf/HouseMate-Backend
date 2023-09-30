@@ -24,8 +24,7 @@ public class CommentMapper {
 
     public ServiceComment mapDTOtoEntity(CommentDTO.Remove commentDTO) {
         ServiceComment serviceComment = new ServiceComment();
-        serviceComment.setId(commentDTO.getId());
-        serviceComment.setServiceId(commentDTO.getServiceId());
+        serviceComment.setId(commentDTO.getCommentId());
         serviceComment.setUserId(commentDTO.getUserId());
         return serviceComment;
     }
