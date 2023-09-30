@@ -6,7 +6,6 @@ package housemate.services;
 
 import housemate.entities.ServiceComment;
 import housemate.mappers.CommentMapper;
-import housemate.mappers.JwtPayloadMapper;
 import housemate.models.CommentDTO;
 import housemate.repositories.CommentRepository;
 import housemate.utils.JwtUtil;
@@ -38,15 +37,7 @@ public class CommentService {
     }
 
     public ResponseEntity<String> addComment(HttpServletRequest request, CommentDTO.Add commentAdd) {
-        if (request.getHeader("Authorization") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token empty");
-        }
-        String token = request.getHeader("Authorization").substring(7);
-        Map<String, Object> payloadMap = jwtUtil.extractClaim(token, claims -> claims.get("payload", Map.class));
-        if (!jwtUtil.isTokenValid(token, new JwtPayloadMapper().mapFromMap(payloadMap))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token expired");
-        }
-        commentAdd.setUserId((int) payloadMap.get("id"));
+        commentAdd.setUserId(getUserIdFromAuthorizationHeader(request));
         CommentMapper commentMapper = new CommentMapper();
         ServiceComment serviceComment = commentMapper.mapDTOtoEntity(commentAdd);
         commentRepository.save(serviceComment);
@@ -55,20 +46,18 @@ public class CommentService {
 
     @Transactional
     public ResponseEntity<String> removeComment(HttpServletRequest request, CommentDTO.Remove commentRemove) {
-        if (request.getHeader("Authorization") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token empty");
-        }
-        String token = request.getHeader("Authorization").substring(7);
-        Map<String, Object> payloadMap = jwtUtil.extractClaim(token, claims -> claims.get("payload", Map.class));
-        if (!jwtUtil.isTokenValid(token, new JwtPayloadMapper().mapFromMap(payloadMap))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token expired");
-        }
-        commentRemove.setUserId((int) payloadMap.get("id"));
+        commentRemove.setUserId(getUserIdFromAuthorizationHeader(request));
         CommentMapper commentMapper = new CommentMapper();
         ServiceComment serviceComment = commentMapper.mapDTOtoEntity(commentRemove);
         if (commentRepository.deleteComment(serviceComment.getId(), serviceComment.getUserId()) == 0) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Comment not found");
         }
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Comment removed");
+    }
+
+    private int getUserIdFromAuthorizationHeader(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").substring(7);
+        Map<String, Object> payloadMap = jwtUtil.extractClaim(token, claims -> claims.get("payload", Map.class));
+        return (int) payloadMap.get("id");
     }
 }

@@ -1,16 +1,29 @@
-
-# Port
+#Port
 server.port=
 
-# Database
-spring.datasource.url=jdbc:mysql://
-spring.datasource.username= 
-spring.datasource.password= 
+#Setting
+server.forward-headers-strategy=
+
+#Database
+spring.datasource.url= jdbc:mysql://
+spring.datasource.username=
+spring.datasource.password=
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
-# Security
+#Security
 spring.security.user.name=
 spring.security.user.password=
 
-# Other
-url.client=http://localhost:5173
+
+#JWT
+application.security.jwt.expiration=
+application.security.jwt.secret-key=
+
+#google OAuth
+spring.security.oauth2.client.registration.google.client-id=
+spring.security.oauth2.client.registration.google.client-secret=
+spring.security.oauth2.client.registration.google.scope=
+
+#
+application.setting.google.redirect-uri=
+url.client=
