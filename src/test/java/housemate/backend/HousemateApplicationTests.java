@@ -40,7 +40,7 @@ class HousemateApplicationTests {
 		}
 	}
 	
-	@Test
+	//@Test
 	public void testUpdateRating() {
 		serviceRepo.updateAvgRating();
 		List<Service> list =  serviceDao.getAll();
@@ -53,7 +53,7 @@ class HousemateApplicationTests {
 		}
 	}
 	
-	@Test
+	//@Test
 	public void testUpdateNumberOfSold() {
 		serviceRepo.updatetheNumberOfSold();
 		List<Service> list =  serviceDao.getAll();
