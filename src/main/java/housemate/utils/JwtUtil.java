@@ -27,9 +27,9 @@ public class JwtUtil {
 //    @Value("${application.security.jwt.expiration}")
     private final long jwtExpiration = 36000000;
 
-    public String extractEmail(String token) {
+    public Map<String, Object> extractPayload(String token) {
         Map<String, Object> payloadMap = extractClaim(token, claims -> claims.get("payload", Map.class));
-        return (String) payloadMap.get("email");
+        return payloadMap;
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -55,8 +55,30 @@ public class JwtUtil {
     }
 
     public boolean isTokenValid(String token, JwtPayload jwtPayload) {
-        final String email = extractEmail(token);
-        return (email.equals(jwtPayload.getEmail())) && !isTokenExpired(token);
+        final Map<String, Object> payload = extractPayload(token);
+        return isPayloadEqual(payload, jwtPayload.toMap()) && !isTokenExpired(token);
+    }
+
+    private boolean isPayloadEqual(Map<String, Object> payload1, Map<String, Object> payload2) {
+        if (payload1.size() != payload2.size()) {
+            return false;
+        }
+
+        for (Map.Entry<String, Object> entry : payload1.entrySet()) {
+            String key = entry.getKey();
+            Object value1 = entry.getValue();
+            Object value2 = payload2.get(key);
+
+            if (value1 == null && value2 == null) {
+                continue;
+            }
+
+            if (value1 == null || value2 == null || !value1.equals(value2)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public boolean isTokenExpired(String token) {

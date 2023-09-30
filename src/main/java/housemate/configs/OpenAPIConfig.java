@@ -15,7 +15,13 @@ import org.springframework.context.annotation.Configuration;
  * @author ThanhF
  */
 @Configuration
-@OpenAPIDefinition(info = @Info(title = "HouseMate API", version = "0.0.0.1"))
+@OpenAPIDefinition(
+        info = @Info(
+                title = "HouseMate API",
+                version = "1.0.0",
+                description = "An API for the software system provides single service and package service for student apartments."
+        )
+)
 @SecurityScheme(
         name = "bearerAuth",
         type = SecuritySchemeType.HTTP,
