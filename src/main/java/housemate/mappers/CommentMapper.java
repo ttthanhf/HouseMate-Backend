@@ -6,11 +6,13 @@ package housemate.mappers;
 
 import housemate.entities.ServiceComment;
 import housemate.models.CommentDTO;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author ThanhF
  */
+@Component
 public class CommentMapper {
 
     public ServiceComment mapDTOtoEntity(CommentDTO.Add commentDTO) {

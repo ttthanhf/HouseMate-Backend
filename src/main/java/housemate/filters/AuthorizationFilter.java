@@ -28,6 +28,9 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    JwtPayloadMapper jwtPayloadMapper;
+
     private final List<String> excludedUrls = Arrays.asList("/swagger-ui", "/auth", "/v3/api-docs");
 
     @Override
@@ -54,11 +57,11 @@ public class AuthorizationFilter extends OncePerRequestFilter {
                 setResponseUnAuthorized(response, "Token expired");
                 return;
             }
-            if (jwtUtil.isTokenValid(token, new JwtPayloadMapper().mapFromMap(payloadMap))) {
+            if (jwtUtil.isTokenValid(token, jwtPayloadMapper.mapFromMap(payloadMap))) {
                 setResponseUnAuthorized(response, "Token Invalid");
                 return;
             }
-        } catch (Exception e) {
+        } catch (Exception e) { //phải là exception mới bắt lỗi unvalid signature được
             setResponseUnAuthorized(response, "Token Invalid");
             return;
         }

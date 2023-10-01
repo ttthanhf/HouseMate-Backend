@@ -7,11 +7,13 @@ package housemate.mappers;
 import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
 import java.util.Map;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author Admin
  */
+@Component
 public class JwtPayloadMapper {
 
     public JwtPayload mapFromUserAccount(UserAccount account) {
