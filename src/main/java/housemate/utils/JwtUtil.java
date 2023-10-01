@@ -4,6 +4,7 @@
  */
 package housemate.utils;
 
+import housemate.entities.JwtPayload;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -11,9 +12,6 @@ import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.*;
 import java.util.function.Function;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 /**
@@ -23,15 +21,20 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtUtil {
 
-    @Value("${application.security.jwt.secret-key}")
-    private final String secretKey = "thisisverysuperhashkeyforsuperjwtkeyveryverybigkey";
-    @Value("${application.security.jwt.expiration}")
-    private long jwtExpiration;
-    @Value("${application.security.jwt.refresh-token.expiration}")
-    private long refreshExpiration;
+//    @Value("${application.security.jwt.secret-key}") //đang ko dùng được nên comment lại và set cứng giá trị
+    private final String secretKey = "asdhhashdsjkhdashkadsheffeajnagkrjnagnjrgknjagrknjrgkjngragrjngrkjngrkjnefajneef";
 
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+//    @Value("${application.security.jwt.expiration}") //đang ko dùng được nên comment lại và set cứng giá trị
+    private final long jwtExpiration = 36000000;
+
+    public int extractUserId(String token) {
+        Map<String, Object> payloadMap = extractClaim(token, claims -> claims.get("payload", Map.class));
+        return (int) payloadMap.get("id");
+    }
+
+    public Map<String, Object> extractPayload(String token) {
+        Map<String, Object> payloadMap = extractClaim(token, claims -> claims.get("payload", Map.class));
+        return payloadMap;
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -39,42 +42,10 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
-    }
-
-    public String generateToken(
-            Map<String, Object> extraClaims,
-            UserDetails userDetails
-    ) {
-        return buildToken(extraClaims, userDetails, jwtExpiration);
-    }
-
     public String generateToken(Map<String, Object> extraClaims) {
         return buildToken(extraClaims, jwtExpiration);
     }
 
-    public String generateRefreshToken(
-            UserDetails userDetails
-    ) {
-        return buildToken(new HashMap<>(), userDetails, refreshExpiration);
-    }
-
-    private String buildToken(
-            Map<String, Object> extraClaims,
-            UserDetails userDetails,
-            long expiration
-    ) {
-        return Jwts
-                .builder()
-                .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
     private String buildToken(
             Map<String, Object> extraClaims,
             long expiration
@@ -88,9 +59,31 @@ public class JwtUtil {
                 .compact();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    public boolean isTokenValid(String token, JwtPayload jwtPayload) {
+        final Map<String, Object> payload = extractPayload(token);
+        return isPayloadEqual(payload, jwtPayload.toMap()) && !isTokenExpired(token);
+    }
+
+    private boolean isPayloadEqual(Map<String, Object> payload1, Map<String, Object> payload2) {
+        if (payload1.size() != payload2.size()) {
+            return false;
+        }
+
+        for (Map.Entry<String, Object> entry : payload1.entrySet()) {
+            String key = entry.getKey();
+            Object value1 = entry.getValue();
+            Object value2 = payload2.get(key);
+
+            if (value1 == null && value2 == null) {
+                continue;
+            }
+
+            if (value1 == null || value2 == null || !value1.equals(value2)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public boolean isTokenExpired(String token) {
