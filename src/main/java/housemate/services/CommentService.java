@@ -26,10 +26,13 @@ import org.springframework.stereotype.Service;
 public class CommentService {
 
     @Autowired
-    CommentRepository commentRepository;
+    private CommentRepository commentRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private CommentMapper commentMapper;
 
     public ResponseEntity<List<ServiceComment>> getAllCommentByServiceId(int serviceId) {
         List<ServiceComment> listComment = commentRepository.getAllCommentByServiceId(serviceId);
@@ -38,7 +41,6 @@ public class CommentService {
 
     public ResponseEntity<String> addComment(HttpServletRequest request, CommentDTO.Add commentAdd) {
         commentAdd.setUserId(getUserIdFromAuthorizationHeader(request));
-        CommentMapper commentMapper = new CommentMapper();
         ServiceComment serviceComment = commentMapper.mapDTOtoEntity(commentAdd);
         commentRepository.save(serviceComment);
         return ResponseEntity.status(HttpStatus.CREATED).body("Comment created");
@@ -47,7 +49,6 @@ public class CommentService {
     @Transactional
     public ResponseEntity<String> removeComment(HttpServletRequest request, CommentDTO.Remove commentRemove) {
         commentRemove.setUserId(getUserIdFromAuthorizationHeader(request));
-        CommentMapper commentMapper = new CommentMapper();
         ServiceComment serviceComment = commentMapper.mapDTOtoEntity(commentRemove);
         if (commentRepository.deleteComment(serviceComment.getId(), serviceComment.getUserId()) == 0) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Comment not found");
