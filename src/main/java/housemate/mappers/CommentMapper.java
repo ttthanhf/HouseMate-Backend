@@ -23,11 +23,4 @@ public class CommentMapper {
         serviceComment.setDate(commentDTO.getDate());
         return serviceComment;
     }
-
-    public ServiceComment mapDTOtoEntity(CommentDTO.Remove commentDTO) {
-        ServiceComment serviceComment = new ServiceComment();
-        serviceComment.setId(commentDTO.getCommentId());
-        serviceComment.setUserId(commentDTO.getUserId());
-        return serviceComment;
-    }
 }

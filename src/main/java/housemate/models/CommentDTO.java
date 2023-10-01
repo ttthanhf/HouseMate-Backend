@@ -32,18 +32,8 @@ public class CommentDTO {
         private String text;
 
         @PastOrPresent
+        @Hidden
         private LocalDateTime date;
 
-    }
-
-    @Getter
-    @Setter
-    public static class Remove {
-
-        @Positive
-        private int commentId;
-
-        @Hidden
-        private int userId;
     }
 }
