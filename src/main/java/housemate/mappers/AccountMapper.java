@@ -6,20 +6,30 @@ package housemate.mappers;
 
 import housemate.constants.Role;
 import housemate.entities.UserAccount;
-import housemate.models.RegisterAccountDTO;
+import housemate.models.AccountDTO;
+import housemate.utils.BcryptUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author Admin
  */
+
+@Component
 public class AccountMapper {
-    public UserAccount mapToEntity(RegisterAccountDTO registerAccountDTO) {
+
+    @Autowired
+    BcryptUtil bcryptUtil;
+
+    public UserAccount mapToEntity(AccountDTO.Register registerAccountDTO) {
         UserAccount userAccount = new UserAccount();
 
         userAccount.setEmailAddress(registerAccountDTO.getEmail());
         userAccount.setFullName(registerAccountDTO.getFullName());
         userAccount.setPhoneNumber(registerAccountDTO.getPhoneNumber());
-        userAccount.setToPasswordHash(registerAccountDTO.getPassword());
+        String hash = bcryptUtil.hashPassword(registerAccountDTO.getPassword());
+        userAccount.setPasswordHash(hash);
         userAccount.setRole(Role.CUSTOMER);
         userAccount.setEmailValidationStatus(false);
 

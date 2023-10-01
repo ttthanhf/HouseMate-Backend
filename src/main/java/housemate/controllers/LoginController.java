@@ -6,6 +6,8 @@ package housemate.controllers;
 
 import housemate.services.LoginService;
 import java.util.*;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping
 @CrossOrigin
+@Tag(name = "Login with Google")
 public class LoginController {
 
     @Autowired

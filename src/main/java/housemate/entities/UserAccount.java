@@ -4,11 +4,10 @@
  */
 package housemate.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import housemate.constants.Role;
-import housemate.models.RegisterAccountDTO;
 import jakarta.persistence.*;
 import lombok.*;
-import org.mindrot.jbcrypt.BCrypt;
 
 /**
  *
@@ -38,6 +37,7 @@ public class UserAccount {
     @Column(name = "phone_number", nullable = true, unique = true)
     private String phoneNumber;
 
+    @JsonIgnore
     @Column(name = "password_hash", nullable = true)
     private String passwordHash;
 
@@ -47,31 +47,12 @@ public class UserAccount {
     @Column(name = "email_validation_status")
     private boolean emailValidationStatus;
 
+    @Column(name = "avatar")
+    private String avatar;
+
     public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus) {
         this.fullName = fullName;
         this.emailAddress = emailAddress;
         this.emailValidationStatus = emailValidationStatus;
     }
-
-    public UserAccount fromRegisterAccountDTO(RegisterAccountDTO registerAccountDTO) {
-
-        UserAccount userAccount = new UserAccount();
-
-        userAccount.setEmailAddress(registerAccountDTO.getEmail());
-        userAccount.setFullName(registerAccountDTO.getFullName());
-        userAccount.setPhoneNumber(registerAccountDTO.getPhoneNumber());
-        userAccount.setToPasswordHash(registerAccountDTO.getPassword());
-        userAccount.setRole(Role.CUSTOMER);
-        userAccount.setEmailValidationStatus(false);
-
-        return userAccount;
-    }
-
-    public void setToPasswordHash(String password) {
-        final int LOG_ROUNDS = 12;
-        String hash = BCrypt.hashpw(password, BCrypt.gensalt(LOG_ROUNDS));
-
-        this.passwordHash = hash;
-    }
-
 }
