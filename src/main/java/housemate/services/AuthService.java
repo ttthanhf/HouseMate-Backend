@@ -4,7 +4,6 @@
  */
 package housemate.services;
 
-import housemate.constants.Role;
 import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
 import housemate.mappers.AccountMapper;
@@ -30,7 +29,7 @@ public class AuthService {
 
     @Autowired
     UserRepository userRepository;
-    
+
     public ResponseEntity<String> login(LoginAccountDTO loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
 
@@ -49,7 +48,7 @@ public class AuthService {
         JwtPayload jwtPayload = new JwtPayloadMapper().mapFromUserAccount(accountDB);
         Map<String, Object> payload = jwtPayload.toMap();
         String token = new JwtUtil().generateToken(payload);
-        
+
         return ResponseEntity.status(HttpStatus.OK).body(token);
 
     }
@@ -60,21 +59,21 @@ public class AuthService {
 
     public ResponseEntity<String> register(RegisterAccountDTO registerAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(registerAccountDTO.getEmail());
-        
+
         // Check email exists database
         if (accountDB != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email have been created before");
         }
-        
+
         // Insert to database
         UserAccount userAccount = new AccountMapper().mapToEntity(registerAccountDTO);
         userAccount = userRepository.save(userAccount);
-        
+
         // Generate token
         JwtPayload jwtPayload = new JwtPayloadMapper().mapFromUserAccount(userAccount);
         Map<String, Object> payload = jwtPayload.toMap();
         String token = new JwtUtil().generateToken(payload);
-        
+
         return ResponseEntity.status(HttpStatus.OK).body(token);
     }
 

@@ -32,7 +32,7 @@ public class AuthController {
 
     @Autowired
     AuthService service;
-    
+
     @GetMapping("/all")
     public ResponseEntity<List<UserAccount>> getAll() {
         return service.getAll();
@@ -42,18 +42,18 @@ public class AuthController {
     public ResponseEntity<String> login(@Valid @RequestBody LoginAccountDTO account) {
         return service.login(account);
     }
-    
+
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterAccountDTO account) {
         return service.register(account);
     }
-    
+
     // TODO: Integrate forgot password
     @PostMapping("/forgot-password/{email}")
     public ResponseEntity<String> forgotPassword(@Valid @PathVariable String email) {
         return service.forgotPassword(email);
     }
-    
+
     // TODO: Fix route mapping
     @PutMapping("/set-new-password")
     public ResponseEntity<String> setNewPassword(@Valid @RequestBody LoginAccountDTO account) {
