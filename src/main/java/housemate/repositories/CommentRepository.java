@@ -22,9 +22,6 @@ public interface CommentRepository extends JpaRepository<ServiceComment, Integer
     @Query("SELECT c FROM ServiceComment c WHERE c.serviceId = :serviceId")
     List<ServiceComment> getAllCommentByServiceId(@Param("serviceId") int serviceId);
 
-    @Override
-    ServiceComment save(ServiceComment serviceComment);
-
     @Modifying
     @Query("DELETE FROM ServiceComment c WHERE c.id = :commentId AND c.userId = :userId")
     int deleteComment(@Param("commentId") int commentId, @Param("userId") int userId);

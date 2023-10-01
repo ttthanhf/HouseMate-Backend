@@ -45,9 +45,9 @@ public class CommentController {
         return commentService.addComment(request, commentAdd);
     }
 
-    @DeleteMapping("/")
+    @DeleteMapping("/{commentId}")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<String> removeComment(HttpServletRequest request, @Valid @RequestBody CommentDTO.Remove commentRemove) {
-        return commentService.removeComment(request, commentRemove);
+    public ResponseEntity<String> removeComment(HttpServletRequest request, @Valid @PathVariable int commentId) {
+        return commentService.removeComment(request, commentId);
     }
 }

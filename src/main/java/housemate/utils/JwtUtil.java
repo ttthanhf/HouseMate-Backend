@@ -21,11 +21,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtUtil {
 
-//    @Value("${application.security.jwt.secret-key}")
+//    @Value("${application.security.jwt.secret-key}") //đang ko dùng được nên comment lại và set cứng giá trị
     private final String secretKey = "asdhhashdsjkhdashkadsheffeajnagkrjnagnjrgknjagrknjrgkjngragrjngrkjngrkjnefajneef";
 
-//    @Value("${application.security.jwt.expiration}")
+//    @Value("${application.security.jwt.expiration}") //đang ko dùng được nên comment lại và set cứng giá trị
     private final long jwtExpiration = 36000000;
+
+    public int extractUserId(String token) {
+        Map<String, Object> payloadMap = extractClaim(token, claims -> claims.get("payload", Map.class));
+        return (int) payloadMap.get("id");
+    }
 
     public Map<String, Object> extractPayload(String token) {
         Map<String, Object> payloadMap = extractClaim(token, claims -> claims.get("payload", Map.class));
