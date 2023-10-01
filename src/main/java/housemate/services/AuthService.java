@@ -4,18 +4,15 @@
  */
 package housemate.services;
 
-import housemate.constants.Role;
 import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
 import housemate.mappers.AccountMapper;
 import housemate.mappers.JwtPayloadMapper;
-import housemate.models.LoginAccountDTO;
-import housemate.models.RegisterAccountDTO;
+import housemate.models.AccountDTO;
 import housemate.repositories.UserRepository;
+import housemate.utils.BcryptUtil;
 import housemate.utils.JwtUtil;
-import java.util.List;
 import java.util.Map;
-import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,17 +27,23 @@ public class AuthService {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    BcryptUtil bcryptUtil;
+
+    @Autowired
+    AccountMapper accountMapper;
     
-    public ResponseEntity<String> login(LoginAccountDTO loginAccountDTO) {
+    public ResponseEntity<String> login(AccountDTO.Login loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
 
         // Check email not in database
         if (accountDB == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't created");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't been created");
         }
 
         // Check correct password
-        boolean isCorrect = BCrypt.checkpw(loginAccountDTO.getPassword(), accountDB.getPasswordHash());
+        boolean isCorrect = bcryptUtil.checkpw(loginAccountDTO.getPassword(), accountDB.getPasswordHash());
         if (!isCorrect) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email or password not correct");
         }
@@ -51,14 +54,9 @@ public class AuthService {
         String token = new JwtUtil().generateToken(payload);
         
         return ResponseEntity.status(HttpStatus.OK).body(token);
-
     }
 
-    public ResponseEntity<List<UserAccount>> getAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
-    }
-
-    public ResponseEntity<String> register(RegisterAccountDTO registerAccountDTO) {
+    public ResponseEntity<String> register(AccountDTO.Register registerAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(registerAccountDTO.getEmail());
         
         // Check email exists database
@@ -67,7 +65,7 @@ public class AuthService {
         }
         
         // Insert to database
-        UserAccount userAccount = new AccountMapper().mapToEntity(registerAccountDTO);
+        UserAccount userAccount = accountMapper.mapToEntity(registerAccountDTO);
         userAccount = userRepository.save(userAccount);
         
         // Generate token
@@ -82,7 +80,7 @@ public class AuthService {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("This feature will be upgraded soon!");
     }
 
-    public ResponseEntity<String> setNewPassword(LoginAccountDTO loginAccountDTO) {
+    public ResponseEntity<String> setNewPassword(AccountDTO.Login loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
 
         // Check email not in database
@@ -91,7 +89,8 @@ public class AuthService {
         }
 
         // Set new password
-        accountDB.setToPasswordHash(loginAccountDTO.getPassword());
+        String hash = bcryptUtil.hashPassword(loginAccountDTO.getPassword());
+        accountDB.setPasswordHash(hash);
         userRepository.save(accountDB);
         return ResponseEntity.status(HttpStatus.OK).body("Set new password successfully!");
     }

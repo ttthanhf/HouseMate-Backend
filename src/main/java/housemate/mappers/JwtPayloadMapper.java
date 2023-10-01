@@ -12,6 +12,7 @@ import housemate.entities.UserAccount;
  * @author Admin
  */
 public class JwtPayloadMapper {
+
     public JwtPayload mapFromUserAccount (UserAccount account) {
         JwtPayload jwtPayload = new JwtPayload();
 

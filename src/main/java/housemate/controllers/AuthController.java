@@ -4,16 +4,13 @@
  */
 package housemate.controllers;
 
-import housemate.entities.UserAccount;
-import housemate.models.LoginAccountDTO;
-import housemate.models.RegisterAccountDTO;
+import housemate.models.AccountDTO;
 import housemate.services.AuthService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -28,23 +25,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth") // TODO: Change "/auth" to "/api/auth"
 @CrossOrigin
+@Tag(name = "Authentication")
 public class AuthController {
 
     @Autowired
     AuthService service;
-    
-    @GetMapping("/all")
-    public ResponseEntity<List<UserAccount>> getAll() {
-        return service.getAll();
-    }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginAccountDTO account) {
+    public ResponseEntity<String> login(@Valid @RequestBody AccountDTO.Login account) {
         return service.login(account);
     }
     
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid @RequestBody RegisterAccountDTO account) {
+    public ResponseEntity<String> register(@Valid @RequestBody AccountDTO.Register account) {
         return service.register(account);
     }
     
@@ -56,7 +49,7 @@ public class AuthController {
     
     // TODO: Fix route mapping
     @PutMapping("/set-new-password")
-    public ResponseEntity<String> setNewPassword(@Valid @RequestBody LoginAccountDTO account) {
+    public ResponseEntity<String> setNewPassword(@Valid @RequestBody AccountDTO.Login account) {
         return service.setNewPassword(account);
     }
 }
