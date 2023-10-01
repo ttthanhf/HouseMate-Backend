@@ -26,4 +26,6 @@ public interface UserRepository extends JpaRepository<UserAccount, Integer> {
     @Transactional
     @Query("UPDATE UserAccount u SET u.role = :role WHERE u.userId = :userId")
     void updateRole(@Param("userId") int userId, @Param("role") Role role);
+
+    UserAccount findByResetPasswordToken(String token);
 }

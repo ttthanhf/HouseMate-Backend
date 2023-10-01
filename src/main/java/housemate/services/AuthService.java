@@ -12,14 +12,15 @@ import housemate.models.AccountDTO;
 import housemate.repositories.UserRepository;
 import housemate.utils.BcryptUtil;
 import housemate.utils.JwtUtil;
+
 import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 /**
- *
  * @author hdang09
  */
 @Service
@@ -33,7 +34,7 @@ public class AuthService {
 
     @Autowired
     AccountMapper accountMapper;
-    
+
     public ResponseEntity<String> login(AccountDTO.Login loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
 
@@ -52,31 +53,40 @@ public class AuthService {
         JwtPayload jwtPayload = new JwtPayloadMapper().mapFromUserAccount(accountDB);
         Map<String, Object> payload = jwtPayload.toMap();
         String token = new JwtUtil().generateToken(payload);
-        
+
         return ResponseEntity.status(HttpStatus.OK).body(token);
     }
 
     public ResponseEntity<String> register(AccountDTO.Register registerAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(registerAccountDTO.getEmail());
-        
+
         // Check email exists database
         if (accountDB != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email have been created before");
         }
-        
+
         // Insert to database
         UserAccount userAccount = accountMapper.mapToEntity(registerAccountDTO);
         userAccount = userRepository.save(userAccount);
-        
+
         // Generate token
         JwtPayload jwtPayload = new JwtPayloadMapper().mapFromUserAccount(userAccount);
         Map<String, Object> payload = jwtPayload.toMap();
         String token = new JwtUtil().generateToken(payload);
-        
+
         return ResponseEntity.status(HttpStatus.OK).body(token);
     }
 
     public ResponseEntity<String> forgotPassword(String email) {
+        UserAccount account = userRepository.findByEmailAddress(email);
+
+        if (account == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this email!");
+        }
+
+        String token = "token";
+        account.setResetPasswordToken(token);
+        userRepository.save(account);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("This feature will be upgraded soon!");
     }
 
