@@ -5,14 +5,24 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.Date;
+import java.util.List;
 
 /**
  *
  * @author ThanhF
  */
 @Entity
-@Table(name = "Service_Order")
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
+@Data
+@Table(name = "service_order")
 public class ServiceOrder {
 
     @Id
@@ -40,16 +50,8 @@ public class ServiceOrder {
     @Column(name = "payment_transaction_id")
     private int paymentTransactionId;
 
-    public ServiceOrder(int orderId, int customerId, Date orderDate, int totalAmount, Integer discount, int finalTotalPayment, String status, int paymentTransactionId) {
-        this.orderId = orderId;
-        this.customerId = customerId;
-        this.orderDate = orderDate;
-        this.totalAmount = totalAmount;
-        this.discount = discount;
-        this.finalTotalPayment = finalTotalPayment;
-        this.status = status;
-        this.paymentTransactionId = paymentTransactionId;
-    }
+    @OneToMany(mappedBy = "serviceOrder")
+    private List<ServiceOrderItem> serviceOrderItemList;
 
     
 }

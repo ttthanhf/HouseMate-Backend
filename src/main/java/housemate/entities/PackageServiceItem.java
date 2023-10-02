@@ -5,39 +5,62 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
-import java.util.Date;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import housemate.constants.Enum.UsageDurationUnit;
 
 /**
  *
  * @author ThanhF
  */
 @Entity
-@Table(name = "Package_Service_Item")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "package_service_item")
 public class PackageServiceItem {
 
-    @Id
-    @Column(name = "package_service_id")
-    private int packageServiceId;
+	
+	@JsonBackReference
+	@ManyToOne
+	@JoinColumn(name = "package_service_id", insertable = false, updatable = false)
+    private PackageService packageService;
 
-    @Id
-    @Column(name = "service_id")
+	@JsonBackReference
+    @ManyToOne
+    @JoinColumn(name = "service_id", insertable = false, updatable = false)
+    private Service service;
+
+	@Id
+	@JsonIgnore
+	@Column(name = "package_service_id")
+    private int packageId;
+	
+	@Id
+	@Column(name = "service_id")
     private int serviceId;
-
+	
+	
     @Column(name = "quantity")
-    private int quantity;
+    private int usageLimit;
+    
+    @Column(name = "duration_value")
+    private int usageDurationValue;
 
-    @Column(name = "date_start")
-    private Date dateStart;
+    @Column(name = "duration_unit")
+    @Enumerated(EnumType.STRING)
+    private UsageDurationUnit usageDurationUnit;
 
-    @Column(name = "date_end")
-    private Date dateEnd;
 
-    public PackageServiceItem(int packageServiceId, int serviceId, int quantity, Date dateStart, Date dateEnd) {
-        this.packageServiceId = packageServiceId;
-        this.serviceId = serviceId;
-        this.quantity = quantity;
-        this.dateStart = dateStart;
-        this.dateEnd = dateEnd;
-    }
 
 }
+

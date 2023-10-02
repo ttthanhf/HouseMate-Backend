@@ -5,28 +5,41 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 /**
  *
  * @author ThanhF
  */
 @Entity
-@Table(name = "Service_Order_Item")
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
+@Data
+@Table(name = "service_order_item")
 public class ServiceOrderItem {
 
     @Id
     @Column(name = "service_order_item_id")
-    private int id;
+    private int serviceOrderItemId;
 
-    @Column(name = "order_id")
-    private int orderId;
+    @ManyToOne
+    @JoinColumn(name ="order_id", insertable = false, updatable = false)
+    private ServiceOrder serviceOrder;
+    
+    @ManyToOne
+    @JoinColumn(name = "service_id", insertable = false, updatable = false)
+    private Service service;
 
-    @Column(name = "service_id")
-    private int serviceId;
-
-    @Column(name = "package_service_id")
-    private int packageServiceId;
+    @ManyToOne
+    @JoinColumn(name = "service_id", insertable = false, updatable = false)
+    private PackageService packageService;
 
     @Column(name = "quantity_purchased")
     private int quantityPurchased;
@@ -40,15 +53,6 @@ public class ServiceOrderItem {
     @Column(name = "end_date")
     private Date endDate;
 
-    public ServiceOrderItem(int id, int orderId, int serviceId, int packageServiceId, int quantityPurchased, int subTotal, Date startDate, Date endDate) {
-        this.id = id;
-        this.orderId = orderId;
-        this.serviceId = serviceId;
-        this.packageServiceId = packageServiceId;
-        this.quantityPurchased = quantityPurchased;
-        this.subTotal = subTotal;
-        this.startDate = startDate;
-        this.endDate = endDate;
-    }
+   
 }
 
