@@ -12,10 +12,12 @@ import housemate.models.LoginAccountDTO;
 import housemate.models.RegisterAccountDTO;
 import housemate.repositories.UserRepository;
 import housemate.utils.JwtUtil;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,9 @@ public class AuthService {
 
     @Autowired
     UserRepository userRepository;
+
+    @Value("${url.client}")
+    private String redirectUri;
 
     public ResponseEntity<String> login(LoginAccountDTO loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
@@ -93,5 +98,24 @@ public class AuthService {
         accountDB.setToPasswordHash(loginAccountDTO.getPassword());
         userRepository.save(accountDB);
         return ResponseEntity.status(HttpStatus.OK).body("Set new password successfully!");
+    }
+
+    public ResponseEntity<String> loginWithGoogle(Map<String, Object> userOAuth) {
+        String email = (String) userOAuth.get("email");
+        String fullName = (String) userOAuth.get("name");
+        boolean emailVerified = (boolean) userOAuth.get("email_verified");
+        String avatar = (String) userOAuth.get("picture");
+        UserAccount userAccount = userRepository.findByEmailAddress(email);
+        if (userAccount == null) {
+            UserAccount newUser = new UserAccount(fullName, email, emailVerified, avatar);
+            userAccount = userRepository.save(newUser);
+        }
+        JwtUtil jwtUtil = new JwtUtil();
+        JwtPayload jwtPayload = new JwtPayload(userAccount.getUserId(), fullName, email, userAccount.getRole().toString());
+        Map<String, Object> payload = jwtPayload.toMap();
+        String token = jwtUtil.generateToken(payload);
+        String url = redirectUri + "/" + "?success=true&token=" + token;
+        URI uri = URI.create(url);
+        return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
     }
 }

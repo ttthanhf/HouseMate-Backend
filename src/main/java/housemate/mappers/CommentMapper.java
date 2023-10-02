@@ -4,8 +4,8 @@
  */
 package housemate.mappers;
 
-import housemate.entities.ServiceComment;
-import housemate.models.CommentDTO;
+import housemate.entities.Comment;
+import housemate.models.CommentAddDTO;
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class CommentMapper {
 
-    public ServiceComment mapDTOtoEntity(CommentDTO.Add commentDTO) {
-        ServiceComment serviceComment = new ServiceComment();
+    public Comment mapDTOtoEntity(CommentAddDTO commentDTO) {
+        Comment serviceComment = new Comment();
         serviceComment.setServiceId(commentDTO.getServiceId());
         serviceComment.setUserId(commentDTO.getUserId());
         serviceComment.setText(commentDTO.getText());

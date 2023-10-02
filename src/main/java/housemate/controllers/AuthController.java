@@ -10,8 +10,10 @@ import housemate.models.RegisterAccountDTO;
 import housemate.services.AuthService;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,32 +33,38 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     @Autowired
-    AuthService service;
+    AuthService authService;
 
     @GetMapping("/all")
     public ResponseEntity<List<UserAccount>> getAll() {
-        return service.getAll();
+        return authService.getAll();
     }
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@Valid @RequestBody LoginAccountDTO account) {
-        return service.login(account);
+        return authService.login(account);
     }
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterAccountDTO account) {
-        return service.register(account);
+        return authService.register(account);
     }
 
     // TODO: Integrate forgot password
     @PostMapping("/forgot-password/{email}")
     public ResponseEntity<String> forgotPassword(@Valid @PathVariable String email) {
-        return service.forgotPassword(email);
+        return authService.forgotPassword(email);
     }
 
     // TODO: Fix route mapping
     @PutMapping("/set-new-password")
     public ResponseEntity<String> setNewPassword(@Valid @RequestBody LoginAccountDTO account) {
-        return service.setNewPassword(account);
+        return authService.setNewPassword(account);
+    }
+
+    @GetMapping("/callback/google/redirect")
+    public ResponseEntity<String> loginSuccessWithGoogle(OAuth2AuthenticationToken oAuth2AuthenticationToken) {
+        Map<String, Object> user = oAuth2AuthenticationToken.getPrincipal().getAttributes();
+        return authService.loginWithGoogle(user);
     }
 }

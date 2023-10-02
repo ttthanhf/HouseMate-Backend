@@ -47,10 +47,14 @@ public class UserAccount {
     @Column(name = "email_validation_status")
     private boolean emailValidationStatus;
 
-    public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus) {
+    @Column(name = "avatar")
+    private String avatar;
+
+    public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus, String avatar) {
         this.fullName = fullName;
         this.emailAddress = emailAddress;
         this.emailValidationStatus = emailValidationStatus;
+        this.avatar = avatar;
     }
 
     public UserAccount fromRegisterAccountDTO(RegisterAccountDTO registerAccountDTO) {
