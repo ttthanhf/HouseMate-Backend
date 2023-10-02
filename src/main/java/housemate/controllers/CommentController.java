@@ -4,8 +4,8 @@
  */
 package housemate.controllers;
 
-import housemate.entities.ServiceComment;
-import housemate.models.CommentDTO;
+import housemate.entities.Comment;
+import housemate.models.CommentAddDTO;
 import housemate.services.CommentService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,13 +35,13 @@ public class CommentController {
     CommentService commentService;
 
     @GetMapping("/services/{serviceId}")
-    public ResponseEntity<List<ServiceComment>> getAllCommentByServiceId(@Valid @PathVariable int serviceId) {
+    public ResponseEntity<List<Comment>> getAllCommentByServiceId(@Valid @PathVariable int serviceId) {
         return commentService.getAllCommentByServiceId(serviceId);
     }
 
     @PostMapping("/")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<String> addComment(HttpServletRequest request, @Valid @RequestBody CommentDTO.Add commentAdd) {
+    public ResponseEntity<String> addComment(HttpServletRequest request, @Valid @RequestBody CommentAddDTO commentAdd) {
         return commentService.addComment(request, commentAdd);
     }
 

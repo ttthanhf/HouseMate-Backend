@@ -23,12 +23,12 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests
                         -> authorizeRequests
-                        .requestMatchers("/callback/google/redirect").authenticated()
+                        .requestMatchers("/auth/callback/google/redirect").authenticated()
                         .anyRequest().permitAll()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .oauth2Login(oauth2Login -> oauth2Login
-                .defaultSuccessUrl("/callback/google/redirect", true));
+                .defaultSuccessUrl("/auth/callback/google/redirect", true));
         return http.build();
     }
 }
