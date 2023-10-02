@@ -54,9 +54,11 @@ public class UserAccount {
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
 
-    public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus) {
+    public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus, String avatar) {
         this.fullName = fullName;
         this.emailAddress = emailAddress;
         this.emailValidationStatus = emailValidationStatus;
+        this.avatar = avatar;
     }
+
 }
