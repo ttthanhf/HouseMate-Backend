@@ -32,6 +32,9 @@ public class AuthService {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    JwtUtil jwtUtil;
+
     @Value("${url.client}")
     private String redirectUri;
 
@@ -52,7 +55,7 @@ public class AuthService {
         // Generate token
         JwtPayload jwtPayload = new JwtPayloadMapper().mapFromUserAccount(accountDB);
         Map<String, Object> payload = jwtPayload.toMap();
-        String token = new JwtUtil().generateToken(payload);
+        String token = jwtUtil.generateToken(payload);
 
         return ResponseEntity.status(HttpStatus.OK).body(token);
 
@@ -77,7 +80,7 @@ public class AuthService {
         // Generate token
         JwtPayload jwtPayload = new JwtPayloadMapper().mapFromUserAccount(userAccount);
         Map<String, Object> payload = jwtPayload.toMap();
-        String token = new JwtUtil().generateToken(payload);
+        String token = jwtUtil.generateToken(payload);
 
         return ResponseEntity.status(HttpStatus.OK).body(token);
     }
@@ -105,15 +108,23 @@ public class AuthService {
         String fullName = (String) userOAuth.get("name");
         boolean emailVerified = (boolean) userOAuth.get("email_verified");
         String avatar = (String) userOAuth.get("picture");
+
         UserAccount userAccount = userRepository.findByEmailAddress(email);
+
+        //if userAccount not exist -> create new user
         if (userAccount == null) {
             UserAccount newUser = new UserAccount(fullName, email, emailVerified, avatar);
             userAccount = userRepository.save(newUser);
         }
-        JwtUtil jwtUtil = new JwtUtil();
+
+        //Create jwt payload
         JwtPayload jwtPayload = new JwtPayload(userAccount.getUserId(), fullName, email, userAccount.getRole().toString());
         Map<String, Object> payload = jwtPayload.toMap();
+
+        //generate token with payload
         String token = jwtUtil.generateToken(payload);
+
+        //Create uri with token for redirect
         String url = redirectUri + "/" + "?success=true&token=" + token;
         URI uri = URI.create(url);
         return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
