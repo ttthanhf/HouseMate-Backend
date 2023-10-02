@@ -10,13 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  *
@@ -48,8 +42,8 @@ public class AuthController {
     }
     
     // TODO: Fix route mapping
-    @PutMapping("/set-new-password")
-    public ResponseEntity<String> setNewPassword(@Valid @RequestBody AccountDTO.Login account) {
-        return service.setNewPassword(account);
+    @GetMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody AccountDTO.Login account) {
+        return service.resetPassword(account);
     }
 }

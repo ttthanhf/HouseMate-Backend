@@ -13,11 +13,17 @@ import housemate.repositories.UserRepository;
 import housemate.utils.BcryptUtil;
 import housemate.utils.JwtUtil;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
+import java.util.UUID;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 /**
@@ -34,6 +40,9 @@ public class AuthService {
 
     @Autowired
     AccountMapper accountMapper;
+
+    @Autowired
+    private JavaMailSender mailSender;
 
     public ResponseEntity<String> login(AccountDTO.Login loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
@@ -77,20 +86,57 @@ public class AuthService {
         return ResponseEntity.status(HttpStatus.OK).body(token);
     }
 
-    public ResponseEntity<String> forgotPassword(String email) {
-        UserAccount account = userRepository.findByEmailAddress(email);
+    private void sendEmail(String recipientEmail, String resetPasswordLink) throws MessagingException, UnsupportedEncodingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
 
-        if (account == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this email!");
-        }
+        helper.setFrom("smtp.housemate@gmail.com", "HouseMate Security");
+        helper.setTo(recipientEmail);
 
-        String token = "token";
-        account.setResetPasswordToken(token);
-        userRepository.save(account);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("This feature will be upgraded soon!");
+        String subject = "Here's the link to reset your password";
+
+        String content = "<p>Hello,</p>"
+                + "<p>You have requested to reset your password.</p>"
+                + "<p>Click the link below to change your password:</p>"
+                + "<p><a href=\"" + resetPasswordLink + "\">Change my password</a></p>"
+                + "<br>"
+                + "<p>Ignore this email if you do remember your password, "
+                + "or you have not made the request.</p>";
+
+        helper.setSubject(subject);
+        helper.setText(content, true);
+
+        mailSender.send(message);
     }
 
-    public ResponseEntity<String> setNewPassword(AccountDTO.Login loginAccountDTO) {
+    private String generateRandomString(int length) {
+        return UUID.randomUUID().toString().replaceAll("-", "").substring(0, length);
+    }
+
+    public ResponseEntity<String> forgotPassword(String email) {
+        String token = generateRandomString(30);
+        try {
+            // Check account in database
+            UserAccount account = userRepository.findByEmailAddress(email);
+            if (account == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this email!");
+            }
+
+            // Store reset_password_token to account
+            account.setResetPasswordToken(token);
+            userRepository.save(account);
+
+            // Send email
+            String URL_SERVER = "http://localhost:8080";
+            String resetPasswordLink = URL_SERVER + "/reset-password?token=" + token;
+            sendEmail(email, resetPasswordLink);
+            return ResponseEntity.status(HttpStatus.OK).body("We have sent a reset password link to your email. Please check.");
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            return ResponseEntity.status(HttpStatus.OK).body("Error while sending email");
+        }
+    }
+
+    public ResponseEntity<String> resetPassword(AccountDTO.Login loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
 
         // Check email not in database
