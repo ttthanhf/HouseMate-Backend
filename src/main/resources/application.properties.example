@@ -12,5 +12,24 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.security.user.name=
 spring.security.user.password=
 
-# Other
-url.client=http://localhost:5173
+#JWT
+application.security.jwt.refresh-token.expiration=
+application.security.jwt.expiration=
+application.security.jwt.secret-key=
+
+#SMTP
+spring.mail.host=
+spring.mail.username=
+spring.mail.password=
+spring.mail.port=
+spring.mail.properties.mail.smtp.auth=
+spring.mail.properties.mail.smtp.starttls.enable=
+
+#google OAuth
+spring.security.oauth2.client.registration.google.client-id=
+spring.security.oauth2.client.registration.google.client-secret=
+spring.security.oauth2.client.registration.google.scope=
+
+#Others
+application.setting.google.redirect-uri=
+url.client=
