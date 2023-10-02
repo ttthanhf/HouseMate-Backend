@@ -34,16 +34,14 @@ public class AuthController {
     public ResponseEntity<String> register(@Valid @RequestBody AccountDTO.Register account) {
         return service.register(account);
     }
-    
-    // TODO: Integrate forgot password
+
     @PostMapping("/forgot-password/{email}")
-    public ResponseEntity<String> forgotPassword(@Valid @PathVariable String email) {
+    public ResponseEntity<String> forgotPassword(@PathVariable String email) {
         return service.forgotPassword(email);
     }
-    
-    // TODO: Fix route mapping
-    @GetMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@Valid @RequestBody AccountDTO.Login account) {
-        return service.resetPassword(account);
+
+    @PostMapping("/reset-password/{token}/{password}")
+    public ResponseEntity<String> resetPassword(@PathVariable String token, @PathVariable String password) {
+        return service.resetPassword(token, password);
     }
 }
