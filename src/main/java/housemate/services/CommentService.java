@@ -42,7 +42,7 @@ public class CommentService {
     public ResponseEntity<String> addComment(HttpServletRequest request, CommentAddDTO commentAdd) {
         commentAdd.setUserId(authorizationUtil.getUserIdFromAuthorizationHeader(request));
         commentAdd.setDate(LocalDateTime.now());
-        ServiceComment serviceComment = commentMapper.mapToEntity(commentAdd);
+        Comment serviceComment = commentMapper.mapToEntity(commentAdd);
         commentRepository.save(serviceComment);
         return ResponseEntity.status(HttpStatus.CREATED).body("Comment created");
     }
