@@ -15,11 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-<<<<<<< HEAD
 import housemate.constants.Enum.SaleStatus;
-=======
-import housemate.constants.SaleStatus;
->>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
+
 import housemate.entities.Service;
 import housemate.entities.ServiceFeedback;
 import housemate.exceptions.ApiServicesRequestException;
@@ -33,12 +30,8 @@ public class ServiceController {
 	@Autowired
 	TheService serviceDao;
 	
-<<<<<<< HEAD
-=======
-	@Autowired
-	ServiceFeedbackRepository serviceFeedbackRepo;
 
->>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
+
 	@GetMapping
 	public ResponseEntity<?> getServiceList() {
 		List<Service> serviceList = serviceDao.getAll();
@@ -50,7 +43,6 @@ public class ServiceController {
 		return ResponseEntity.ok(serviceList);
 	}
 	
-<<<<<<< HEAD
 	@GetMapping("/available-status")
 	public ResponseEntity<?> getAvailbleServiceList() {
 		List<Service> serviceList = serviceDao.filterBySaleStatus(SaleStatus.AVAILABLE);
@@ -72,18 +64,7 @@ public class ServiceController {
 
 		return ResponseEntity.ok(serviceList);
 	}
-=======
-//	@GetMapping("/servic-feedbacks")
-//	public ResponseEntity<?> getFeedback() {
-//		List<ServiceFeedback> serviceList = serviceFeedbackRepo.findAll();
-//		if (serviceList.isEmpty())
-//			// throw new ApiServicesRequestException("Sorry The List Is Empty Now");
-//			return ResponseEntity.status(HttpStatus.NO_CONTENT)
-//					.body("Sorry The Feedback Is Empty Or You Input Wrong Field !");
-//
-//		return ResponseEntity.ok(serviceList);
-//	}
->>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
+
 
 	@GetMapping("/sort")
 	public ResponseEntity<?> getServiceListSort(@RequestParam String fieldname, 
@@ -129,12 +110,9 @@ public class ServiceController {
 
 	@PutMapping("/new-sale-status/{id}")
 	public ResponseEntity<?> updateServiceSaleStatus(@PathVariable("id") int serviceId,
-<<<<<<< HEAD
 			@RequestParam SaleStatus saleStatus) {
 
-=======
-			@RequestBody SaleStatus saleStatus) {
->>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
+
 		Service service = serviceDao.updateSaleStatus(serviceId, saleStatus);
 		
 		if (service == null)
