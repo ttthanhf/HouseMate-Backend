@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CartMapper {
     
-    public Cart mapDTOtoEntity(CartAddDTO cartDTO) {
+    public Cart mapToEntity(CartAddDTO cartDTO) {
         Cart cart = new Cart();
         cart.setServiceId(cartDTO.getServiceId());
         cart.setUserId(cartDTO.getUserId());
