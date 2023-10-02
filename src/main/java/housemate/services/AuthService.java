@@ -8,12 +8,15 @@ import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
 import housemate.mappers.AccountMapper;
 import housemate.mappers.JwtPayloadMapper;
-import housemate.models.AccountDTO;
+import housemate.models.LoginAccountDTO;
+import housemate.models.RegisterAccountDTO;
 import housemate.repositories.UserRepository;
 import housemate.utils.BcryptUtil;
 import housemate.utils.JwtUtil;
+import java.net.URI;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,6 +40,9 @@ public class AuthService {
     UserRepository userRepository;
 
     @Autowired
+    JwtUtil jwtUtil;
+
+    @Autowired
     BcryptUtil bcryptUtil;
 
     @Autowired
@@ -48,7 +54,11 @@ public class AuthService {
     @Value("${url.client}")
     private String URL_CLIENT;
 
-    public ResponseEntity<String> login(AccountDTO.Login loginAccountDTO) {
+    public ResponseEntity<List<UserAccount>> getAll() {
+        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
+    }
+
+    public ResponseEntity<String> login(LoginAccountDTO loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
 
         // Check email not in database
@@ -65,12 +75,12 @@ public class AuthService {
         // Generate token
         JwtPayload jwtPayload = new JwtPayloadMapper().mapFromUserAccount(accountDB);
         Map<String, Object> payload = jwtPayload.toMap();
-        String token = new JwtUtil().generateToken(payload);
+        String token = jwtUtil.generateToken(payload);
 
         return ResponseEntity.status(HttpStatus.OK).body(token);
     }
 
-    public ResponseEntity<String> register(AccountDTO.Register registerAccountDTO) {
+    public ResponseEntity<String> register(RegisterAccountDTO registerAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(registerAccountDTO.getEmail());
 
         // Check email exists database
@@ -85,7 +95,7 @@ public class AuthService {
         // Generate token
         JwtPayload jwtPayload = new JwtPayloadMapper().mapFromUserAccount(userAccount);
         Map<String, Object> payload = jwtPayload.toMap();
-        String token = new JwtUtil().generateToken(payload);
+        String token = jwtUtil.generateToken(payload);
 
         return ResponseEntity.status(HttpStatus.OK).body(token);
     }
@@ -152,5 +162,32 @@ public class AuthService {
         account.setResetPasswordToken(null);
         userRepository.save(account);
         return ResponseEntity.status(HttpStatus.OK).body("Set new password successfully!");
+    }
+
+    public ResponseEntity<String> loginWithGoogle(Map<String, Object> userOAuth) {
+        String email = (String) userOAuth.get("email");
+        String fullName = (String) userOAuth.get("name");
+        boolean emailVerified = (boolean) userOAuth.get("email_verified");
+        String avatar = (String) userOAuth.get("picture");
+
+        UserAccount userAccount = userRepository.findByEmailAddress(email);
+
+        //if userAccount not exist -> create new user
+        if (userAccount == null) {
+            UserAccount newUser = new UserAccount(fullName, email, emailVerified, avatar);
+            userAccount = userRepository.save(newUser);
+        }
+
+        //Create jwt payload
+        JwtPayload jwtPayload = new JwtPayload(userAccount.getUserId(), fullName, email, userAccount.getRole().toString());
+        Map<String, Object> payload = jwtPayload.toMap();
+
+        //generate token with payload
+        String token = jwtUtil.generateToken(payload);
+
+        //Create uri with token for redirect
+        String url = URL_CLIENT + "/" + "?success=true&token=" + token;
+        URI uri = URI.create(url);
+        return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
     }
 }

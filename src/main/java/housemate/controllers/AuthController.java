@@ -4,10 +4,14 @@
  */
 package housemate.controllers;
 
-import housemate.models.AccountDTO;
+import housemate.entities.UserAccount;
+import housemate.models.LoginAccountDTO;
+import housemate.models.RegisterAccountDTO;
 import housemate.services.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,31 +21,36 @@ import org.springframework.web.bind.annotation.*;
  * @author hdang09
  */
 @RestController
-@RequestMapping("/auth") // TODO: Change "/auth" to "/api/auth"
+@RequestMapping("/auth")  // TODO: Change "/auth" to "/api/auth"
 @CrossOrigin
 @Tag(name = "Authentication")
 public class AuthController {
 
     @Autowired
-    AuthService service;
+    AuthService authService;
+
+//    @GetMapping("/all")
+//    public ResponseEntity<List<UserAccount>> getAll() {
+//        return authService.getAll();
+//    }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody AccountDTO.Login account) {
-        return service.login(account);
+    public ResponseEntity<String> login(@Valid @RequestBody LoginAccountDTO account) {
+        return authService.login(account);
     }
-    
+
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid @RequestBody AccountDTO.Register account) {
-        return service.register(account);
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterAccountDTO account) {
+        return authService.register(account);
     }
 
     @PostMapping("/forgot-password/{email}")
     public ResponseEntity<String> forgotPassword(@PathVariable String email) {
-        return service.forgotPassword(email);
+        return authService.forgotPassword(email);
     }
 
-    @PostMapping("/reset-password/{token}/{password}")
+    @PutMapping("/reset-password/{token}/{password}")
     public ResponseEntity<String> resetPassword(@PathVariable String token, @PathVariable String password) {
-        return service.resetPassword(token, password);
+        return authService.resetPassword(token, password);
     }
 }
