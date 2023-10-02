@@ -4,8 +4,8 @@
  */
 package housemate.mappers;
 
-import housemate.entities.ServiceComment;
-import housemate.models.CommentDTO;
+import housemate.entities.Comment;
+import housemate.models.CommentAddDTO;
 import org.springframework.stereotype.Component;
 
 /**

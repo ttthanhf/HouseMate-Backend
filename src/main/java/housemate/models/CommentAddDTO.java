@@ -16,24 +16,20 @@ import lombok.Setter;
  *
  * @author ThanhF
  */
-public class CommentDTO {
+@Getter
+@Setter
+public class CommentAddDTO {
 
-    @Getter
-    @Setter
-    public static class Add {
+    @Positive
+    private int serviceId;
 
-        @Positive
-        private int serviceId;
+    @Hidden
+    private int userId;
 
-        @Hidden
-        private int userId;
+    @Size(min = 1, max = 50000)
+    private String text;
 
-        @Size(min = 1, max = 50000)
-        private String text;
-
-        @PastOrPresent
-        @Hidden
-        private LocalDateTime date;
-
-    }
+    @PastOrPresent
+    @Hidden
+    private LocalDateTime date;
 }
