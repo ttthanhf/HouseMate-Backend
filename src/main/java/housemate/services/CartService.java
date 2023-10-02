@@ -42,11 +42,15 @@ public class CartService {
     public ResponseEntity<String> addToCart(HttpServletRequest request, CartAddDTO cartAdd) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         int serviceId = cartAdd.getServiceId();
+
+        //if have item in cart -> update quantity only
         if (cartRepository.getCartByUserIdAndServiceId(userId, serviceId) != null) {
-            int quanlity = cartAdd.getQuanlity();
-            cartRepository.updateCartQuanlity(userId, serviceId, quanlity);
+            int quanlity = cartAdd.getQuantity();
+            cartRepository.updateCartQuantity(userId, serviceId, quanlity);
             return ResponseEntity.status(HttpStatus.OK).body("Updated to cart");
         }
+
+        //if dont have item in cart -> create new item in cart
         cartAdd.setDate(LocalDateTime.now());
         cartAdd.setUserId(userId);
         Cart cart = cartMapper.mapToEntity(cartAdd);
@@ -57,7 +61,7 @@ public class CartService {
     public ResponseEntity<String> removeCart(HttpServletRequest request, int cartId) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         if (cartRepository.deleteCart(userId, cartId) == 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cart not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cart not found");
         }
         return ResponseEntity.status(HttpStatus.OK).body("Removed");
     }

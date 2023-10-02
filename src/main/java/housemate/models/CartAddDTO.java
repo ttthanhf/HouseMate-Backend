@@ -27,7 +27,7 @@ public class CartAddDTO {
     private int serviceId;
 
     @Positive
-    private int quanlity;
+    private int quantity;
 
     @PastOrPresent
     @Hidden

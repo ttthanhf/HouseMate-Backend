@@ -29,25 +29,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/cart")
 @CrossOrigin
+@SecurityRequirement(name = "bearerAuth")
 public class CartController {
 
     @Autowired
     CartService cartService;
 
     @GetMapping("/")
-    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<List<Cart>> getCart(HttpServletRequest request) {
         return cartService.getCart(request);
     }
 
     @PostMapping("/")
-    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<String> addCart(HttpServletRequest request, @RequestBody CartAddDTO cartAdd) {
         return cartService.addToCart(request, cartAdd);
     }
 
     @DeleteMapping("/{cartId}")
-    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<String> removeCart(HttpServletRequest request, @Valid @PathVariable int cartId) {
         return cartService.removeCart(request, cartId);
     }
