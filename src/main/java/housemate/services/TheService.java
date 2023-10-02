@@ -7,7 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 
+<<<<<<< HEAD
 import housemate.constants.Enum.SaleStatus;
+=======
+import housemate.constants.SaleStatus;
+>>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
 import housemate.entities.Service;
 import housemate.repositories.ServiceRepository;
 import housemate.services.interfaces.IService;
@@ -21,6 +25,16 @@ public class TheService implements IService {
 
 	private static final Logger logger = LoggerFactory.getLogger(TheService.class);
 
+<<<<<<< HEAD
+=======
+
+	//serviceRepo.updateAvgRating();
+//@PostLoad
+//public void updateRating () {
+//	serviceRepo.updateAvgRating();
+//}
+//	
+>>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
 	@Override
 	public List<Service> getAll() {
 
@@ -38,6 +52,7 @@ public class TheService implements IService {
 
 		// orderRequire: A-Z = asc, Z-A = desc
 		
+<<<<<<< HEAD
 		List<Service> services;
 		try {
 			Sort nameSort = Sort.by(fieldName.trim());
@@ -49,6 +64,18 @@ public class TheService implements IService {
 		}			
 			return services;
 
+=======
+		List<Service> service;
+		try {
+			Sort nameSort = Sort.by(fieldName.trim());
+			if(orderRequire.equalsIgnoreCase("asc")) service = serviceRepo.findAll(nameSort.ascending());
+			else service = serviceRepo.findAll(nameSort.descending());
+		}catch (Exception e) {
+			service = null;
+			e.printStackTrace();
+		}			
+			return service;
+>>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
 
 	}
 
@@ -96,7 +123,10 @@ public class TheService implements IService {
 			}
 			service.setTitleName(newServiceInfo.getTitleName().trim());
 			service.setDescription(newServiceInfo.getTitleName().trim());
+<<<<<<< HEAD
 			service.setOriginalPrice(newServiceInfo.getOriginalPrice());
+=======
+>>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
 			service.setSalePrice(newServiceInfo.getSalePrice());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -137,10 +167,13 @@ public class TheService implements IService {
 		return false;
 	}
 
+<<<<<<< HEAD
 	@Override
 	public List<Service> filterByRating(int ratingRequired) {
 		return serviceRepo.findByAvgRatingGreaterThanEqual(ratingRequired);
 	}
 
 
+=======
+>>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
 }

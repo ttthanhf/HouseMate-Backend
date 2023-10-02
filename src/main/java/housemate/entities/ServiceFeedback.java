@@ -35,10 +35,15 @@ public class ServiceFeedback {
     @JoinColumn(name = "service_id", insertable = false, updatable = false)
     private Service service;
 
+<<<<<<< HEAD
     @ManyToOne
     @JoinColumn(name = "package_id", nullable = true, insertable = false, updatable = false)
     private PackageService packageService;
 
+=======
+    @Column(name = "package_id", columnDefinition = "integer default 0")
+    private Integer packageId;
+>>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
 
     @Column(name = "customer_id")
     private int customerId;
