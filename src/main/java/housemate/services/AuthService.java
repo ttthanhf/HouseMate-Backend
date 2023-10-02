@@ -20,6 +20,7 @@ import java.util.UUID;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -43,6 +44,9 @@ public class AuthService {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    @Value("${url.client}")
+    private String URL_CLIENT;
 
     public ResponseEntity<String> login(AccountDTO.Login loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
@@ -94,7 +98,6 @@ public class AuthService {
         helper.setTo(recipientEmail);
 
         String subject = "Here's the link to reset your password";
-
         String content = "<p>Hello,</p>"
                 + "<p>You have requested to reset your password.</p>"
                 + "<p>Click the link below to change your password:</p>"
@@ -109,12 +112,12 @@ public class AuthService {
         mailSender.send(message);
     }
 
-    private String generateRandomString(int length) {
-        return UUID.randomUUID().toString().replaceAll("-", "").substring(0, length);
+    private String generateRandomString() {
+        return UUID.randomUUID().toString().replaceAll("-", "").substring(0, 30);
     }
 
     public ResponseEntity<String> forgotPassword(String email) {
-        String token = generateRandomString(30);
+        String token = generateRandomString();
         try {
             // Check account in database
             UserAccount account = userRepository.findByEmailAddress(email);
@@ -127,8 +130,7 @@ public class AuthService {
             userRepository.save(account);
 
             // Send email
-            String URL_SERVER = "http://localhost:8080";
-            String resetPasswordLink = URL_SERVER + "/reset-password?token=" + token;
+            String resetPasswordLink = URL_CLIENT + "/set-password?token=" + token;
             sendEmail(email, resetPasswordLink);
             return ResponseEntity.status(HttpStatus.OK).body("We have sent a reset password link to your email. Please check.");
         } catch (UnsupportedEncodingException | MessagingException e) {
@@ -136,18 +138,19 @@ public class AuthService {
         }
     }
 
-    public ResponseEntity<String> resetPassword(AccountDTO.Login loginAccountDTO) {
-        UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
+    public ResponseEntity<String> resetPassword(String token, String password) {
+        UserAccount account = userRepository.findByResetPasswordToken(token);
 
         // Check email not in database
-        if (accountDB == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't created");
+        if (account == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token is invalid");
         }
 
         // Set new password
-        String hash = bcryptUtil.hashPassword(loginAccountDTO.getPassword());
-        accountDB.setPasswordHash(hash);
-        userRepository.save(accountDB);
+        String hash = bcryptUtil.hashPassword(password);
+        account.setPasswordHash(hash);
+        account.setResetPasswordToken(null);
+        userRepository.save(account);
         return ResponseEntity.status(HttpStatus.OK).body("Set new password successfully!");
     }
 }
