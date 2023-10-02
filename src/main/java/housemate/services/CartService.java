@@ -49,7 +49,7 @@ public class CartService {
         }
         cartAdd.setDate(LocalDateTime.now());
         cartAdd.setUserId(userId);
-        Cart cart = cartMapper.mapDTOtoEntity(cartAdd);
+        Cart cart = cartMapper.mapToEntity(cartAdd);
         cartRepository.save(cart);
         return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
     }
