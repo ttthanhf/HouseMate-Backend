@@ -33,7 +33,7 @@ public class ServiceOrderItem {
     @JoinColumn(name ="order_id", insertable = false, updatable = false)
     private ServiceOrder serviceOrder;
 
-<<<<<<< HEAD
+
     @ManyToOne
     @JoinColumn(name = "service_id", insertable = false, updatable = false)
     private Service service;
@@ -42,15 +42,7 @@ public class ServiceOrderItem {
     @JoinColumn(name = "package_service_id", insertable = false, updatable = false)
     private PackageService packageService;
 
-=======
-    
-    @ManyToOne
-    @JoinColumn(name = "service_id", insertable = false, updatable = false)
-    private Service service;
 
-    @Column(name = "package_service_id", columnDefinition = "integer default 0")
-    private Integer packageServiceId;
->>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
 
     @Column(name = "quantity_purchased")
     private int quantityPurchased;
