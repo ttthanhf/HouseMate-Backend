@@ -22,13 +22,13 @@ import lombok.ToString;
  * @author ThanhF
  */
 @Entity
-@Table(name = "service_comment")
+@Table(name = "comments")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @ToString
-public class ServiceComment {
+public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
