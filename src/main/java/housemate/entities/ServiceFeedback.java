@@ -39,6 +39,7 @@ public class ServiceFeedback {
     @JoinColumn(name = "package_id", nullable = true, insertable = false, updatable = false)
     private PackageService packageService;
 
+
     @Column(name = "customer_id")
     private int customerId;
 

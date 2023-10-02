@@ -29,7 +29,6 @@ public class ServiceController {
 	@Autowired
 	TheService serviceDao;
 	
-
 	@GetMapping
 	public ResponseEntity<?> getServiceList() {
 		List<Service> serviceList = serviceDao.getAll();
@@ -108,6 +107,7 @@ public class ServiceController {
 	@PutMapping("/new-sale-status/{id}")
 	public ResponseEntity<?> updateServiceSaleStatus(@PathVariable("id") int serviceId,
 			@RequestParam SaleStatus saleStatus) {
+
 		Service service = serviceDao.updateSaleStatus(serviceId, saleStatus);
 		
 		if (service == null)
