@@ -35,6 +35,12 @@ build/
 
 ### OWN ###
 src/main/resources/application.properties
+**/src/test/
 nbactions.xml
 nb-configuration.xml
+<<<<<<< HEAD
 **/src/test/
+=======
+
+**/src/test/java/housemate.backend/
+>>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3

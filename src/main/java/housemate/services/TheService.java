@@ -49,6 +49,7 @@ public class TheService implements IService {
 		}			
 			return services;
 
+
 	}
 
 	@Override
@@ -140,5 +141,6 @@ public class TheService implements IService {
 	public List<Service> filterByRating(int ratingRequired) {
 		return serviceRepo.findByAvgRatingGreaterThanEqual(ratingRequired);
 	}
+
 
 }

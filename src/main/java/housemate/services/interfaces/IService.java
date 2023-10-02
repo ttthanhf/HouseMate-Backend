@@ -22,6 +22,7 @@ public interface IService {
 	public List<Service> sortByOneField(String fieldName, String orderRequire);
 	public List<Service> filterBySaleStatus(SaleStatus saleStatus);
 	public List<Service> filterByRating(int ratingRequired);
+
 	//READ ONE
 	public Service getOne(int serviceId);
 	//CREATE

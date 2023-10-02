@@ -97,7 +97,10 @@ public class AuthService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't created");
         }
 
+
         // Set new password
+
+
         accountDB.setToPasswordHash(loginAccountDTO.getPassword());
         userRepository.save(accountDB);
         return ResponseEntity.status(HttpStatus.OK).body("Set new password successfully!");

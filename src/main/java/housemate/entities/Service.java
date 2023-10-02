@@ -43,7 +43,7 @@ public class Service {
     @Column(name = "title_name", unique = true, nullable = false)
     private String titleName;
 
-    
+
     @Column(name = "original_price", nullable = false)
     private int originalPrice;
     
@@ -54,6 +54,7 @@ public class Service {
     @Column(name = "unit_of_measure", nullable = false)
     private UnitOfMeasure unitOfMeasure;
     
+
     @Column(name = "description", nullable = false)
     private String description;
 
@@ -63,6 +64,7 @@ public class Service {
 
     
     @Column(name = "avg_rating", columnDefinition = "float default 0")
+
     private Float avgRating;
 
     //not yet building relationship
@@ -78,6 +80,7 @@ public class Service {
     private Integer numberOfSold;
     
     //This service is bought by many orders which construct service in order = service order item 
+
     @OneToMany(mappedBy = "service")
     @JsonIgnore
     private List<ServiceOrderItem> serviceOrderItemList;
