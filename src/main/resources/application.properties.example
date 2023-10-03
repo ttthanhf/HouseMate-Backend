@@ -16,7 +16,6 @@ spring.security.user.password=
 
 #JWT
 application.security.jwt.refresh-token.expiration=
-application.security.jwt.expiration=
 application.security.jwt.secret-key=
 
 #SMTP

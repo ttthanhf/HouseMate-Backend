@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class BcryptUtil {
 
-    final int LOG_ROUNDS = 12;
+    final int LOG_ROUNDS = 10;
 
     public String hashPassword(String password) {
         return BCrypt.hashpw(password, BCrypt.gensalt(LOG_ROUNDS));
