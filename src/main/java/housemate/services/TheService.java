@@ -6,12 +6,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
-
 import housemate.constants.Enum.SaleStatus;
+import housemate.constants.Enum.ServiceField;
+import housemate.constants.Enum.SortRequired;
 import housemate.entities.Service;
 import housemate.repositories.ServiceRepository;
 import housemate.services.interfaces.IService;
-import jakarta.persistence.PostLoad;
+
+/**
+*
+* @author Anh
+*/
 
 @org.springframework.stereotype.Service
 public class TheService implements IService {
@@ -35,14 +40,14 @@ public class TheService implements IService {
 	}
 
 	@Override
-	public List<Service> sortByOneField(String fieldName, String orderRequire) {
+	public List<Service> sortByOneField(ServiceField fieldName, SortRequired orderRequire) {
 
 		// orderRequire: A-Z = asc, Z-A = desc
 		
 		List<Service> services;
 		try {
-			Sort nameSort = Sort.by(fieldName.trim());
-			if(orderRequire.equalsIgnoreCase("asc")) services = serviceRepo.findAll(nameSort.ascending());
+			Sort nameSort = Sort.by(fieldName.getFieldName().trim());
+			if(orderRequire.name().equalsIgnoreCase("asc")) services = serviceRepo.findAll(nameSort.ascending());
 			else services = serviceRepo.findAll(nameSort.descending());
 		}catch (Exception e) {
 			services = null;

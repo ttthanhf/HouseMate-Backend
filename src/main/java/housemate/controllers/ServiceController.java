@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import housemate.constants.Enum.SaleStatus;
-
+import housemate.constants.Enum.ServiceField;
+import housemate.constants.Enum.SortRequired;
 import housemate.entities.Service;
 import housemate.entities.ServiceFeedback;
 import housemate.exceptions.ApiServicesRequestException;
@@ -67,8 +68,8 @@ public class ServiceController {
 
 
 	@GetMapping("/sort")
-	public ResponseEntity<?> getServiceListSort(@RequestParam String fieldname, 
-			@RequestParam String requireOrder) {
+	public ResponseEntity<?> getServiceListSort(@RequestParam ServiceField fieldname, 
+			@RequestParam SortRequired requireOrder) {
 		List<Service> serviceList = serviceDao.sortByOneField(fieldname, requireOrder);
 		
 		if (serviceList == null)

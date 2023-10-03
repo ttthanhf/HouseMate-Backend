@@ -4,7 +4,6 @@
  */
 package housemate.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,7 +13,7 @@ import lombok.NoArgsConstructor;
 
 /**
  *
- * @author ThanhF
+ * @author Anh
  */
 @Entity
 @Data

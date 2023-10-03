@@ -6,16 +6,14 @@ package housemate.services.interfaces;
 
 import java.util.List;
 
-<<<<<<< HEAD
 import housemate.constants.Enum.SaleStatus;
-=======
-import housemate.constants.SaleStatus;
->>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
+import housemate.constants.Enum.ServiceField;
+import housemate.constants.Enum.SortRequired;
 import housemate.entities.Service;
 
 /**
  *
- * @author ThanhF
+ * @author Anh
  */
 
 @org.springframework.stereotype.Service
@@ -23,13 +21,10 @@ public interface IService {
     //READ LIST
 	public List<Service> getAll();
 	public List<Service> searchByName(String keyword);
-	public List<Service> sortByOneField(String fieldName, String orderRequire);
+	public List<Service> sortByOneField(ServiceField fieldName, SortRequired orderRequire);
 	public List<Service> filterBySaleStatus(SaleStatus saleStatus);
-<<<<<<< HEAD
 	public List<Service> filterByRating(int ratingRequired);
 
-=======
->>>>>>> 1af5ca64aeceb766f630c5431341dbd512787af3
 	//READ ONE
 	public Service getOne(int serviceId);
 	//CREATE
@@ -40,6 +35,7 @@ public interface IService {
 	//DELETE
 	public Service removeOne(int serviceId );
 	//public void removeMulti(Service service);
+	;
 	
 	
 	

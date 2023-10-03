@@ -1,19 +1,18 @@
 package housemate.services;
 
-import java.time.LocalDateTime;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import housemate.entities.PackageService;
+import housemate.entities.PackageService.Summary;
 import housemate.entities.PackageServiceItem;
 import housemate.repositories.PackageServiceItemRepository;
 import housemate.repositories.PackageServiceRepository;
 import housemate.services.interfaces.IPackageService;
-import housemate.constants.Enum.PackageServiceField;
+import housemate.constants.Enum.ServiceField;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.SortRequired;
 
@@ -33,31 +32,26 @@ public class ThePackageService implements IPackageService{
 	private static final Logger logger = LoggerFactory.getLogger(TheService.class);
 	
 	@Override
-	public List<PackageService> getAll() {
-		
-		return pakcageServiceRepo.findAll();
-	}
-	
-	@Override
-	public List<PackageService.Summary> getAllSummary() {
+	public List<PackageService.Summary> getAll() {
 		
 		return pakcageServiceRepo.findAllBy();
 	}
 
+
 	@Override
-	public List<PackageService> searchByName(String keyword) {
+	public List<PackageService.Summary> searchByName(String keyword) {
 		
 		return pakcageServiceRepo.findByTitleNameContaining(keyword);
 	}
 
 	@Override
-	public List<PackageService> sortByOneField(PackageServiceField fieldName, SortRequired orderRequire) {
+	public List<PackageService.Summary> sortByOneField(ServiceField fieldName, SortRequired orderRequire) {
 		
-		List<PackageService> packageServices;
+		List<PackageService.Summary> packageServices;
 		try {
 			Sort nameSort = Sort.by(fieldName.getFieldName().trim());
-			if(orderRequire.name().equalsIgnoreCase("asc")) packageServices = pakcageServiceRepo.findAll(nameSort.ascending());
-			else packageServices = pakcageServiceRepo.findAll(nameSort.descending());
+			if(orderRequire.name().equalsIgnoreCase("asc")) packageServices = pakcageServiceRepo.findAllBy(nameSort.ascending());
+			else packageServices = pakcageServiceRepo.findAllBy(nameSort.descending());
 		}catch (Exception e) {
 			packageServices = null;
 			e.printStackTrace();
@@ -65,13 +59,14 @@ public class ThePackageService implements IPackageService{
 			return packageServices;
 	}
 
+	
 	@Override
-	public List<PackageService> filterBySaleStatus(SaleStatus saleStatus) {
+	public List<PackageService.Summary> filterBySaleStatus(SaleStatus saleStatus) {
 		return pakcageServiceRepo.findBySaleStatus(saleStatus);
 	}
 
 	@Override
-	public List<PackageService> filterByRating(int ratingRequired) {
+	public List<PackageService.Summary> filterByRating(int ratingRequired) {
 		return pakcageServiceRepo.findByAvgRatingGreaterThanEqual(ratingRequired);
 		 
 	}
@@ -103,7 +98,7 @@ public class ThePackageService implements IPackageService{
 			packageServiceIemRepo.saveAll(itemList);
 			
 			//save all done then update the price
-			pakcageServiceRepo.updateTheOriginalPrice(packageService);
+			//pakcageServiceRepo.updateTheOriginalPrice(packageService);
 
 		} catch (Exception e) {
 			logger.warn("Saved failed");
@@ -142,7 +137,7 @@ public class ThePackageService implements IPackageService{
 				updateItem.setUsageDurationUnit(item.getUsageDurationUnit());
 			}	
 			
-			pakcageServiceRepo.updateTheOriginalPrice(packageService);
+			//pakcageServiceRepo.updateTheOriginalPrice(packageService);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -176,6 +171,9 @@ public class ThePackageService implements IPackageService{
 		}
 		return delPackageService;
 	}
+
+
+	
 
 
 }

@@ -52,7 +52,7 @@ public class Enum {
 		}
 	}
 
-	public static enum PackageServiceField {
+	public static enum ServiceField {
 
 		NAME("titleName"),
 		PRICE("salePrice"),
@@ -60,7 +60,7 @@ public class Enum {
 
 		private String fieldName;
 
-		PackageServiceField(String fieldName) {
+		ServiceField(String fieldName) {
 			this.fieldName = fieldName;
 		}
 
