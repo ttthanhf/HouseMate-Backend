@@ -2,10 +2,12 @@ package housemate.controllers;
 
 import housemate.constants.Role;
 import housemate.entities.UserAccount;
+import housemate.models.UpdateAccountDTO;
 import housemate.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,9 +41,9 @@ public class AccountController {
     }
 
     @Operation(summary = "Update account info")
-    @PutMapping("/update")
-    public ResponseEntity<String> updateInfo(@RequestBody UserAccount account) {
-        return service.updateInfo(account);
+    @PutMapping("/update/{userId}")
+    public ResponseEntity<String> updateInfo(@Valid @RequestBody UpdateAccountDTO updateAccountDTO, @PathVariable int userId) {
+        return service.updateInfo(updateAccountDTO, userId);
     }
 
     @Operation(summary = "Delete account by userId")

@@ -2,6 +2,8 @@ package housemate.services;
 
 import housemate.constants.Role;
 import housemate.entities.UserAccount;
+import housemate.mappers.AccountMapper;
+import housemate.models.UpdateAccountDTO;
 import housemate.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,9 @@ public class AccountService {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    AccountMapper accountMapper;
+
     public ResponseEntity<List<UserAccount>> getAll() {
         return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
     }
@@ -25,8 +30,14 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body(account);
     }
 
-    public ResponseEntity<String> updateInfo(UserAccount account) {
+    public ResponseEntity<String> updateInfo(UpdateAccountDTO updateAccountDTO, int userId) {
+        // Get account in database
+        UserAccount accountDB = userRepository.findByUserId(userId);
+
+        // Update account
+        UserAccount account = accountMapper.updateAccount(accountDB, updateAccountDTO);
         userRepository.save(account);
+
         return ResponseEntity.status(HttpStatus.OK).body("Updated successfully!");
     }
 

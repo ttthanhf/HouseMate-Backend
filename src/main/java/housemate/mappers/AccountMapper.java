@@ -7,6 +7,7 @@ package housemate.mappers;
 import housemate.constants.Role;
 import housemate.entities.UserAccount;
 import housemate.models.RegisterAccountDTO;
+import housemate.models.UpdateAccountDTO;
 import housemate.utils.BcryptUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,5 +35,14 @@ public class AccountMapper {
         userAccount.setEmailValidationStatus(false);
 
         return userAccount;
+    }
+
+    public UserAccount updateAccount(UserAccount currentAccount, UpdateAccountDTO updatedAccount) {
+        currentAccount.setFullName(updatedAccount.getFullName());
+        currentAccount.setPhoneNumber(updatedAccount.getPhoneNumber());
+        currentAccount.setEmailAddress(updatedAccount.getEmailAddress());
+        currentAccount.setEmailAddress(updatedAccount.getEmailAddress());
+
+        return currentAccount;
     }
 }
