@@ -46,4 +46,13 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body("Changed role successfully!");
     }
 
+    public ResponseEntity<List<UserAccount>> getAllCustomer() {
+        List<UserAccount> customers = userRepository.findByRole(Role.CUSTOMER);
+        return ResponseEntity.status(HttpStatus.OK).body(customers);
+    }
+
+    public ResponseEntity<List<UserAccount>> getAllStaff() {
+        List<UserAccount> staffs = userRepository.findByRole(Role.STAFF);
+        return ResponseEntity.status(HttpStatus.OK).body(staffs);
+    }
 }

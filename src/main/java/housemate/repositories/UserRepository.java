@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  *
  * @author ThanhF
@@ -28,4 +30,6 @@ public interface UserRepository extends JpaRepository<UserAccount, Integer> {
     void updateRole(@Param("userId") int userId, @Param("role") Role role);
 
     UserAccount findByResetPasswordToken(String token);
+
+    List<UserAccount> findByRole(Role role);
 }
