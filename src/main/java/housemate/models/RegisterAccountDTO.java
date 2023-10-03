@@ -34,8 +34,8 @@ public class RegisterAccountDTO {
     @Schema(example = "Example", description = "Full name of an account")
     private String fullName;
 
-    @Schema(example = "0866123456", description = "Phone number of an account")
     @Pattern(regexp = RegexConstants.PHONE_NUMBER_REGEX, message = "Invalid phone number format")
+    @Schema(example = "0866123456", description = "Phone number of an account")
     private String phoneNumber;
 
     @Pattern(

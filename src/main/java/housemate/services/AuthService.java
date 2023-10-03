@@ -8,8 +8,10 @@ import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
 import housemate.mappers.AccountMapper;
 import housemate.mappers.JwtPayloadMapper;
+import housemate.models.ForgotPasswordDTO;
 import housemate.models.LoginAccountDTO;
 import housemate.models.RegisterAccountDTO;
+import housemate.models.ResetPasswordDTO;
 import housemate.repositories.UserRepository;
 import housemate.utils.BcryptUtil;
 import housemate.utils.JwtUtil;
@@ -126,8 +128,9 @@ public class AuthService {
         return UUID.randomUUID().toString().replaceAll("-", "").substring(0, 30);
     }
 
-    public ResponseEntity<String> forgotPassword(String email) {
+    public ResponseEntity<String> forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
         String token = generateRandomString();
+        String email = forgotPasswordDTO.getEmail();
         try {
             // Check account in database
             UserAccount account = userRepository.findByEmailAddress(email);
@@ -148,7 +151,8 @@ public class AuthService {
         }
     }
 
-    public ResponseEntity<String> resetPassword(String token, String password) {
+    public ResponseEntity<String> resetPassword(ResetPasswordDTO resetPasswordDTO) {
+        String token = resetPasswordDTO.getToken();
         UserAccount account = userRepository.findByResetPasswordToken(token);
 
         // Check email not in database
@@ -157,6 +161,7 @@ public class AuthService {
         }
 
         // Set new password
+        String password = resetPasswordDTO.getPassword();
         String hash = bcryptUtil.hashPassword(password);
         account.setPasswordHash(hash);
         account.setResetPasswordToken(null);

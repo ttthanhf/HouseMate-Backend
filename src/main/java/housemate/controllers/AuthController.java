@@ -5,8 +5,10 @@
 package housemate.controllers;
 
 import housemate.entities.UserAccount;
+import housemate.models.ForgotPasswordDTO;
 import housemate.models.LoginAccountDTO;
 import housemate.models.RegisterAccountDTO;
+import housemate.models.ResetPasswordDTO;
 import housemate.services.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -46,14 +48,14 @@ public class AuthController {
         return authService.register(account);
     }
 
-    @PostMapping("/forgot-password/{email}")
-    public ResponseEntity<String> forgotPassword(@PathVariable String email) {
-        return authService.forgotPassword(email);
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordDTO forgotPasswordDTO) {
+        return authService.forgotPassword(forgotPasswordDTO);
     }
 
-    @PutMapping("/reset-password/{token}/{password}")
-    public ResponseEntity<String> resetPassword(@PathVariable String token, @PathVariable String password) {
-        return authService.resetPassword(token, password);
+    @PutMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordDTO resetPasswordDTO) {
+        return authService.resetPassword(resetPasswordDTO);
     }
 
     @GetMapping("/callback/google/redirect")
