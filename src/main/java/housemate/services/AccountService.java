@@ -55,4 +55,9 @@ public class AccountService {
         List<UserAccount> staffs = userRepository.findByRole(Role.STAFF);
         return ResponseEntity.status(HttpStatus.OK).body(staffs);
     }
+
+    public ResponseEntity<List<UserAccount>> getAllAdmin() {
+        List<UserAccount> staffs = userRepository.findByRole(Role.ADMIN);
+        return ResponseEntity.status(HttpStatus.OK).body(staffs);
+    }
 }
