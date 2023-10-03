@@ -69,7 +69,7 @@ public class AccountController {
     }
 
     @Operation(summary = "Get all admin account")
-    @GetMapping("/admin")
+    @GetMapping("/admins")
     public ResponseEntity<List<UserAccount>> getAllAdmin() {
         return service.getAllAdmin();
     }
