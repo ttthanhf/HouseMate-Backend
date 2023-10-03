@@ -11,9 +11,11 @@ import housemate.services.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -29,10 +31,10 @@ public class AuthController {
     @Autowired
     AuthService authService;
 
-//    @GetMapping("/all")
-//    public ResponseEntity<List<UserAccount>> getAll() {
-//        return authService.getAll();
-//    }
+    @GetMapping("/all")
+    public ResponseEntity<List<UserAccount>> getAll() {
+        return authService.getAll();
+    }
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@Valid @RequestBody LoginAccountDTO account) {
@@ -52,5 +54,11 @@ public class AuthController {
     @PutMapping("/reset-password/{token}/{password}")
     public ResponseEntity<String> resetPassword(@PathVariable String token, @PathVariable String password) {
         return authService.resetPassword(token, password);
+    }
+
+    @GetMapping("/callback/google/redirect")
+    public ResponseEntity<String> loginSuccessWithGoogle(OAuth2AuthenticationToken oAuth2AuthenticationToken) {
+        Map<String, Object> user = oAuth2AuthenticationToken.getPrincipal().getAttributes();
+        return authService.loginWithGoogle(user);
     }
 }
