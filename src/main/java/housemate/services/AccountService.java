@@ -34,7 +34,7 @@ public class AccountService {
         // Find account in database
         UserAccount account = userRepository.findByUserId(userId);
         if (account == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cannot find this account!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cannot find this account!");
         }
 
         // Delete account
