@@ -7,6 +7,11 @@ import housemate.models.PackageServiceDTO;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+*
+* @author Anh
+*/
+
 @Getter
 @Setter
 public class PackageServiceMapper {

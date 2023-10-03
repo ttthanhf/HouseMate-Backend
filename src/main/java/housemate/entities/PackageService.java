@@ -6,14 +6,22 @@ package housemate.entities;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
 import org.springframework.data.rest.core.config.Projection;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import housemate.constants.Enum.SaleStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,7 +31,7 @@ import lombok.Setter;
 
 /**
  *
- * @author ThanhF
+ * @author Anh
  */
 @Entity
 @Data
@@ -37,7 +45,7 @@ public class PackageService {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Setter(value = AccessLevel.NONE)
     @Column(name = "package_service_id")
-    private int packageServiceId;
+    private Integer packageServiceId;
 
     @Column(name = "title_name", unique = true, nullable = false)
     private String titleName;
@@ -80,7 +88,7 @@ public class PackageService {
     
     @Projection(name = "summary", types = PackageService.class)
     public interface Summary {
-    	int getPackageServiceId();
+    	Integer getPackageServiceId();
     	String getTitleName();
     	int getOriginalPrice();
     	int getSalePrice();

@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 
 /**
  *
- * @author ThanhF
+ * @author Anh
  */
 @Entity
 @NoArgsConstructor

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 /**
  *
- * @author Admin
+ * @author ThanhF
  */
 @Component
 public class JwtPayloadMapper {

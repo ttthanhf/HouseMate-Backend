@@ -23,7 +23,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @author ThanhF
  */
 @Component
-public class AuthorizationFilter extends OncePerRequestFilter {
+public class AuthorizationFilter extends OncePerRequestFilter 
+{
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -31,7 +32,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     @Autowired
     JwtPayloadMapper jwtPayloadMapper;
 
-    private final List<String> excludedUrls = Arrays.asList("/swagger-ui", "/auth", "/v3/api-docs", "/comment/services");
+    private final List<String> excludedUrls = Arrays.asList("/swagger-ui", "/auth", "/v3/api-docs", "/comment/services", "/housemate-services","/api/services","/api/package-service");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)

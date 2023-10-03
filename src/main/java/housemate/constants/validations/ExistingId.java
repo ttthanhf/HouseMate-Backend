@@ -53,7 +53,7 @@ public @interface ExistingId {
 			
 			switch (type) {
 			case SERVICE: 
-				inValidId = serviceRepo.findById(id) != null ? true : true;
+				inValidId = serviceRepo.findById(id) != null ? true : false;
 				break;
 			case PACKAGE:
 				inValidId = packageRepo.findById(id) != null ? true : false;

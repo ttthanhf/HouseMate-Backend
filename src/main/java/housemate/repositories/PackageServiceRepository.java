@@ -2,6 +2,7 @@ package housemate.repositories;
 
 import java.util.List;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,24 +10,28 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import housemate.constants.Enum.SaleStatus;
 import housemate.entities.PackageService;
-import housemate.entities.Service;
 import jakarta.transaction.Transactional;
 
 @Repository
 public interface PackageServiceRepository extends JpaRepository<PackageService, Integer> {
-List<PackageService> findByTitleNameContaining(String keyword);
+List<PackageService.Summary> findByTitleNameContaining(String keyword);
 	
-	Service findByTitleName(String titleName);
+	PackageService findByTitleName(String titleName);
 	
-	Service findByTitleNameIgnoreCase(String titleName);
+	PackageService findByTitleNameIgnoreCase(String titleName);
 	
-	List<PackageService> findBySaleStatus(SaleStatus saleStatus);
+	List<PackageService.Summary> findBySaleStatus(SaleStatus saleStatus);
 	
-	List<PackageService> findByAvgRatingGreaterThanEqual(int requiredRating);
+	List<PackageService.Summary> findByAvgRatingGreaterThanEqual(int requiredRating);
 	
-	//findAllBySummary
-	List<PackageService.Summary> findAllBy();
-		
+	List<PackageService.Summary> findAllBy(Sort sort);
+	
+	default List<PackageService.Summary> findAllBy() {
+        Sort defaultSort = Sort.by("avgRating"); // Giá trị mặc định cho Sort
+
+        return findAllBy(defaultSort);
+    }
+	
 	@Transactional
 	@Modifying
 	@Query(value = "UPDATE PackageService ps SET ps.avgRating = (SELECT AVG(f.rating) FROM ServiceFeedback f WHERE f.packageService = ps)")
@@ -47,5 +52,5 @@ List<PackageService> findByTitleNameContaining(String keyword);
 	@Modifying
 	@Query(value = "UPDATE PackageService ps SET ps.originalPrice = (SELECT SUM(psi.usageLimit * s.originalPrice) FROM PackageServiceItem psi JOIN"
 					+ " psi.service s WHERE psi.packageService = :ps)")
-	void updateTheOriginalPrice(@Param("ps") PackageService ps);
+	void sumOriginalPrice(@Param("ps") PackageService ps);
 }
