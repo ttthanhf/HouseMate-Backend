@@ -20,17 +20,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class AccountMapper {
 
-    @Autowired
-    BcryptUtil bcryptUtil;
-
     public UserAccount mapToEntity(RegisterAccountDTO registerAccountDTO) {
         UserAccount userAccount = new UserAccount();
 
         userAccount.setEmailAddress(registerAccountDTO.getEmail());
         userAccount.setFullName(registerAccountDTO.getFullName());
         userAccount.setPhoneNumber(registerAccountDTO.getPhoneNumber());
-        String hash = bcryptUtil.hashPassword(registerAccountDTO.getPassword());
-        userAccount.setPasswordHash(hash);
         userAccount.setRole(Role.CUSTOMER);
         userAccount.setEmailValidationStatus(false);
 

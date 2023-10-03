@@ -91,6 +91,8 @@ public class AuthService {
         }
 
         // Insert to database
+        String hash = bcryptUtil.hashPassword(registerAccountDTO.getPassword());
+        registerAccountDTO.setPassword(hash);
         UserAccount userAccount = accountMapper.mapToEntity(registerAccountDTO);
         userAccount = userRepository.save(userAccount);
 
