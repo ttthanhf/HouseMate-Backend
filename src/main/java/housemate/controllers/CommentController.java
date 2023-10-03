@@ -8,6 +8,7 @@ import housemate.entities.Comment;
 import housemate.models.CommentAddDTO;
 import housemate.services.CommentService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/comment")
 @CrossOrigin
+@Tag(name = "Comment")
 public class CommentController {
 
     @Autowired

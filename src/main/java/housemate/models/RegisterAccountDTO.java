@@ -34,12 +34,12 @@ public class RegisterAccountDTO {
     @Schema(example = "Example", description = "Full name of an account")
     private String fullName;
 
-    @Schema(example = "0866123456", description = "Phone number of an account")
     @Pattern(regexp = RegexConstants.PHONE_NUMBER_REGEX, message = "Invalid phone number format")
+    @Schema(example = "0866123456", description = "Phone number of an account")
     private String phoneNumber;
 
     @Pattern(
-            regexp = RegexConstants.PASSWORD_REGEX, 
+            regexp = RegexConstants.PASSWORD_REGEX,
             message = "Must be 8 to 16 characters, including a number, an uppercase letter, and a lowercase letter"
     )
     @Schema(example = "Password123", description = "Password of an account")
