@@ -3,6 +3,7 @@ package housemate.controllers;
 import housemate.constants.Role;
 import housemate.entities.UserAccount;
 import housemate.services.AccountService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +16,10 @@ import java.util.List;
  * @author hdang09
  */
 @RestController
-@RequestMapping("/account") // TODO: Change "/auth" to "/api/auth"
+@RequestMapping("/account")
 @CrossOrigin
 @Tag(name = "Account")
+@SecurityRequirement(name = "bearerAuth")
 public class AccountController {
 
     @Autowired
@@ -43,9 +45,19 @@ public class AccountController {
         return service.delete(userId);
     }
 
-    @PutMapping("role")
+    @PutMapping("/role")
     public ResponseEntity<String> changeRole(@RequestParam int userId, @RequestParam Role role) {
         return service.changeRole(userId, role);
+    }
+
+    @GetMapping("/customers")
+    public ResponseEntity<List<UserAccount>> getAllCustomer() {
+        return service.getAllCustomer();
+    }
+
+    @GetMapping("/staffs")
+    public ResponseEntity<List<UserAccount>> getAllStaff() {
+        return service.getAllStaff();
     }
 }
 
