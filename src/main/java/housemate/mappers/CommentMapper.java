@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CommentMapper {
 
-    public Comment mapDTOtoEntity(CommentAddDTO commentDTO) {
+    public Comment mapToEntity(CommentAddDTO commentDTO) {
         Comment serviceComment = new Comment();
         serviceComment.setServiceId(commentDTO.getServiceId());
         serviceComment.setUserId(commentDTO.getUserId());
