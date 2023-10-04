@@ -33,7 +33,7 @@ public class ReplyComment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reply_id")
-    private int id;
+    private int replyId;
 
     @Column(name = "comment_id")
     private int commentId;
