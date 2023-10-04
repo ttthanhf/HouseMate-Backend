@@ -4,6 +4,7 @@
  */
 package housemate.utils;
 
+import housemate.constants.Role;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,12 @@ public class AuthorizationUtil {
 
     public int getUserIdFromAuthorizationHeader(HttpServletRequest request) {
         String token = request.getHeader("Authorization").substring(7);
-        return jwtUtil.extractUserId(token);
+        return (int) jwtUtil.extractPayload(token).get("id");
     }
+
+    public Role getRoleFromAuthorizationHeader(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").substring(7);
+        return (Role) jwtUtil.extractPayload(token).get("role");
+    }
+
 }

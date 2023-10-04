@@ -4,7 +4,7 @@
  */
 package housemate.repositories;
 
-import housemate.entities.Comment;
+import housemate.entities.ReplyComment;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -17,14 +17,14 @@ import org.springframework.stereotype.Repository;
  * @author ThanhF
  */
 @Repository
-public interface CommentRepository extends JpaRepository<Comment, Integer> {
+public interface ReplyCommentRepository extends JpaRepository<ReplyComment, Integer> {
 
-    @Query("SELECT c FROM Comment c WHERE c.serviceId = :serviceId")
-    List<Comment> getAllCommentByServiceId(@Param("serviceId") int serviceId);
+    @Query("SELECT c FROM ReplyComment c WHERE c.commentId = :commentId")
+    List<ReplyComment> getAllReplyCommentByCommentId(@Param("commentId") int commentId);
 
     @Modifying
-    @Query("DELETE FROM Comment c WHERE c.id = :commentId AND c.userId = :userId")
-    int deleteCommentByUser(@Param("commentId") int commentId, @Param("userId") int userId);
+    @Query("DELETE FROM ReplyComment c WHERE c.id = :replyCommentId AND c.userId = :userId")
+    int deleteReplyComment(@Param("replyCommentId") int replyCommentId, @Param("userId") int userId);
 
     @Modifying
     @Query("DELETE FROM Comment c WHERE c.id = :commentId")
