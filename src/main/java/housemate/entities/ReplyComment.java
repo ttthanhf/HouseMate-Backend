@@ -10,9 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,21 +22,21 @@ import lombok.ToString;
  * @author ThanhF
  */
 @Entity
-@Table(name = "comments")
+@Table(name = "reply_comments")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @ToString
-public class Comment {
+public class ReplyComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "comment_id")
+    @Column(name = "reply_id")
     private int id;
 
-    @Column(name = "service_id")
-    private int serviceId;
+    @Column(name = "comment_id")
+    private int commentId;
 
     @Column(name = "user_id")
     private int userId;
@@ -48,7 +46,4 @@ public class Comment {
 
     @Column(name = "date")
     private LocalDateTime date;
-
-    @Transient
-    private List<ReplyComment> listReplyComment;
 }
