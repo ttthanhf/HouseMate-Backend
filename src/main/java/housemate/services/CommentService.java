@@ -48,7 +48,7 @@ public class CommentService {
     public ResponseEntity<List<Comment>> getAllCommentByServiceId(int serviceId) {
         List<Comment> listComment = commentRepository.getAllCommentByServiceId(serviceId);
         for (Comment comment : listComment) {
-            comment.setListReplyComment(getAllReplyCommentByCommentId(comment.getId()));
+            comment.setListReplyComment(getAllReplyCommentByCommentId(comment.getCommentId()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(listComment);
     }
