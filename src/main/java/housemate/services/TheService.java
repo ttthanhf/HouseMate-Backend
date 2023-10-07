@@ -202,6 +202,7 @@ public class TheService implements IService {
 			for(Integer singleServiceId : keySet) {
 				PackageServiceItem item = new PackageServiceItem();
 				item.setPackageServiceId(savedServiceId);
+				item.setSingleServiceId(singleServiceId);
 				item.setService(serviceRepo.findByServiceId(singleServiceId).orElse(null));
 				item.setQuantity(childServiceSet.get(singleServiceId));
 				System.out.println("ID: " + singleServiceId + " Name: " + childServiceSet.get(singleServiceId));
