@@ -32,7 +32,7 @@ public class AuthorizationFilter extends OncePerRequestFilter
     @Autowired
     JwtPayloadMapper jwtPayloadMapper;
 
-    private final List<String> excludedUrls = Arrays.asList("/swagger-ui", "/auth", "/v3/api-docs", "/comment/services", "/housemate-services","/api/services","/api/package-service");
+    private final List<String> excludedUrls = Arrays.asList("/swagger-ui", "/auth", "/v3/api-docs", "/comment/services", "/services");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)

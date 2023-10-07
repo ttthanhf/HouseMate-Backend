@@ -1,18 +1,36 @@
 package housemate.services;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.javapoet.TypeName;
+import org.springframework.web.reactive.result.method.annotation.ResponseEntityExceptionHandler;
+
+import housemate.configs.ModelMapper;
 import housemate.constants.Enum.SaleStatus;
+import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
 import housemate.constants.Enum.SortRequired;
+import housemate.constants.Enum.UsageDurationUnit;
+import housemate.entities.PackageServiceItem;
 import housemate.entities.Service;
+import housemate.entities.ServiceType;
+import housemate.models.ServiceNewDTO;
+import housemate.models.ServiceViewDTO;
+import housemate.repositories.PackageServiceItemRepository;
 import housemate.repositories.ServiceRepository;
+import housemate.repositories.ServiceTypeRepository;
 import housemate.services.interfaces.IService;
-
+import housemate.models.ServiceViewDTO.PackagePrice;
 /**
 *
 * @author Anh
@@ -23,118 +41,176 @@ public class TheService implements IService {
 
 	@Autowired
 	ServiceRepository serviceRepo;
-
+	
+	@Autowired
+	ServiceTypeRepository serviceTypeRepo;
+	
+	@Autowired
+	PackageServiceItemRepository packageServiceItemRepo;
+	
+	ModelMapper mapper = new ModelMapper();
+	
 	private static final Logger logger = LoggerFactory.getLogger(TheService.class);
 
-
 	@Override
-	public List<Service> getAll() {
-
-		return serviceRepo.findAll();
+	public List<Service> getAllAvailable() {
+		List<Service> serviceDtoList = serviceRepo.findAllAvailable();
+		return serviceDtoList;
 	}
 
 	@Override
-	public List<Service> searchByName(String keyword) {
+	public List<Service> fitlerAndSortForAllKind(ServiceCategory category, SaleStatus saleStatus, int ratingUpperFrom,
+			ServiceField fieldname, SortRequired requireOrder) {
 
-		return serviceRepo.findByTitleNameContaining(keyword);
-	}
+		List<Service> serviceDtoList;
+		Sort sort;
 
-	@Override
-	public List<Service> sortByOneField(ServiceField fieldName, SortRequired orderRequire) {
-
-		// orderRequire: A-Z = asc, Z-A = desc
+		if (fieldname.equals(fieldname.PRICE)) {
+			sort = Sort.unsorted();
+			serviceDtoList = serviceRepo.filterAllKind(saleStatus, ratingUpperFrom, sort);
+			Comparator<Service> theComparator = Comparator
+					.comparingDouble(service -> (service.getOriginalPrice() - service.getSalePrice()));
+			if (requireOrder.equals(SortRequired.DESC)) {
+				theComparator = theComparator.reversed();
+			}
+			Collections.sort(serviceDtoList, theComparator);
+		} else {
+			if (requireOrder.equals(SortRequired.ASC))
+				sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
+			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
+			serviceDtoList = serviceRepo.filterAllKind(saleStatus, ratingUpperFrom, sort);
+		}
 		
-		List<Service> services;
-		try {
-			Sort nameSort = Sort.by(fieldName.getFieldName().trim());
-			if(orderRequire.name().equalsIgnoreCase("asc")) services = serviceRepo.findAll(nameSort.ascending());
-			else services = serviceRepo.findAll(nameSort.descending());
-		}catch (Exception e) {
-			services = null;
-			e.printStackTrace();
-		}			
-			return services;
-
-
+		List<Service> updateList = new ArrayList<>();
+		if (category.equals(ServiceCategory.packages)) {	
+			for (Service service : serviceDtoList) 
+				if (service.isPackage()) 
+					updateList.add(service);
+			serviceDtoList = updateList;
+		} if (category.equals(ServiceCategory.singles)) {
+			for (Service service : serviceDtoList) 
+				if (!service.isPackage())
+					updateList.add(service);
+			serviceDtoList = updateList;
+		}
+		return serviceDtoList;
 	}
 
-	@Override
-	public List<Service> filterBySaleStatus(SaleStatus saleStatus) {
-
-		return serviceRepo.findBySaleStatus(saleStatus);
-	}
 
 	@Override
-	public Service getOne(int serviceId) {
+	public List<Service> searchForAllKind(String keyword, ServiceCategory category, SaleStatus saleStatus,
+			int ratingUpperFrom, ServiceField fieldname, SortRequired requireOrder) {
+		List<Service> serviceDtoList;
+		Sort sort;
 
-		return serviceRepo.findById(serviceId).orElse(null);
-	}
-
-	@Override
-	public Service createNew(Service service) {
-		try {
-			if (duplicateTitleName(service.getTitleName())) {
-				logger.info("Duplicated Service Title Name - Pick Another Name");
-				throw new Exception("Duplicated Title Name");
+		if (fieldname.equals(fieldname.PRICE)) {
+			sort = Sort.unsorted();
+			serviceDtoList = serviceRepo.searchAllKind( saleStatus, keyword, ratingUpperFrom, sort);
+			Comparator<Service> theComparator = Comparator
+					.comparingDouble(service -> (service.getOriginalPrice() - service.getSalePrice()));
+			if (requireOrder.equals(SortRequired.DESC)) {
+				theComparator = theComparator.reversed();
 			}
-			LocalDateTime currentDateTime = LocalDateTime.now();
-			service.setCreatorId(0001);
-			service.setCreatedAt(currentDateTime);
-			service.setSaleStatus(SaleStatus.NOT_AVAILABLE);
-			service = serviceRepo.save(service);
-			return serviceRepo.findById(service.getServiceId()).orElse(null);
+			Collections.sort(serviceDtoList, theComparator);
+		} else {
+			if (requireOrder.equals(SortRequired.ASC))
+				sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
+			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
+			serviceDtoList = serviceRepo.searchAllKind(saleStatus, keyword, ratingUpperFrom, sort);
+		}
+		
+		List<Service> updateList = new ArrayList<>();
+		if (category.equals(ServiceCategory.packages)) {	
+			for (Service service : serviceDtoList) 
+				if (service.isPackage()) 
+					updateList.add(service);
+			serviceDtoList = updateList;
+		} if (category.equals(ServiceCategory.singles)) {
+			for (Service service : serviceDtoList) 
+				if (!service.isPackage())
+					updateList.add(service);
+			serviceDtoList = updateList;
+		}
+		return serviceDtoList;
+	}
+
+
+
+
+
+	@Override
+	public ServiceViewDTO getOne(int serviceId) {
+		ServiceViewDTO serviceDtoForDetail = new ServiceViewDTO();
+		Service service = serviceRepo.findById(serviceId).orElse(null);
+		if(service != null) {
+			serviceDtoForDetail.setService(service);
+			if(!service.isPackage()) //this is a service
+			{
+				List<ServiceType> typeList = serviceTypeRepo.findAllByserviceId(service.getServiceId()).orElse(null);
+				if(typeList != null)
+					serviceDtoForDetail.setTypeList(typeList);
+					
+			}else if(service.isPackage()){ //this is a package
+				List<PackageServiceItem> packageServiceChildList = packageServiceItemRepo.findAllByPackageServiceId(service.getServiceId()).orElse(null);
+				if(packageServiceChildList != null) {
+					serviceDtoForDetail.setPackageServiceItemList(packageServiceChildList);
+				}
+				 //set combo price for each package service
+					List<PackagePrice> priceList = new ArrayList<>();	
+					PackagePrice packagePrice = new PackagePrice();
+					priceList.add(packagePrice.setPackagePrice(service, 3, UsageDurationUnit.MONTH));
+					priceList.add(packagePrice.setPackagePrice(service, 6, UsageDurationUnit.MONTH));
+					priceList.add(packagePrice.setPackagePrice(service, 12, UsageDurationUnit.MONTH));
+					serviceDtoForDetail.setPriceList(priceList);
+			}
+		}
+		return serviceDtoForDetail;
+	}
+
+	@Override
+	public ServiceViewDTO createNew(ServiceNewDTO serviceDTO) {	
+		//set sale status base on sale price and original price
+		if(serviceDTO.getSalePrice() > serviceDTO.getOriginalPrice());
+		if (serviceDTO.getSalePrice() > 0)
+			serviceDTO.setSaleStatus(SaleStatus.ONSALE);
+		else
+			serviceDTO.setSaleStatus(SaleStatus.AVAILABLE);
+		
+		//map to DTO
+		Service newService = mapper.map(serviceDTO, Service.class);
+		//save into DB
+		Service savedService = serviceRepo.save(newService);
+		
+		//save typeNameList for single services
+		if(serviceDTO.getTypeNameList() != null && !serviceDTO.isPackage() && savedService != null) {
+				int savedServiceId = savedService.getServiceId();
+				for(String element : serviceDTO.getTypeNameList()) {
+					ServiceType type = new ServiceType();
+					type.setServiceId(savedServiceId);
+					type.setTypeName(element);
+					System.out.println("ID: " + type.getServiceId() + "Name: " + type.getTypeName());
+					serviceTypeRepo.save(type);
+		        }	
+		}
+		
+		//save childService for package
+		if(serviceDTO.getServiceChildList() != null && serviceDTO.isPackage() && savedService != null) {
+			int savedServiceId = savedService.getServiceId();
+			System.out.println("ID: ======== " + savedServiceId);
+			Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
+			Set<Integer> keySet = childServiceSet.keySet();
+			for(Integer singleServiceId : keySet) {
+				PackageServiceItem item = new PackageServiceItem();
+				item.setPackageServiceId(savedServiceId);
+				item.setService(serviceRepo.findByServiceId(singleServiceId).orElse(null));
+				item.setQuantity(childServiceSet.get(singleServiceId));
+				System.out.println("ID: " + singleServiceId + " Name: " + childServiceSet.get(singleServiceId));
+				packageServiceItemRepo.save(item);
+	        }
 			
-		} catch (Exception ex) {
-			ex.printStackTrace();
 		}
-		return null;
-	}
-
-	@Override
-	public Service updateInfo(int serviceId, Service newServiceInfo) {
-		Service service = serviceRepo.findById(serviceId).orElse(null);
-		try {
-
-			if (service == null) {
-				logger.warn("The Service Not Exists To Update !");
-				throw new Exception("The service with the ID: " + serviceId + "Not Exist !");
-
-			}
-			service.setTitleName(newServiceInfo.getTitleName().trim());
-			service.setDescription(newServiceInfo.getTitleName().trim());
-
-			service.setSalePrice(newServiceInfo.getSalePrice());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return service;
-	}
-
-	@Override
-	public Service updateSaleStatus(int serviceId, SaleStatus saleStatus) {
-		Service service = serviceRepo.findById(serviceId).orElse(null);
-		if (service != null) {
-			service.setSaleStatus(saleStatus);
-			service = serviceRepo.save(service);
-			return service;
-		}
-		return service;
-	}
-
-	@Override
-	public Service removeOne(int serviceId) {
-		Service delService = serviceRepo.findById(serviceId).orElse(null);
-		try {
-			if (delService == null) 
-				throw new IllegalArgumentException("The service with the ID: " + serviceId + "Do Not Exist !");
-				serviceRepo.deleteById(serviceId);
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-			logger.warn("The Service Not Exist To Remove !");
-			return null;
-		}
-		return delService;
+		
+		return this.getOne(savedService.getServiceId());
 	}
 
 	public boolean duplicateTitleName(String titleName) {
@@ -142,11 +218,11 @@ public class TheService implements IService {
 			return true;
 		return false;
 	}
+	
 
-	@Override
-	public List<Service> filterByRating(int ratingRequired) {
-		return serviceRepo.findByAvgRatingGreaterThanEqual(ratingRequired);
-	}
+
+
+
 
 
 }

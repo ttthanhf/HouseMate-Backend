@@ -5,12 +5,17 @@
 package housemate.repositories;
 
 import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import housemate.constants.Enum.SaleStatus;
 import housemate.entities.Service;
+import housemate.models.ServiceNewDTO;
 import jakarta.transaction.Transactional;
 
 /**
@@ -20,26 +25,52 @@ import jakarta.transaction.Transactional;
 @Transactional
 @Repository
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
+
+	//get all services for admin
+	List<Service> findAll(); 
 	
-	List<Service> findByTitleNameContaining(String keyword);
+	//get all available services for customer
+	@Query( value = "SELECT s FROM Service s WHERE s.saleStatus <> 'DISCONTINUED'")
+	List<Service> findAllAvailable(); 
 	
-	Service findByTitleName(String titleName);
+	//filter on service available - saleStatus : AVAILABLE || ONSALE
+	@Query("SELECT s FROM Service s WHERE "
+			+ "s.saleStatus = :saleStatus " 
+			+ "AND s.avgRating >= :ratingFrom " )
+    List<Service> filterAllKind(
+    		@Param("saleStatus") SaleStatus saleStatus,
+    		@Param("ratingFrom")int ratingFrom ,
+    		Sort sort
+    		);
+	
+	@Query("SELECT s FROM Service s WHERE "
+			+ "s.saleStatus = :saleStatus " 
+			+ "AND LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')) "
+			+ "AND s.avgRating >= :ratingFrom " )
+    List<Service> searchAllKind(
+    		@Param("saleStatus") SaleStatus saleStatus,
+    		@Param("keyword") String keyword,
+    		@Param("ratingFrom")int ratingFrom ,
+    		Sort sort
+    		);
+
+	
+	Optional<Service> findByServiceId(int id);
 	
 	Service findByTitleNameIgnoreCase(String titleName);
 	
-	List<Service> findBySaleStatus(SaleStatus saleStatus);
-	
-	List<Service> findByAvgRatingGreaterThanEqual(int requiredRating);
-	
 	@Transactional
 	@Modifying
-	@Query(value = "UPDATE Service s SET s.avgRating = (SELECT AVG(f.rating) FROM ServiceFeedback f WHERE f.service = s)")
+	@Query(value = "UPDATE Service s SET s.avgRating = "
+					+ "(SELECT COALESCE(AVG(f.rating),0) FROM ServiceFeedback f WHERE f.service = s) "
+			        + "WHERE NOT EXISTS (SELECT 1 FROM ServiceFeedback f WHERE f.service = s)")
 	void updateAvgRating();
 	
 	@Transactional
 	@Modifying
-	@Query(value = "UPDATE Service s SET s.numberOfSold = (SELECT COUNT(soi) FROM ServiceOrderItem soi WHERE soi.service = s)")
-
+	@Query(value = "UPDATE Service s SET s.numberOfSold = "
+					+ "(SELECT COALESCE(COUNT(soi),0) FROM ServiceOrderItem soi WHERE soi.service = s) "
+					+ "WHERE NOT EXISTS (SELECT 1 FROM ServiceOrderItem soi WHERE soi.service = s)")
 	void updatetheNumberOfSold();
 	
 
