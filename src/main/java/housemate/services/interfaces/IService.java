@@ -10,7 +10,6 @@ import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
 import housemate.constants.Enum.SortRequired;
-import housemate.entities.PackageService;
 import housemate.entities.Service;
 import housemate.models.ServiceNewDTO;
 import housemate.models.ServiceViewDTO;

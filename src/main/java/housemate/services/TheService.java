@@ -203,9 +203,9 @@ public class TheService implements IService {
 				PackageServiceItem item = new PackageServiceItem();
 				item.setPackageServiceId(savedServiceId);
 				item.setSingleServiceId(singleServiceId);
-				item.setService(serviceRepo.findByServiceId(singleServiceId).orElse(null));
 				item.setQuantity(childServiceSet.get(singleServiceId));
 				System.out.println("ID: " + singleServiceId + " Name: " + childServiceSet.get(singleServiceId));
+				System.out.println("SERVICE STRING =======" + serviceRepo.findByServiceId(singleServiceId).orElse(null));
 				packageServiceItemRepo.save(item);
 	        }
 			
