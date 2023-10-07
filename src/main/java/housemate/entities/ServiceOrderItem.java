@@ -38,12 +38,7 @@ public class ServiceOrderItem {
     @JoinColumn(name = "service_id", insertable = false, updatable = false)
     private Service service;
 
-    @ManyToOne
-    @JoinColumn(name = "package_service_id", insertable = false, updatable = false)
-    private PackageService packageService;
-
-
-
+    
     @Column(name = "quantity_purchased")
     private int quantityPurchased;
 

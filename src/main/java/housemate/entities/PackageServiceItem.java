@@ -5,15 +5,17 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.io.Serializable;
-import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import housemate.constants.Enum.UsageDurationUnit;
-import housemate.entities.PackageService;
+
 /**
  *
  * @author Anh
@@ -23,9 +25,9 @@ import housemate.entities.PackageService;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
- class RelationShipId implements Serializable {
-    private int packageId;
-    private int serviceId;
+ class IdComboPackageServiceItem implements Serializable {
+    private int packageServiceId; //same name with the key
+    private int singleServiceId;
 }
 
 @Data
@@ -34,36 +36,26 @@ import housemate.entities.PackageService;
 @Builder
 @Table(name = "package_service_item")
 @Entity
-@IdClass(RelationShipId.class)
+@IdClass(IdComboPackageServiceItem.class)
 public class PackageServiceItem {
 
-	@JsonBackReference
-	@ManyToOne
-	@JoinColumn(name = "package_service_id")
-    private PackageService packageService;
-
-	@JsonBackReference
     @ManyToOne
     @JoinColumn(name = "service_id")
     private Service service;
 
 	@Id
 	@Column(name = "package_service_id")
-    private int packageId;
+	@JsonIgnore
+    private int packageServiceId;
 	
 	@Id
 	@Column(name = "service_id")
-    private int serviceId;
+	@JsonIgnore
+    private int singleServiceId;
 	
     @Column(name = "quantity")
-    private int usageLimit;
+    private int quantity;
     
-    @Column(name = "duration_value")
-    private int usageDurationValue;
-
-    @Column(name = "duration_unit")
-    @Enumerated(EnumType.STRING)
-    private UsageDurationUnit usageDurationUnit;
 
 
 }

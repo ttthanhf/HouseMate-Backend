@@ -1,22 +1,17 @@
-package housemate.constants.validations;
+package housemate.utils.valiations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import housemate.repositories.PackageServiceRepository;
 import housemate.repositories.ServiceRepository;
+import housemate.utils.valiations.UniqueTitleName.UniqueTitleNameValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.Payload;
-import housemate.constants.validations.UniqueTitleName.UniqueTitleNameValidator;
 
 @Constraint(validatedBy = UniqueTitleNameValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})
@@ -37,19 +32,17 @@ public @interface UniqueTitleName {
 
 		@Autowired
 		ServiceRepository serviceRepo;
-		@Autowired
-		PackageServiceRepository packageRepo;
 		
 		@Override
 		public boolean isValid(String value, ConstraintValidatorContext context) {
 			
 			boolean isValidTilteName = true;
 			try {
-				if((packageRepo.findByTitleNameIgnoreCase(value.trim()) != null) 
-					    || (serviceRepo.findByTitleNameIgnoreCase(value.trim()) != null)) {
+				if((serviceRepo.findByTitleNameIgnoreCase(value) != null))
+				{
 						isValidTilteName = false;
 						throw new Exception("Duplicated Title Name");
-					}
+				}
 			}catch(Exception ex) {
 				ex.printStackTrace();
 			}

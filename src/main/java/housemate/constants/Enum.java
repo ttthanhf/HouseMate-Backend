@@ -3,6 +3,12 @@ package housemate.constants;
 /*This class contain all kind of Housemate Enum*/
 public class Enum {
 
+	public static enum ServiceCategory {
+		singles,
+		packages,
+		general;
+	}
+	
 	public static enum UsageDurationUnit {
 		DAY,
 		WEEK,
@@ -20,19 +26,10 @@ public class Enum {
 	}
 
 	public static enum SaleStatus {
-		NOT_AVAILABLE("not available for sale"),
-		AVAILABLE("available for sale"),
-		DISCONTINUED("discontinued");
-
-		private String saleStatus;
-
-		SaleStatus(String saleStatus) {
-			this.saleStatus = saleStatus;
-		}
-
-		public String getSaleStatus() {
-			return saleStatus;
-		}
+		AVAILABLE,
+		ONSALE,
+		DISCONTINUED,
+		NOT_AVAILABLE;
 	}
 
 	public static enum UnitOfMeasure {
@@ -55,7 +52,7 @@ public class Enum {
 	public static enum ServiceField {
 
 		NAME("titleName"),
-		PRICE("salePrice"),
+		PRICE("price"),
 		NUMBER_OF_SOLD("numberOfSold");
 
 		private String fieldName;

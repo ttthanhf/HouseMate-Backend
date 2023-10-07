@@ -11,7 +11,6 @@ import org.springframework.context.annotation.aspectj.EnableSpringConfigured;
  * @author ThanhF
  */
 @SpringBootApplication
-@EnableSpringConfigured
 @OpenAPIDefinition(
         info = @Info(
                 title = "HouseMate API",

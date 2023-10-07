@@ -1,4 +1,4 @@
-package housemate.services;
+package housemate.aspects;
 
 
 import org.aspectj.lang.JoinPoint;
@@ -9,8 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import housemate.entities.PackageService;
-import housemate.repositories.PackageServiceRepository;
 import housemate.repositories.ServiceRepository;
 
 /**
@@ -23,11 +21,12 @@ import housemate.repositories.ServiceRepository;
 public class TheServiceAspect {
 	
 	private Logger LOG = LoggerFactory.getLogger(this.getClass().getSimpleName());
+
 	
-	@Pointcut("within(housemate.repositories.ServiceRepository)")
+	@Pointcut("within(housemate.services.TheService)")
 	public void updateService() {
 	}
-	
+
 	@Autowired
 	ServiceRepository serviceRepo;
 	
@@ -35,29 +34,6 @@ public class TheServiceAspect {
 	public void before(JoinPoint jp) {
 		LOG.info("Update the avg_rating every time calling query ---- " + jp.getSignature().getName());
 		serviceRepo.updateAvgRating();
-		serviceRepo.updatetheNumberOfSold();
-		
+		//serviceRepo.updatetheNumberOfSold();
 	    }
-		
-	@Pointcut("within(housemate.repositories.PackageServiceRepository)")
-	public void updatePackage() {
-	}
-	
-	@Autowired
-	PackageServiceRepository packageRepo;
-	
-	@Before("updatePackage()")
-	public void updatePackage(JoinPoint jp) {
-		LOG.info("Update the avg_rating every time calling query ---- " + jp.getSignature().getName());
-		packageRepo.updateAvgRating();
-		packageRepo.updateTheNumberOfSold();
-		packageRepo.updateTheOriginalPrice();
-		
-	    }
-	
-
-
-	
-
-
 }

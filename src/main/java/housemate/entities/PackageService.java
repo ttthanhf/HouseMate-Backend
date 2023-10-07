@@ -6,7 +6,6 @@ package housemate.entities;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.springframework.data.rest.core.config.Projection;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -33,7 +32,7 @@ import lombok.Setter;
  *
  * @author Anh
  */
-@Entity
+//@Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -42,8 +41,6 @@ import lombok.Setter;
 public class PackageService {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Setter(value = AccessLevel.NONE)
     @Column(name = "package_service_id")
     private Integer packageServiceId;
 
@@ -66,35 +63,15 @@ public class PackageService {
     @Column(name = "avg_rating", columnDefinition = "float default 0")
     private Float avgRating;
 
-    //not yet build relationship
     @Column(name = "creator_id", nullable = false) 
     private int creatorId;
 
     @Column(name = "created_at", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createdAt;
 
     @Column(name = "number_of_sold", columnDefinition = "integer default 0")
     private Integer numberOfSold;
     
-    
-    @JsonManagedReference
-    @OneToMany(mappedBy = "packageService")
-    List<PackageServiceItem> packageServiceItemList;
-   
-    @OneToMany(mappedBy = "packageService")
-    @JsonIgnore
-    private List<ServiceOrderItem> serviceOrderItemList;
-    
-    @Projection(name = "summary", types = PackageService.class)
-    public interface Summary {
-    	Integer getPackageServiceId();
-    	String getTitleName();
-    	int getOriginalPrice();
-    	int getSalePrice();
-    	int getAvgRating();
-    	int getNumberOfSold();
-    }
     
     
 }

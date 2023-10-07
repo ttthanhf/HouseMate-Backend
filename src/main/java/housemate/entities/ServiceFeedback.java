@@ -31,16 +31,9 @@ public class ServiceFeedback {
     private int taskId;
     
     @ManyToOne
-    @JoinColumn(name = "service_id", insertable = false, updatable = false)
+    @JoinColumn(name = "service_id")
     private Service service;
-
-
-    @ManyToOne
-    @JoinColumn(name = "package_id", nullable = true, insertable = false, updatable = false)
-    private PackageService packageService;
-
-
-
+    
     @Column(name = "customer_id")
     private int customerId;
 
@@ -54,6 +47,5 @@ public class ServiceFeedback {
     private Float rating;
 
 
-    
 }
 
