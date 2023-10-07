@@ -14,6 +14,8 @@ import lombok.Setter;
 
 import java.io.Serializable;
 
+import org.springframework.data.annotation.ReadOnlyProperty;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -39,18 +41,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @IdClass(IdComboPackageServiceItem.class)
 public class PackageServiceItem {
 
-    @ManyToOne
-    @JoinColumn(name = "service_id")
-    private Service service;
+//    @ManyToOne
+//    @JoinColumn(name = "service_id")
+//    @ReadOnlyProperty
+//    private Service service;
 
 	@Id
 	@Column(name = "package_service_id")
-	@JsonIgnore
     private int packageServiceId;
 	
 	@Id
 	@Column(name = "service_id")
-	@JsonIgnore
     private int singleServiceId;
 	
     @Column(name = "quantity")
