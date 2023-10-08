@@ -6,7 +6,6 @@ import java.util.Set;
 
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
-import housemate.utils.valiations.UniqueTitleName;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -28,7 +27,6 @@ public class ServiceNewDTO implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 
-	@UniqueTitleName
 	@Schema(description = "Title name" )
 	private String titleName;
 
@@ -47,7 +45,7 @@ public class ServiceNewDTO implements Serializable{
 	@Schema(description = "Description of your service")
 	private String description;
 
-	@Hidden
+	
 	@Schema(description = "Default: AVAILABLE If salePrice Exist -> ONSALE")
 	private SaleStatus saleStatus;
 	

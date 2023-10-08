@@ -5,7 +5,6 @@
 package housemate.services.interfaces;
 
 import java.util.List;
-import org.springframework.data.domain.Sort;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
@@ -24,14 +23,14 @@ public interface IService {
     //READ LIST
 	public List<Service> getAllAvailable(); 
 	//public List<ServiceAvailableView> FitlerAndSortForAvailable(SaleStatus saleStatus, int ratingUpperFrom, ServiceField fieldname, SortRequired requireOrder);
-	public List<Service> fitlerAndSortForAllKind(
+	public List<Service> fitlerAndSortAllKind(
 			ServiceCategory category,
 			SaleStatus saleStatus,
 			int ratingUpperFrom,
 			ServiceField fieldname,
 			SortRequired requireOrder
 			);
-	public List<Service> searchForAllKind(
+	public List<Service> searchAllKind(
 			String keyword,
 			ServiceCategory category,
 			SaleStatus saleStatus,
@@ -44,16 +43,11 @@ public interface IService {
 	public ServiceViewDTO getOne(int serviceId);
 
 	//CREATE
-	public ServiceViewDTO createNew(ServiceNewDTO service);
+	public ServiceViewDTO createNew(ServiceNewDTO service) throws Exception;
 //	//----------//
-//	//UPDATE
-//	public Service updateInfo(int serviceId, Service newServiceInfo);
-//	public Service updateSaleStatus(int serviceId, SaleStatus saleStatus);
-//	//DELETE
-//	public Service removeOne(int serviceId );
-//	//public void removeMulti(Service service);
-//	
-//	
+	//UPDATE
+	public ServiceViewDTO updateInfo(int serviceId, ServiceNewDTO newServiceInfo) throws Exception ;
+
 	
 	
 }

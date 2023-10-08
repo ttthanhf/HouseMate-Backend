@@ -12,5 +12,6 @@ import housemate.entities.ServiceType;
 @Repository
 public interface PackageServiceItemRepository extends JpaRepository<PackageServiceItem, Integer[]>{
 	Optional<List<PackageServiceItem>> findAllByPackageServiceId(int packageServiceId);
+	Optional<PackageServiceItem> findByPackageServiceIdAndSingleServiceId(int packageServiceId, int singleServiceId);
 	
 }

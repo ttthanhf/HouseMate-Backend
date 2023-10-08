@@ -7,5 +7,7 @@ import housemate.entities.ServiceType;
 
 public interface ServiceTypeRepository extends JpaRepository<ServiceType, Integer> {
 	
-	Optional<List<ServiceType>> findAllByserviceId(int serviceId);
+	Optional<List<ServiceType>> findAllByServiceId(int serviceId);
+
+	void deleteAllByServiceId(int serviceId);
 }
