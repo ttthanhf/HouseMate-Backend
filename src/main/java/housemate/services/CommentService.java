@@ -83,7 +83,7 @@ public class CommentService {
     public ResponseEntity<String> removeComment(HttpServletRequest request, int commentId) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        Role userRole = authorizationUtil.getRoleFromAuthorizationHeader(request);
+        Role userRole = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
 
         // if role admin => can remove comment 
         if (userRole.equals(Role.ADMIN) && commentRepository.deleteCommentByAdmin(commentId) != 0) {
