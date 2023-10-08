@@ -21,7 +21,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -127,13 +126,16 @@ public class CommentService {
         replyCommentAdd.setDate(LocalDateTime.now());
 
         //If comment exist => can reply to that comment
-        Optional<Comment> comment = commentRepository.findById(replyCommentAdd.getCommentId());
+        Comment comment = commentRepository.getCommentById(replyCommentAdd.getCommentId());
         if (comment != null) {
+
             ReplyComment replyComment = replyCommentMapper.mapToEntity(replyCommentAdd);
             replyCommentRepository.save(replyComment);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body("Reply comment created");
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("Reply comment created");
+        return ResponseEntity.status(HttpStatus.CREATED).body("Reply comment can not create because comment not found");
     }
 
     @Transactional

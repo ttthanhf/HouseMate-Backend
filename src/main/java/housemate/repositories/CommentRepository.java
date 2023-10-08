@@ -29,4 +29,7 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
     @Modifying
     @Query("DELETE FROM Comment c WHERE c.id = :commentId")
     int deleteCommentByAdmin(@Param("commentId") int commentId);
+
+    @Query("SELECT c FROM Comment c WHERE c.id = :commentId")
+    Comment getCommentById(@Param("commentId") int commentId);
 }
