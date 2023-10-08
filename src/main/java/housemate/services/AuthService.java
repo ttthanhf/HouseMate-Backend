@@ -68,6 +68,11 @@ public class AuthService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't been created");
         }
 
+        // Check if account logged in with Google
+        if (accountDB.getPasswordHash() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Username or password not found");
+        }
+
         // Check correct password
         boolean isCorrect = bcryptUtil.checkpw(loginAccountDTO.getPassword(), accountDB.getPasswordHash());
         if (!isCorrect) {
