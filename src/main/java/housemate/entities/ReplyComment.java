@@ -4,12 +4,14 @@
  */
 package housemate.entities;
 
+import housemate.models.UserDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -46,4 +48,7 @@ public class ReplyComment {
 
     @Column(name = "date")
     private LocalDateTime date;
+
+    @Transient
+    private UserDTO userDetail;
 }

@@ -7,12 +7,15 @@ package housemate.services;
 import housemate.constants.Role;
 import housemate.entities.Comment;
 import housemate.entities.ReplyComment;
+import housemate.entities.UserAccount;
 import housemate.mappers.CommentMapper;
 import housemate.mappers.ReplyCommentMapper;
+import housemate.mappers.UserMapper;
 import housemate.models.CommentAddDTO;
 import housemate.models.ReplyCommentAddDTO;
 import housemate.repositories.CommentRepository;
 import housemate.repositories.ReplyCommentRepository;
+import housemate.repositories.UserRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
@@ -45,10 +48,18 @@ public class CommentService {
     @Autowired
     private AuthorizationUtil authorizationUtil;
 
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private UserRepository userRepository;
+
     public ResponseEntity<List<Comment>> getAllCommentByServiceId(int serviceId) {
         List<Comment> listComment = commentRepository.getAllCommentByServiceId(serviceId);
         for (Comment comment : listComment) {
             comment.setListReplyComment(getAllReplyCommentByCommentId(comment.getCommentId()));
+            UserAccount userEntity = userRepository.findByUserId(comment.getUserId());
+            comment.setUserDetail(userMapper.mapToDto(userEntity));
         }
         return ResponseEntity.status(HttpStatus.OK).body(listComment);
     }
@@ -77,6 +88,10 @@ public class CommentService {
     //Reply Comment Service
     private List<ReplyComment> getAllReplyCommentByCommentId(int commentId) {
         List<ReplyComment> listReplyComment = replyCommentRepository.getAllReplyCommentByCommentId(commentId);
+        for (ReplyComment replyComment : listReplyComment) {
+            UserAccount userEntity = userRepository.findByUserId(replyComment.getUserId());
+            replyComment.setUserDetail(userMapper.mapToDto(userEntity));
+        }
         return listReplyComment;
     }
 

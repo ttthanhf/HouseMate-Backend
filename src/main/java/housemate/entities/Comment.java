@@ -4,6 +4,7 @@
  */
 package housemate.entities;
 
+import housemate.models.UserDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -51,4 +52,7 @@ public class Comment {
 
     @Transient
     private List<ReplyComment> listReplyComment;
+
+    @Transient
+    private UserDTO userDetail;
 }
