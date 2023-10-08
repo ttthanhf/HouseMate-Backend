@@ -35,4 +35,7 @@ public interface CartRepository extends JpaRepository<Cart, Integer> {
     @Transactional
     @Query("UPDATE Cart c SET c.quantity = :quanlity WHERE c.userId = :userId AND c.serviceId = :serviceId")
     void updateCartQuantity(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quanlity") int quanlity);
+
+    @Query("SELECT sum(c.quantity) FROM Cart c WHERE c.userId = :userId")
+    int getTotalCart(@Param("userId") int userId);
 }
