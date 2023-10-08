@@ -27,6 +27,10 @@ public interface ReplyCommentRepository extends JpaRepository<ReplyComment, Inte
     int deleteReplyComment(@Param("replyCommentId") int replyCommentId, @Param("userId") int userId);
 
     @Modifying
+    @Query("DELETE FROM ReplyComment c WHERE c.commentId = :commentId")
+    void deleteReplyCommentByCommentId(@Param("commentId") int commentId);
+
+    @Modifying
     @Query("DELETE FROM Comment c WHERE c.id = :commentId")
     int deleteCommentByAdmin(@Param("commentId") int commentId);
 }
