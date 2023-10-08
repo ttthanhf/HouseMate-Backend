@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  *
  * @author Anh
@@ -51,6 +53,7 @@ public class ServiceOrder {
     private int paymentTransactionId;
 
     @OneToMany(mappedBy = "serviceOrder")
+    @JsonIgnore
     private List<ServiceOrderItem> serviceOrderItemList;
 
     

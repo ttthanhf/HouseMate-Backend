@@ -7,6 +7,7 @@ public class Enum {
 		singles,
 		packages,
 		general;
+		
 	}
 	
 	public static enum UsageDurationUnit {
@@ -29,24 +30,14 @@ public class Enum {
 		AVAILABLE,
 		ONSALE,
 		DISCONTINUED,
-		NOT_AVAILABLE;
 	}
 
 	public static enum UnitOfMeasure {
 
-		HOUR("Hour"),
-		KG("Kg"),
-		TIME("Time");
-
-		private String unitOfMeasure;
-
-		UnitOfMeasure(String unitOfMeasure) {
-			this.unitOfMeasure = unitOfMeasure;
-		}
-
-		public String getUnitOfMeasure() {
-			return unitOfMeasure;
-		}
+		HOUR,
+		KG,
+		TIME;
+		
 	}
 
 	public static enum ServiceField {

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import housemate.constants.Enum.UsageDurationUnit;
 import housemate.entities.PackageServiceItem;
@@ -28,26 +29,25 @@ public class ServiceViewDTO {
 	@JsonInclude(value = Include.NON_EMPTY)
 	private List<PackageServiceItem> packageServiceItemList;
 	
-	@JsonInclude(value = Include.NON_EMPTY)
-	List<PackagePrice> priceList;
-
+	List<ServicePrice> priceList;
 	
+
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class PackagePrice{ //let this class to access directly
-		private int duration_value;
-		private UsageDurationUnit duration_unit;
+	public static class ServicePrice{ //let this class to access directly
+		private int durationValue;
+		private UsageDurationUnit durationUnit;
 		private int originalPrice;
 		private int salePrice;
+		@JsonProperty(value = "extensionFeePerMonth")
+		private int extensionFee;
 		
-		public PackagePrice setPackagePrice(Service service, int duration_value, UsageDurationUnit duration_unit ) {
-			int originalPrice = service.getOriginalPrice() * duration_value;
-			int salePrice = service.getSalePrice() * duration_value;
-			return new PackagePrice(duration_value, duration_unit,originalPrice,salePrice);
+		public ServicePrice setPriceForComboMonth(Service service, int duration_value, UsageDurationUnit duration_unit, int extensionFee) {
+			int originalPrice = service.getOriginalPrice() + extensionFee * duration_value;
+			int salePrice = (originalPrice - service.getSalePrice()) * extensionFee * duration_value;
+			return new ServicePrice(duration_value, duration_unit,originalPrice,salePrice, extensionFee);
 		}
-		
-		
 	}
 	
 }

@@ -41,11 +41,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @IdClass(IdComboPackageServiceItem.class)
 public class PackageServiceItem {
 
-//    @ManyToOne
-//    @JoinColumn(name = "service_id")
-//    @ReadOnlyProperty
-//    private Service service;
-
 	@Id
 	@Column(name = "package_service_id")
     private int packageServiceId;
@@ -57,6 +52,8 @@ public class PackageServiceItem {
     @Column(name = "quantity")
     private int quantity;
     
+    @Transient
+    private String description;
 
 
 }

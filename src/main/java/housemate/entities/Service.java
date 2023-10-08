@@ -26,12 +26,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @Table(name = "service")
-
 public class Service {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Setter(value = AccessLevel.NONE)
 	@Column(name = "service_id")
 	private int serviceId;
 
@@ -66,9 +64,5 @@ public class Service {
 	
 	@Column(name = "isPackage", nullable = false)
 	private boolean isPackage;
-	
-
-
-	
 	
 }
