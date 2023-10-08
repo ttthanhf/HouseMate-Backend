@@ -24,9 +24,9 @@ public class AuthorizationUtil {
         return (int) jwtUtil.extractPayload(token).get("id");
     }
 
-    public Role getRoleFromAuthorizationHeader(HttpServletRequest request) {
+    public String getRoleFromAuthorizationHeader(HttpServletRequest request) {
         String token = request.getHeader("Authorization").substring(7);
-        return (Role) jwtUtil.extractPayload(token).get("role");
+        return (String) jwtUtil.extractPayload(token).get("role");
     }
 
 }
