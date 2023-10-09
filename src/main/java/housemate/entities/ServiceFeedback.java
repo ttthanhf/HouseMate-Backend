@@ -5,6 +5,7 @@
 package housemate.entities;
 
 
+import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -41,7 +42,7 @@ public class ServiceFeedback {
     private int content;
 
     @Column(name = "created_at")
-    private int createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "rating", columnDefinition = "float default 0")
     private Float rating;
