@@ -20,6 +20,7 @@ import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -71,7 +72,7 @@ public class CommentService {
     public ResponseEntity<String> addComment(HttpServletRequest request, CommentAddDTO commentAdd) {
 
         commentAdd.setUserId(authorizationUtil.getUserIdFromAuthorizationHeader(request));
-        commentAdd.setDate(LocalDateTime.now());
+        commentAdd.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 
         Comment serviceComment = commentMapper.mapToEntity(commentAdd);
         commentRepository.save(serviceComment);
@@ -123,7 +124,7 @@ public class CommentService {
     public ResponseEntity<String> addReplyComment(HttpServletRequest request, ReplyCommentAddDTO replyCommentAdd) {
 
         replyCommentAdd.setUserId(authorizationUtil.getUserIdFromAuthorizationHeader(request));
-        replyCommentAdd.setDate(LocalDateTime.now());
+        replyCommentAdd.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 
         //If comment exist => can reply to that comment
         Comment comment = commentRepository.getCommentById(replyCommentAdd.getCommentId());
