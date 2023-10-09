@@ -105,7 +105,7 @@ public class ServicesController {
 	}
 	
 	@PostMapping("/new")
-	public ResponseEntity<Object> createNewService(@Valid @RequestBody ServiceNewDTO newServiceDTO) {	
+	public ResponseEntity<?> createNewService(@Valid @RequestBody ServiceNewDTO newServiceDTO) {	
 		ServiceViewDTO service = null;
 		try {
 			service = servDao.createNew(newServiceDTO);
@@ -116,7 +116,7 @@ public class ServicesController {
 	}
 	
 	@PutMapping("/{id}")
-	public ResponseEntity<Object> updateService(@PathVariable("id") int serviceId,@Valid @RequestBody ServiceNewDTO newServiceDTO) {	
+	public ResponseEntity<?> updateService(@PathVariable("id") int serviceId,@Valid @RequestBody ServiceNewDTO newServiceDTO) {	
 		ServiceViewDTO service = null;
 		try {
 			service = servDao.updateInfo(serviceId, newServiceDTO);
