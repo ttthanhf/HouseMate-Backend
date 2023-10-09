@@ -5,6 +5,7 @@
 package housemate.controllers;
 
 import housemate.entities.Comment;
+import housemate.entities.ReplyComment;
 import housemate.models.CommentAddDTO;
 import housemate.models.ReplyCommentAddDTO;
 import housemate.services.CommentService;
@@ -56,6 +57,12 @@ public class CommentController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<String> removeComment(HttpServletRequest request, @Valid @PathVariable int commentId) {
         return commentService.removeComment(request, commentId);
+    }
+
+    @Operation(summary = "Get all reply comment by comment id")
+    @GetMapping("/{commentId}/reply")
+    public ResponseEntity<List<ReplyComment>> getAllReplyCommentByCommentId(@Valid @PathVariable int commentId) {
+        return commentService.getAllReplyCommentByCommentId(commentId);
     }
 
     @Operation(summary = "Add reply comment")
