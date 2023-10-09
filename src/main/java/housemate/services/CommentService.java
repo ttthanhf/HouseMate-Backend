@@ -124,7 +124,7 @@ public class CommentService {
     public ResponseEntity<String> addReplyComment(HttpServletRequest request, ReplyCommentAddDTO replyCommentAdd) {
 
         replyCommentAdd.setUserId(authorizationUtil.getUserIdFromAuthorizationHeader(request));
-        replyCommentAdd.setDate(LocalDateTime.now());
+        replyCommentAdd.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 
         //If comment exist => can reply to that comment
         Comment comment = commentRepository.getCommentById(replyCommentAdd.getCommentId());
