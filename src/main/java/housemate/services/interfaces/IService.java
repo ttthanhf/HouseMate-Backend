@@ -6,7 +6,6 @@ package housemate.services.interfaces;
 
 import java.util.List;
 import java.util.Optional;
-
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
@@ -42,7 +41,7 @@ public interface IService {
 	public ServiceViewDTO createNew(ServiceNewDTO service);
 //	//----------//
 	//UPDATE
-	public ServiceViewDTO updateInfo(int serviceId, ServiceNewDTO newServiceInfo) throws Exception ;
+	public ServiceViewDTO updateInfo(int serviceId, ServiceNewDTO newServiceInfo) throws Exception;
 
 	
 	
