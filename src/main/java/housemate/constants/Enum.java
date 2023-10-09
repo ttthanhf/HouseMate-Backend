@@ -32,15 +32,12 @@ public class Enum {
 	}
 
 	public static enum UnitOfMeasure {
-
 		HOUR,
 		KG,
 		TIME;
-		
 	}
 
 	public static enum ServiceField {
-
 		NAME("titleName"),
 		PRICE("price"),
 		NUMBER_OF_SOLD("numberOfSold");
