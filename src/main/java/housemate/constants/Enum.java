@@ -7,7 +7,6 @@ public class Enum {
 		singles,
 		packages,
 		general;
-		
 	}
 	
 	public static enum UsageDurationUnit {

@@ -34,6 +34,6 @@ public class TheServiceAspect {
 	public void before(JoinPoint jp) {
 		LOG.info("Update the avg_rating every time calling query ---- " + jp.getSignature().getName());
 		serviceRepo.updateAvgRating();
-		//serviceRepo.updatetheNumberOfSold();
+		serviceRepo.updatetheNumberOfSold();
 	    }
 }

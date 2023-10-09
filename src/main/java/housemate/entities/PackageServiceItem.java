@@ -5,19 +5,11 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.io.Serializable;
-
-import org.springframework.data.annotation.ReadOnlyProperty;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  *
  * @author Anh

@@ -9,11 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.util.Date;
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  *
@@ -51,10 +48,6 @@ public class ServiceOrder {
 
     @Column(name = "payment_transaction_id")
     private int paymentTransactionId;
-
-    @OneToMany(mappedBy = "serviceOrder")
-    @JsonIgnore
-    private List<ServiceOrderItem> serviceOrderItemList;
 
     
 }

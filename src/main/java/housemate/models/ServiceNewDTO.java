@@ -3,7 +3,6 @@ package housemate.models;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
-
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
 import io.swagger.v3.oas.annotations.Hidden;
