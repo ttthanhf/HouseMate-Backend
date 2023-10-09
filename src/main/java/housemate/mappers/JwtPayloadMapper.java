@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtPayloadMapper {
 
-    public JwtPayload mapFromUserAccount(UserAccount account) {
+    public JwtPayload mapFromUserAccount (UserAccount account) {
         JwtPayload jwtPayload = new JwtPayload();
 
         jwtPayload.setId(account.getUserId());

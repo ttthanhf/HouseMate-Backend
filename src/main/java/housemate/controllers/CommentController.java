@@ -6,8 +6,11 @@ package housemate.controllers;
 
 import housemate.entities.Comment;
 import housemate.models.CommentAddDTO;
+import housemate.models.ReplyCommentAddDTO;
 import housemate.services.CommentService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -29,25 +32,43 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/comment")
 @CrossOrigin
+@Tag(name = "Comment")
 public class CommentController {
 
     @Autowired
     CommentService commentService;
 
+    @Operation(summary = "Get all comment by service id")
     @GetMapping("/services/{serviceId}")
     public ResponseEntity<List<Comment>> getAllCommentByServiceId(@Valid @PathVariable int serviceId) {
         return commentService.getAllCommentByServiceId(serviceId);
     }
 
-    @PostMapping("/")
+    @Operation(summary = "Add comment")
+    @PostMapping("/add")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<String> addComment(HttpServletRequest request, @Valid @RequestBody CommentAddDTO commentAdd) {
         return commentService.addComment(request, commentAdd);
     }
 
-    @DeleteMapping("/{commentId}")
+    @Operation(summary = "Remove comment")
+    @DeleteMapping("/remove/{commentId}")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<String> removeComment(HttpServletRequest request, @Valid @PathVariable int commentId) {
         return commentService.removeComment(request, commentId);
+    }
+
+    @Operation(summary = "Add reply comment")
+    @PostMapping("/reply/add")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<String> addReplyComment(HttpServletRequest request, @Valid @RequestBody ReplyCommentAddDTO replyCommentAdd) {
+        return commentService.addReplyComment(request, replyCommentAdd);
+    }
+
+    @Operation(summary = "Remove reply comment")
+    @DeleteMapping("/reply/remove/{replyCommentId}")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<String> removeReplyComment(HttpServletRequest request, @Valid @PathVariable int replyCommentId) {
+        return commentService.removeReplyComment(request, replyCommentId);
     }
 }

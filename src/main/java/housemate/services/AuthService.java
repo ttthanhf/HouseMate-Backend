@@ -8,22 +8,31 @@ import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
 import housemate.mappers.AccountMapper;
 import housemate.mappers.JwtPayloadMapper;
+import housemate.models.ForgotPasswordDTO;
 import housemate.models.LoginAccountDTO;
 import housemate.models.RegisterAccountDTO;
+import housemate.models.ResetPasswordDTO;
 import housemate.repositories.UserRepository;
+import housemate.utils.BcryptUtil;
 import housemate.utils.JwtUtil;
 import java.net.URI;
+
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
-import org.mindrot.jbcrypt.BCrypt;
+import java.util.UUID;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 /**
- *
  * @author hdang09
  */
 @Service
@@ -35,19 +44,37 @@ public class AuthService {
     @Autowired
     JwtUtil jwtUtil;
 
+    @Autowired
+    BcryptUtil bcryptUtil;
+
+    @Autowired
+    AccountMapper accountMapper;
+
+    @Autowired
+    private JavaMailSender mailSender;
+
     @Value("${url.client}")
-    private String redirectUri;
+    private String URL_CLIENT;
+
+    public ResponseEntity<List<UserAccount>> getAll() {
+        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
+    }
 
     public ResponseEntity<String> login(LoginAccountDTO loginAccountDTO) {
         UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
 
         // Check email not in database
         if (accountDB == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't created");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't been created");
+        }
+
+        // Check if account logged in with Google
+        if (accountDB.getPasswordHash() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Username or password not found");
         }
 
         // Check correct password
-        boolean isCorrect = BCrypt.checkpw(loginAccountDTO.getPassword(), accountDB.getPasswordHash());
+        boolean isCorrect = bcryptUtil.checkpw(loginAccountDTO.getPassword(), accountDB.getPasswordHash());
         if (!isCorrect) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email or password not correct");
         }
@@ -58,11 +85,6 @@ public class AuthService {
         String token = jwtUtil.generateToken(payload);
 
         return ResponseEntity.status(HttpStatus.OK).body(token);
-
-    }
-
-    public ResponseEntity<List<UserAccount>> getAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
     }
 
     public ResponseEntity<String> register(RegisterAccountDTO registerAccountDTO) {
@@ -74,7 +96,9 @@ public class AuthService {
         }
 
         // Insert to database
-        UserAccount userAccount = new AccountMapper().mapToEntity(registerAccountDTO);
+        String hash = bcryptUtil.hashPassword(registerAccountDTO.getPassword());
+        registerAccountDTO.setPassword(hash);
+        UserAccount userAccount = accountMapper.mapToEntity(registerAccountDTO);
         userAccount = userRepository.save(userAccount);
 
         // Generate token
@@ -85,24 +109,70 @@ public class AuthService {
         return ResponseEntity.status(HttpStatus.OK).body(token);
     }
 
-    public ResponseEntity<String> forgotPassword(String email) {
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("This feature will be upgraded soon!");
+    private void sendEmail(String recipientEmail, String resetPasswordLink) throws MessagingException, UnsupportedEncodingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+
+        helper.setFrom("smtp.housemate@gmail.com", "HouseMate Security");
+        helper.setTo(recipientEmail);
+
+        String subject = "Here's the link to reset your password";
+        String content = "<p>Hello,</p>"
+                + "<p>You have requested to reset your password.</p>"
+                + "<p>Click the link below to change your password:</p>"
+                + "<p><a href=\"" + resetPasswordLink + "\">Change my password</a></p>"
+                + "<br>"
+                + "<p>Ignore this email if you do remember your password, "
+                + "or you have not made the request.</p>";
+
+        helper.setSubject(subject);
+        helper.setText(content, true);
+
+        mailSender.send(message);
     }
 
-    public ResponseEntity<String> setNewPassword(LoginAccountDTO loginAccountDTO) {
-        UserAccount accountDB = userRepository.findByEmailAddress(loginAccountDTO.getEmail());
+    private String generateRandomString() {
+        return UUID.randomUUID().toString().replaceAll("-", "").substring(0, 30);
+    }
+
+    public ResponseEntity<String> forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
+        String token = generateRandomString();
+        String email = forgotPasswordDTO.getEmail();
+        try {
+            // Check account in database
+            UserAccount account = userRepository.findByEmailAddress(email);
+            if (account == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this email!");
+            }
+
+            // Store reset_password_token to account
+            account.setResetPasswordToken(token);
+            userRepository.save(account);
+
+            // Send email
+            String resetPasswordLink = URL_CLIENT + "/set-password?token=" + token;
+            sendEmail(email, resetPasswordLink);
+            return ResponseEntity.status(HttpStatus.OK).body("We have sent a reset password link to your email. Please check.");
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            return ResponseEntity.status(HttpStatus.OK).body("Error while sending email");
+        }
+    }
+
+    public ResponseEntity<String> resetPassword(ResetPasswordDTO resetPasswordDTO) {
+        String token = resetPasswordDTO.getToken();
+        UserAccount account = userRepository.findByResetPasswordToken(token);
 
         // Check email not in database
-        if (accountDB == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't created");
+        if (account == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token is invalid");
         }
 
-
         // Set new password
-
-
-        accountDB.setToPasswordHash(loginAccountDTO.getPassword());
-        userRepository.save(accountDB);
+        String password = resetPasswordDTO.getPassword();
+        String hash = bcryptUtil.hashPassword(password);
+        account.setPasswordHash(hash);
+        account.setResetPasswordToken(null);
+        userRepository.save(account);
         return ResponseEntity.status(HttpStatus.OK).body("Set new password successfully!");
     }
 
@@ -128,7 +198,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(payload);
 
         //Create uri with token for redirect
-        String url = redirectUri + "/" + "?success=true&token=" + token;
+        String url = URL_CLIENT + "/" + "?success=true&token=" + token;
         URI uri = URI.create(url);
         return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
     }
