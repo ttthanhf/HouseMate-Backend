@@ -5,6 +5,7 @@
 package housemate.controllers;
 
 import housemate.entities.Comment;
+import housemate.entities.ReplyComment;
 import housemate.models.CommentAddDTO;
 import housemate.models.ReplyCommentAddDTO;
 import housemate.services.CommentService;
@@ -40,7 +41,7 @@ public class CommentController {
 
     @Operation(summary = "Get all comment by service id")
     @GetMapping("/services/{serviceId}")
-    public ResponseEntity<List<Comment>> getAllCommentByServiceId(@Valid @PathVariable int serviceId) {
+    public ResponseEntity<List<Comment>> getAllCommentByServiceId(@PathVariable int serviceId) {
         return commentService.getAllCommentByServiceId(serviceId);
     }
 
@@ -54,8 +55,14 @@ public class CommentController {
     @Operation(summary = "Remove comment")
     @DeleteMapping("/remove/{commentId}")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<String> removeComment(HttpServletRequest request, @Valid @PathVariable int commentId) {
+    public ResponseEntity<String> removeComment(HttpServletRequest request, @PathVariable int commentId) {
         return commentService.removeComment(request, commentId);
+    }
+
+    @Operation(summary = "Get all reply comment by comment id")
+    @GetMapping("/{commentId}/reply")
+    public ResponseEntity<List<ReplyComment>> getAllReplyCommentByCommentId(@PathVariable int commentId) {
+        return commentService.getAllReplyCommentByCommentId(commentId);
     }
 
     @Operation(summary = "Add reply comment")
@@ -68,7 +75,7 @@ public class CommentController {
     @Operation(summary = "Remove reply comment")
     @DeleteMapping("/reply/remove/{replyCommentId}")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<String> removeReplyComment(HttpServletRequest request, @Valid @PathVariable int replyCommentId) {
+    public ResponseEntity<String> removeReplyComment(HttpServletRequest request, @PathVariable int replyCommentId) {
         return commentService.removeReplyComment(request, replyCommentId);
     }
 }

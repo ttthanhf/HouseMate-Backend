@@ -20,6 +20,7 @@ import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -60,7 +61,7 @@ public class CommentService {
 
         //add user detail and reply comment for each comment
         for (Comment comment : listComment) {
-            comment.setListReplyComment(getAllReplyCommentByCommentId(comment.getCommentId()));
+            comment.setListReplyComment(getAllReplyCommentByCommentIdForComment(comment.getCommentId()));
             UserAccount userEntity = userRepository.findByUserId(comment.getUserId());
             comment.setUserDetail(userMapper.mapToDto(userEntity));
         }
@@ -71,7 +72,7 @@ public class CommentService {
     public ResponseEntity<String> addComment(HttpServletRequest request, CommentAddDTO commentAdd) {
 
         commentAdd.setUserId(authorizationUtil.getUserIdFromAuthorizationHeader(request));
-        commentAdd.setDate(LocalDateTime.now());
+        commentAdd.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 
         Comment serviceComment = commentMapper.mapToEntity(commentAdd);
         commentRepository.save(serviceComment);
@@ -107,7 +108,7 @@ public class CommentService {
     }
 
     //Reply Comment Service
-    private List<ReplyComment> getAllReplyCommentByCommentId(int commentId) {
+    private List<ReplyComment> getAllReplyCommentByCommentIdForComment(int commentId) {
 
         List<ReplyComment> listReplyComment = replyCommentRepository.getAllReplyCommentByCommentId(commentId);
 
@@ -120,10 +121,23 @@ public class CommentService {
         return listReplyComment;
     }
 
+    public ResponseEntity<List<ReplyComment>> getAllReplyCommentByCommentId(int commentId) {
+
+        List<ReplyComment> listReplyComment = replyCommentRepository.getAllReplyCommentByCommentId(commentId);
+
+        //add user Detail to reply comment
+        for (ReplyComment replyComment : listReplyComment) {
+            UserAccount userEntity = userRepository.findByUserId(replyComment.getUserId());
+            replyComment.setUserDetail(userMapper.mapToDto(userEntity));
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(listReplyComment);
+    }
+
     public ResponseEntity<String> addReplyComment(HttpServletRequest request, ReplyCommentAddDTO replyCommentAdd) {
 
         replyCommentAdd.setUserId(authorizationUtil.getUserIdFromAuthorizationHeader(request));
-        replyCommentAdd.setDate(LocalDateTime.now());
+        replyCommentAdd.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 
         //If comment exist => can reply to that comment
         Comment comment = commentRepository.getCommentById(replyCommentAdd.getCommentId());
