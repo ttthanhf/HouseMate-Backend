@@ -4,6 +4,7 @@
  */
 package housemate.filters;
 
+import housemate.constants.RegexConstants;
 import housemate.mappers.JwtPayloadMapper;
 import housemate.utils.JwtUtil;
 import jakarta.servlet.FilterChain;
@@ -32,6 +33,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     JwtPayloadMapper jwtPayloadMapper;
 
     private final List<String> excludedUrls = Arrays.asList("/swagger-ui", "/auth", "/v3/api-docs", "/comment/services");
+    private final List<String> excludedUrlsRegex = Arrays.asList(RegexConstants.REPLY_COMMENT_REGEX);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -70,11 +72,21 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     }
 
     private boolean isUrlExcluded(String url) {
+
+        //check url start with excludedUrls
         for (String excludedUrl : excludedUrls) {
             if (url.startsWith(excludedUrl)) {
                 return true;
             }
         }
+
+        //check url match with excludedUrlsRegex
+        for (String excludedUrlRegex : excludedUrlsRegex) {
+            if (url.matches(excludedUrlRegex)) {
+                return true;
+            }
+        }
+
         return false;
     }
 
