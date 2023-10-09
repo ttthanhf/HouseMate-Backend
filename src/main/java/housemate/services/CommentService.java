@@ -131,7 +131,7 @@ public class CommentService {
             replyComment.setUserDetail(userMapper.mapToDto(userEntity));
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(listReplyComment);
+        return ResponseEntity.status(HttpStatus.OK).body(listReplyComment);
     }
 
     public ResponseEntity<String> addReplyComment(HttpServletRequest request, ReplyCommentAddDTO replyCommentAdd) {
