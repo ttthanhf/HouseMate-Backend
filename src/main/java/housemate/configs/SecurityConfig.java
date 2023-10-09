@@ -27,8 +27,8 @@ public class SecurityConfig {
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .oauth2Login(oauth2Login -> oauth2Login
-                .defaultSuccessUrl("/auth/callback/google/redirect", true))
-                ;
+                .defaultSuccessUrl("/auth/callback/google/redirect", true));
+                
         return http.build();
     }
 }

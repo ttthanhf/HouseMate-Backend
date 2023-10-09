@@ -4,12 +4,10 @@
  */
 package housemate.utils;
 
-import housemate.constants.Role;
 import housemate.entities.JwtPayload;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-
 import java.security.Key;
 import java.util.*;
 import java.util.function.Function;

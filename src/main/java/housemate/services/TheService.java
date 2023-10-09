@@ -1,12 +1,13 @@
 package housemate.services;
 
-import java.net.BindException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import housemate.repositories.PackageServiceItemRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
 import housemate.services.interfaces.IService;
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import housemate.models.ServiceViewDTO.ServicePrice;
 /**
@@ -49,103 +51,78 @@ public class TheService implements IService {
 	
 	@Override
 	public List<Service> getAllAvailable() {
-		List<Service> serviceDtoList = serviceRepo.findAllAvailable();
-		return serviceDtoList;
+		List<Service> serviceList = serviceRepo.findAllAvailable();
+		if(serviceList.isEmpty())
+			throw new EntityNotFoundException("Empty Services Now !");
+		return serviceList;
 	}
 
 	@Override
-	public List<Service> fitlerAndSortAllKind(ServiceCategory category, SaleStatus saleStatus, int ratingUpperFrom,
-			ServiceField fieldname, SortRequired requireOrder) {
-
-		List<Service> serviceDtoList;
-		Sort sort;
+	public List<Service> searchFilterAllKind(
+			String keywordValue ,
+			Optional<ServiceCategory> category,
+			Optional<SaleStatus> saleStatus,
+			Optional<Integer> rating,
+			Optional<ServiceField> sortBy,
+			Optional<SortRequired> orderBy) {
 		
-		//Sort by price field
-		if (fieldname.equals(fieldname.PRICE)) {
-			sort = Sort.unsorted();
-			serviceDtoList = serviceRepo.filterAllKind(saleStatus, ratingUpperFrom, sort);
-			Comparator<Service> theComparator = Comparator.comparingDouble(
-							service -> (service.getOriginalPrice() - service.getSalePrice())
-						);
-			if (requireOrder.equals(SortRequired.DESC)) {
-				theComparator = theComparator.reversed();
-			}
-			
-			Collections.sort(serviceDtoList, theComparator);
-			
-		} else { //sort by other field: title name, rating, ...
-			if (requireOrder.equals(SortRequired.ASC))
-				sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
-			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
-			serviceDtoList = serviceRepo.filterAllKind(saleStatus, ratingUpperFrom, sort);
-		}
+		List<Service> serviceList;
 		
-		//Filter the list by service type
-		List<Service> updateListByCategory = new ArrayList<>();
-		if (category.equals(ServiceCategory.packages)) {	
-			for (Service service : serviceDtoList) 
-				if (service.isPackage()) 
-					updateListByCategory.add(service);
-			serviceDtoList = updateListByCategory;
-		} if (category.equals(ServiceCategory.singles)) {
-			for (Service service : serviceDtoList) 
-				if (!service.isPackage())
-					updateListByCategory.add(service);
-			serviceDtoList = updateListByCategory;
-		}
-		return serviceDtoList;
-	}
-
-
-	@Override
-	public List<Service> searchAllKind(String keyword, ServiceCategory category, SaleStatus saleStatus,
-			int ratingUpperFrom, ServiceField fieldname, SortRequired requireOrder) {
-		List<Service> serviceDtoList;
+		if(keywordValue != null) keywordValue = keywordValue.trim(); 
+		else keywordValue = "";
+		ServiceCategory cateogryValue = category.orElse(ServiceCategory.general);
+		SaleStatus statusValue = saleStatus.orElse(SaleStatus.AVAILABLE); 
+		Integer ratingValue = rating.orElse(0); 
+		ServiceField fieldname = sortBy.orElse(ServiceField.PRICE);
+		SortRequired requireOrder = orderBy.orElse(SortRequired.ASC);
+		
+		
 		Sort sort;
 
 		if (fieldname.equals(fieldname.PRICE)) {
 			sort = Sort.unsorted();
-			serviceDtoList = serviceRepo.searchAllKind(saleStatus, keyword.trim(), ratingUpperFrom, sort);
+			serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, sort);
 			Comparator<Service> theComparator = Comparator
 					.comparingDouble(service -> (service.getOriginalPrice() - service.getSalePrice()));
 			if (requireOrder.equals(SortRequired.DESC)) {
 				theComparator = theComparator.reversed();
 			}
 			
-			Collections.sort(serviceDtoList, theComparator);
+			Collections.sort(serviceList, theComparator);
 			
 		} else {
 			if (requireOrder.equals(SortRequired.ASC))
 				sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
 			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
-			serviceDtoList = serviceRepo.searchAllKind(saleStatus, keyword, ratingUpperFrom, sort);
+			serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, sort);
 		}
 		
-		List<Service> updateList = new ArrayList<>();
-		if (category.equals(ServiceCategory.packages)) {	
-			for (Service service : serviceDtoList) 
+		List<Service> updateListByCategory = new ArrayList<>();
+		if (cateogryValue.equals(ServiceCategory.packages)) {	
+			for (Service service : serviceList) 
 				if (service.isPackage()) 
-					updateList.add(service);
-			serviceDtoList = updateList;
-		} if (category.equals(ServiceCategory.singles)) {
-			for (Service service : serviceDtoList) 
+					updateListByCategory.add(service);
+			serviceList = updateListByCategory;
+		} if (cateogryValue.equals(ServiceCategory.singles)) {
+			for (Service service : serviceList) 
 				if (!service.isPackage())
-					updateList.add(service);
-			serviceDtoList = updateList;
+					updateListByCategory.add(service);
+			serviceList = updateListByCategory;
 		}
-		return serviceDtoList;
+		
+		if (serviceList.isEmpty() || serviceList == null) {
+			throw new EntityNotFoundException("Not found !");
+		}
+		return serviceList;
 	}
-
-
-
 
 
 	@Override
 	public ServiceViewDTO getOne(int serviceId) {
+		
 		ServiceViewDTO serviceDtoForDetail = new ServiceViewDTO();
 		
 		Service service = serviceRepo.findById(serviceId).orElse(null);
-		
 		
 		if(service == null) 
 			throw new EntityNotFoundException("Not found this service !");
@@ -175,12 +152,12 @@ public class TheService implements IService {
 			priceList.add(servicePrice.setPriceForComboMonth(service, 6, UsageDurationUnit.MONTH,10000)); //extension fee 15000/month for 6 months
 			priceList.add(servicePrice.setPriceForComboMonth(service, 12, UsageDurationUnit.MONTH,20000)); //extension fee 20000/month for 12 months
 			serviceDtoForDetail.setPriceList(priceList);
-		
+			
 		return serviceDtoForDetail;
 	}
 
 	@Override
-	public ServiceViewDTO createNew(ServiceNewDTO serviceDTO) throws Exception{	
+	public ServiceViewDTO createNew(ServiceNewDTO serviceDTO) {	
 		
 		ServiceViewDTO savedServiceDTO = null;
 			//Check duplicate title name
@@ -191,7 +168,7 @@ public class TheService implements IService {
 			}
 			//Set auto sale status	
 			if(serviceDTO.getSalePrice() >= serviceDTO.getOriginalPrice())
-				throw new Exception("The sale price must be smaller than the original price");
+				throw new IllegalArgumentException("The sale price must be smaller than the original price");
 			if (serviceDTO.getSalePrice() > 0)
 				serviceDTO.setSaleStatus(SaleStatus.ONSALE);
 			else
@@ -205,11 +182,11 @@ public class TheService implements IService {
 				Set<String> uniqueNames = new HashSet<>();
 				for(String typeName : typeNameList) {
 					if(!uniqueNames.add(typeName.toLowerCase().trim()))
-						throw new BindException("Duplicated the type name of this service !");
+						throw new IllegalArgumentException("Duplicated the type name of this service !");
 				}
 			}
 			else {
-				throw new BindException("The single service not allow to set service child list !");
+				throw new IllegalArgumentException("The single service not allow to set service child list !");
 			}
 		}
 			
@@ -217,13 +194,13 @@ public class TheService implements IService {
 			if (serviceDTO.isPackage()) {
 				if (serviceDTO.getServiceChildList() != null && serviceDTO.getTypeNameList() == null) {
 					if(serviceDTO.getServiceChildList().size() < 2)
-						throw new BindException("The package contains at least 2 single services !");
+						throw new IllegalArgumentException("The package contains at least 2 single services !");
 					for (Integer key : serviceDTO.getServiceChildList().keySet()) {
 						if (serviceRepo.findByServiceId(key) == null)
-							throw new Exception("This service does not existing before");
+							throw new IllegalArgumentException("This service does not existing before");
 					}
 				} else {
-					throw new BindException("The package not allow to set type name list !");
+					throw new IllegalArgumentException("The package not allow to set type name list !");
 				}
 			}
 			
@@ -237,7 +214,6 @@ public class TheService implements IService {
 						ServiceType type = new ServiceType();
 						type.setServiceId(savedServiceId);
 						type.setTypeName(element.trim());
-						System.out.println("ID: " + type.getServiceId() + "Name: " + type.getTypeName());
 						serviceTypeRepo.save(type);
 			        }	
 			}
@@ -245,25 +221,23 @@ public class TheService implements IService {
 			//save child service for package
 			if(serviceDTO.getServiceChildList() != null && serviceDTO.isPackage() && savedService != null) {
 				int savedServiceId = savedService.getServiceId();
-				System.out.println("ID: ======== " + savedServiceId);
 				Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
 				for(Integer singleServiceId : childServiceSet.keySet()) {
 					PackageServiceItem item = new PackageServiceItem();
 					item.setPackageServiceId(savedServiceId);
 					item.setSingleServiceId(singleServiceId);
 					item.setQuantity(childServiceSet.get(singleServiceId));
-					System.out.println("ID: " + singleServiceId + " Name: " + childServiceSet.get(singleServiceId));
-					System.out.println("SERVICE STRING =======" + serviceRepo.findByServiceId(singleServiceId).orElse(null));
 					packageServiceItemRepo.save(item);
 		        }
 			}
 			savedServiceDTO = this.getOne(savedService.getServiceId());
 	
+			if(savedServiceDTO == null ) throw new EntityExistsException("Saved Failed !");
 		return savedServiceDTO;
 	}
 
 	@Override
-	public ServiceViewDTO updateInfo(int serviceId, ServiceNewDTO serviceDTO) throws Exception {
+	public ServiceViewDTO updateInfo(int serviceId, ServiceNewDTO serviceDTO) {
 		
 		ServiceViewDTO savedServiceDTONewInfo = null;
 		 Service oldService = serviceRepo.findById(serviceId).orElse(null);
@@ -279,7 +253,7 @@ public class TheService implements IService {
 		
 		//update status 	
 		if(serviceDTO.getSalePrice() >= serviceDTO.getOriginalPrice())
-			throw new Exception("The sale price must be smaller than the original price");
+			throw new IllegalArgumentException("The sale price must be smaller than the original price");
 		
 			if(!serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED)) {
 				oldService.setSaleStatus(SaleStatus.DISCONTINUED);
@@ -300,44 +274,38 @@ public class TheService implements IService {
 			Set<String> uniqueNames = new HashSet<>();
 			for(String typeName : typeNameList) {
 				if(!uniqueNames.add(typeName.toLowerCase().trim()))
-					throw new BindException("Duplicated the type name of this service !");
+					throw new IllegalArgumentException("Duplicated the type name of this service !");
 			}
 		}
 		else {
-			throw new BindException("This id is the single service. Not allow to set service child list !");
+			throw new IllegalArgumentException("This id is the single service. Not allow to set service child list !");
 		}
 			serviceTypeRepo.deleteAllByServiceId(serviceId);
 			for(String element : serviceDTO.getTypeNameList()) {
 				ServiceType type = new ServiceType();
 				type.setServiceId(serviceId);
 				type.setTypeName(element);
-				System.out.println("ID: " + type.getServiceId() + "Name: " + type.getTypeName());
 				serviceTypeRepo.save(type);
 	        }
 	}
-		
-		
 		
 		//check single service id existed in db
 		if (oldService.isPackage()) {
 			if (serviceDTO.getServiceChildList() != null && serviceDTO.getTypeNameList() == null) {
 				if(serviceDTO.getServiceChildList().size() < 2)
-					throw new BindException("The package contains at least 2 single services !");
+					throw new IllegalArgumentException("The package contains at least 2 single services !");
 				for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
 					if(packageServiceItemRepo.findByPackageServiceIdAndSingleServiceId(serviceId,singleServiceId) == null);
-						throw new Exception("Not allow to change the existing single service item list in this package");
+						throw new IllegalArgumentException("Not allow to change the existing single service item list in this package");
 				}
 			} else {
-				throw new BindException("This id is the package. Not allow to set type name list !");
+				throw new IllegalArgumentException("This id is the package. Not allow to set type name list !");
 			}
-			System.out.println("ID: ======== " + serviceId);
 			Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
 			for(Integer singleServiceId : childServiceSet.keySet()) {
 				PackageServiceItem item = 
 						packageServiceItemRepo.findByPackageServiceIdAndSingleServiceId(serviceId, singleServiceId).orElse(null);
 				item.setQuantity(childServiceSet.get(singleServiceId));
-				System.out.println("ID: " + singleServiceId + " Name: " + childServiceSet.get(singleServiceId));
-				System.out.println("SERVICE STRING =======" + serviceRepo.findByServiceId(singleServiceId).orElse(null));
 				packageServiceItemRepo.save(item);
 	        }
 		}
@@ -354,7 +322,8 @@ public class TheService implements IService {
 
 	return savedServiceDTONewInfo;
 	}
-
+	
+	
 
 
 

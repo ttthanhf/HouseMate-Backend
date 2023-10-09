@@ -15,7 +15,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import housemate.constants.Enum.SaleStatus;
 import housemate.entities.Service;
-import housemate.models.ServiceNewDTO;
 import jakarta.transaction.Transactional;
 
 /**
@@ -33,28 +32,18 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	@Query( value = "SELECT s FROM Service s WHERE s.saleStatus <> 'DISCONTINUED'")
 	List<Service> findAllAvailable(); 
 	
-	//filter on service available - saleStatus : AVAILABLE || ONSALE
-	@Query("SELECT s FROM Service s WHERE "
-			+ "s.saleStatus = :saleStatus " 
-			+ "AND s.avgRating >= :ratingFrom " )
-    List<Service> filterAllKind(
-    		@Param("saleStatus") SaleStatus saleStatus,
-    		@Param("ratingFrom")int ratingFrom ,
-    		Sort sort
-    		);
 	
 	@Query("SELECT s FROM Service s WHERE "
 			+ "s.saleStatus = :saleStatus " 
 			+ "AND LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')) "
 			+ "AND s.avgRating >= :ratingFrom " )
-    List<Service> searchAllKind(
+    List<Service> searchFilterAllKind(
     		@Param("saleStatus") SaleStatus saleStatus,
     		@Param("keyword") String keyword,
     		@Param("ratingFrom")int ratingFrom ,
     		Sort sort
     		);
 
-	
 	Optional<Service> findByServiceId(int id);
 	
 	Service findByTitleNameIgnoreCase(String titleName);
