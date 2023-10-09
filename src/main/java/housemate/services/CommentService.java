@@ -20,6 +20,7 @@ import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -71,7 +72,7 @@ public class CommentService {
     public ResponseEntity<String> addComment(HttpServletRequest request, CommentAddDTO commentAdd) {
 
         commentAdd.setUserId(authorizationUtil.getUserIdFromAuthorizationHeader(request));
-        commentAdd.setDate(LocalDateTime.now());
+        commentAdd.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 
         Comment serviceComment = commentMapper.mapToEntity(commentAdd);
         commentRepository.save(serviceComment);
