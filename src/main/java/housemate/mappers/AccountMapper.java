@@ -28,6 +28,7 @@ public class AccountMapper {
         userAccount.setPhoneNumber(registerAccountDTO.getPhoneNumber());
         userAccount.setRole(Role.CUSTOMER);
         userAccount.setEmailValidationStatus(false);
+        userAccount.setPasswordHash(registerAccountDTO.getPassword());
 
         return userAccount;
     }
