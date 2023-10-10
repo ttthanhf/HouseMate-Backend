@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class AccountMapper {
 
     public UserAccount mapToEntity(RegisterAccountDTO registerAccountDTO) {
+        final String DEFAULT_AVATAR = "https://scontent.fsgn2-9.fna.fbcdn.net/v/t1.15752-9/384469032_6609223889131065_8293022876449520388_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=ae9488&_nc_ohc=gjDXwSBmi3YAX-hNO9i&_nc_ht=scontent.fsgn2-9.fna&oh=03_AdTYPieo_8M2sWscLr-rykTpN-IAaBS8JRWarwlkJQpKdA&oe=6540E586";
         UserAccount userAccount = new UserAccount();
 
         userAccount.setEmailAddress(registerAccountDTO.getEmail());
@@ -29,6 +30,7 @@ public class AccountMapper {
         userAccount.setRole(Role.CUSTOMER);
         userAccount.setEmailValidationStatus(false);
         userAccount.setPasswordHash(registerAccountDTO.getPassword());
+        userAccount.setAvatar(DEFAULT_AVATAR);
 
         return userAccount;
     }
