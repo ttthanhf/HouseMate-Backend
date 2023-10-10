@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
@@ -30,8 +29,6 @@ import housemate.repositories.PackageServiceItemRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
 import housemate.services.interfaces.IService;
-import jakarta.persistence.EntityExistsException;
-import jakarta.persistence.EntityNotFoundException;
 import housemate.models.ServiceViewDTO.ServicePrice;
 /**
 *
