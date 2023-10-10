@@ -33,4 +33,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
     }
     
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<String> handleUserException(ApiException e){
+    	return ResponseEntity.status(e.getCode()).body(e.getMessgae());
+    }
+    
 }

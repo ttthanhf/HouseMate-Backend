@@ -13,6 +13,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
@@ -21,6 +23,7 @@ import housemate.constants.Enum.UsageDurationUnit;
 import housemate.entities.PackageServiceItem;
 import housemate.entities.Service;
 import housemate.entities.ServiceType;
+import housemate.exceptions.ApiException;
 import housemate.models.ServiceNewDTO;
 import housemate.models.ServiceViewDTO;
 import housemate.repositories.PackageServiceItemRepository;
@@ -53,7 +56,7 @@ public class TheService implements IService {
 	public List<Service> getAllAvailable() {
 		List<Service> serviceList = serviceRepo.findAllAvailable();
 		if(serviceList.isEmpty())
-			throw new EntityNotFoundException("Empty Services Now !");
+			throw new ApiException(HttpStatus.NOT_FOUND, "Empty Services Now !");
 		return serviceList;
 	}
 
@@ -79,7 +82,7 @@ public class TheService implements IService {
 		
 		Sort sort;
 
-		if (fieldname.equals(fieldname.PRICE)) {
+		if (fieldname.equals(fieldname.PRICE)){
 			sort = Sort.unsorted();
 			serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, sort);
 			Comparator<Service> theComparator = Comparator
@@ -90,7 +93,7 @@ public class TheService implements IService {
 			
 			Collections.sort(serviceList, theComparator);
 			
-		} else {
+		}else {
 			if (requireOrder.equals(SortRequired.ASC))
 				sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
 			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
@@ -103,7 +106,7 @@ public class TheService implements IService {
 				if (service.isPackage()) 
 					updateListByCategory.add(service);
 			serviceList = updateListByCategory;
-		} if (cateogryValue.equals(ServiceCategory.singles)) {
+		}if (cateogryValue.equals(ServiceCategory.singles)) {
 			for (Service service : serviceList) 
 				if (!service.isPackage())
 					updateListByCategory.add(service);
@@ -111,7 +114,7 @@ public class TheService implements IService {
 		}
 		
 		if (serviceList.isEmpty() || serviceList == null) {
-			throw new EntityNotFoundException("Not found !");
+			throw new ApiException(HttpStatus.NOT_FOUND, "Not found !");
 		}
 		return serviceList;
 	}
@@ -125,9 +128,9 @@ public class TheService implements IService {
 		Service service = serviceRepo.findById(serviceId).orElse(null);
 		
 		if(service == null) 
-			throw new EntityNotFoundException("Not found this service !");
-		
-			serviceDtoForDetail.setService(service);
+				throw new ApiException(HttpStatus.NOT_FOUND, "Not found this service !");
+			
+		serviceDtoForDetail.setService(service);
 			
 			if(!service.isPackage()){ //this is a service
 				List<ServiceType> typeList = serviceTypeRepo.findAllByServiceId(service.getServiceId()).orElse(null);
@@ -182,11 +185,11 @@ public class TheService implements IService {
 				Set<String> uniqueNames = new HashSet<>();
 				for(String typeName : typeNameList) {
 					if(!uniqueNames.add(typeName.toLowerCase().trim()))
-						throw new IllegalArgumentException("Duplicated the type name of this service !");
+						throw new ApiException(HttpStatus.BAD_REQUEST, "Not found !");
 				}
 			}
 			else {
-				throw new IllegalArgumentException("The single service not allow to set service child list !");
+				throw new ApiException(HttpStatus.BAD_REQUEST, "The single service not allow to set service child list !");
 			}
 		}
 			
@@ -197,10 +200,10 @@ public class TheService implements IService {
 						throw new IllegalArgumentException("The package contains at least 2 single services !");
 					for (Integer key : serviceDTO.getServiceChildList().keySet()) {
 						if (serviceRepo.findByServiceId(key) == null)
-							throw new IllegalArgumentException("This service does not existing before");
+							throw new ApiException(HttpStatus.BAD_REQUEST, "This service does not existing before");
 					}
 				} else {
-					throw new IllegalArgumentException("The package not allow to set type name list !");
+					throw new ApiException(HttpStatus.BAD_REQUEST, "The package not allow to set type name list !");
 				}
 			}
 			
@@ -210,7 +213,7 @@ public class TheService implements IService {
 			//save typeNameList for single services
 			if(serviceDTO.getTypeNameList() != null && !serviceDTO.isPackage() && savedService != null) {
 					int savedServiceId = savedService.getServiceId();
-					for(String element : serviceDTO.getTypeNameList()) {
+					for (String element : serviceDTO.getTypeNameList()) {
 						ServiceType type = new ServiceType();
 						type.setServiceId(savedServiceId);
 						type.setTypeName(element.trim());
@@ -232,7 +235,9 @@ public class TheService implements IService {
 			}
 			savedServiceDTO = this.getOne(savedService.getServiceId());
 	
-			if(savedServiceDTO == null ) throw new EntityExistsException("Saved Failed !");
+			if(savedServiceDTO == null ) 
+				throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "Saved Failed !");
+			
 		return savedServiceDTO;
 	}
 
@@ -242,18 +247,18 @@ public class TheService implements IService {
 		ServiceViewDTO savedServiceDTONewInfo = null;
 		 Service oldService = serviceRepo.findById(serviceId).orElse(null);
 		 if(oldService == null) {
-				throw new EntityNotFoundException("The service with id : " + serviceId + "does not exists");			
+				throw new ApiException(HttpStatus.NOT_FOUND, "The service with id : " + serviceId + "does not exists");			
 			}
 		//Update name
 		 if(!serviceDTO.getTitleName().equalsIgnoreCase(oldService.getTitleName())) {
 			 if(serviceRepo.findByTitleNameIgnoreCase(serviceDTO.getTitleName().trim()) != null) {
-					throw new DataAccessResourceFailureException("The title name has existed before !");			
+					throw new ApiException(HttpStatus.BAD_REQUEST, "The title name has existed before !");			
 				}
 		 }
 		
 		//update status 	
 		if(serviceDTO.getSalePrice() >= serviceDTO.getOriginalPrice())
-			throw new IllegalArgumentException("The sale price must be smaller than the original price");
+			throw new ApiException(HttpStatus.BAD_REQUEST, "The sale price must be smaller than the original price");
 		
 			if(!serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED)) {
 				oldService.setSaleStatus(SaleStatus.DISCONTINUED);
@@ -274,11 +279,11 @@ public class TheService implements IService {
 			Set<String> uniqueNames = new HashSet<>();
 			for(String typeName : typeNameList) {
 				if(!uniqueNames.add(typeName.toLowerCase().trim()))
-					throw new IllegalArgumentException("Duplicated the type name of this service !");
+					throw new ApiException(HttpStatus.BAD_REQUEST, "Duplicated the type name of this service !");
 			}
 		}
 		else {
-			throw new IllegalArgumentException("This id is the single service. Not allow to set service child list !");
+			throw new ApiException(HttpStatus.BAD_REQUEST, "This id is the single service. Not allow to set service child list !");
 		}
 			serviceTypeRepo.deleteAllByServiceId(serviceId);
 			for(String element : serviceDTO.getTypeNameList()) {
@@ -293,10 +298,10 @@ public class TheService implements IService {
 		if (oldService.isPackage()) {
 			if (serviceDTO.getServiceChildList() != null && serviceDTO.getTypeNameList() == null) {
 				if(serviceDTO.getServiceChildList().size() < 2)
-					throw new IllegalArgumentException("The package contains at least 2 single services !");
+					throw new ApiException(HttpStatus.BAD_REQUEST, "The package contains at least 2 single services !");
 				for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
 					if(packageServiceItemRepo.findByPackageServiceIdAndSingleServiceId(serviceId,singleServiceId) == null);
-						throw new IllegalArgumentException("Not allow to change the existing single service item list in this package");
+						throw new ApiException(HttpStatus.BAD_REQUEST, "Not allow to change the existing single service item list in this package");
 				}
 			} else {
 				throw new IllegalArgumentException("This id is the package. Not allow to set type name list !");
