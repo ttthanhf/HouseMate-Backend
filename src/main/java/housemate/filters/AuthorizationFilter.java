@@ -32,7 +32,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     @Autowired
     JwtPayloadMapper jwtPayloadMapper;
 
-    private final List<String> excludedUrls = Arrays.asList("/swagger-ui", "/auth", "/v3/api-docs", "/comment/services");
+    private final List<String> excludedUrls = Arrays.asList("/swagger-ui", "/auth", "/v3/api-docs", "/comment/services","/feedbacks");
     private final List<String> excludedUrlsRegex = Arrays.asList(RegexConstants.REPLY_COMMENT_REGEX);
 
     @Override
