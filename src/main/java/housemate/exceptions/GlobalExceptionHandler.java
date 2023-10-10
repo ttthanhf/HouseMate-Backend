@@ -34,4 +34,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
     }
+    
+    @ExceptionHandler(UserException.class)
+    public ResponseEntity<String> handleUserException(UserException e){
+    	return ResponseEntity.status(e.getCode()).body(e.getMessgae());
+    }
+   
 }
