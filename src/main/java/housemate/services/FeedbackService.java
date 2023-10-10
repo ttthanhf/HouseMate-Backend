@@ -146,7 +146,7 @@ public class FeedbackService {
 		
 		ServiceFeedback feeback =  feedBackRepo.findById(serviceFeedbackId).orElse(null);
 		
-		if(feeback != null) {
+		if(feeback == null) {
 			throw new UserException(HttpStatus.NOT_FOUND, "This feedback does not exists");
 		}
 		
@@ -163,7 +163,7 @@ public class FeedbackService {
 		feedback.setCustomerId(userId);
 		ServiceFeedback addedFeedback =  feedBackRepo.save(feedback);
 		
-		if(addedFeedback != null) {
+		if(addedFeedback == null) {
 			throw new RuntimeException("Saved Failed !");
 		}
 		
@@ -185,7 +185,7 @@ public class FeedbackService {
 		oldFeedback.setCreatedAt(LocalDateTime.now());
 		ServiceFeedback addedFeedback =  feedBackRepo.save(oldFeedback);
 		
-		if(addedFeedback != null) {
+		if(addedFeedback == null) {
 			throw new RuntimeException("Saved Failed !");
 		}
 		
