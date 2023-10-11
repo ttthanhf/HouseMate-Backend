@@ -1,8 +1,13 @@
 package housemate.models;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -48,16 +53,27 @@ public class ServiceNewDTO implements Serializable{
 	@Schema(description = "Default: AVAILABLE If salePrice Exist -> ONSALE")
 	private SaleStatus saleStatus;
 	
-	@Schema(description = "Ađ Link Images Of Service")
-	private String imageUrl;
+	@Schema(description = "Images Of Service")
+	private String image;
 	
 	@Hidden
 	@Schema(description = "Is package: true ? false")
 	private boolean isPackage;
 
+	@Schema(example = "[\r\n"
+			+ "\"type 1\",\r\n"
+			+ "\"type 2\"\r\n"
+			+ "  ]" ,description = "how many types this service has")
+	@JsonInclude(value = Include.NON_NULL)
 	Set<String> typeNameList ;
 	
-	Map<Integer, Integer> serviceChildList; //one for id - one for qu
+	@Schema(example = "{\r\n"
+			+ "\"1\": 0,\r\n"
+			+ "\"2\": 0,\r\n"
+			+ "\"3\": 0\r\n"
+			+ "  }", description = "Choose single services from single service list and set the quantity")
+	@JsonInclude(value = Include.NON_NULL)
+	Map<Integer, Integer> serviceChildList; //one for id - one for quantity
 
 
 	
