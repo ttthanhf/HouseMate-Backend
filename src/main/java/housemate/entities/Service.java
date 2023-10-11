@@ -63,4 +63,5 @@ public class Service {
 	@Column(name = "isPackage", nullable = false)
 	private boolean isPackage;
 	
+	
 }
