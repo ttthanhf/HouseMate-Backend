@@ -4,9 +4,9 @@ package housemate.constants;
 public class Enum {
 
 	public static enum ServiceCategory {
-		singles,
-		packages,
-		general;
+		SINGLES,
+		PACKAGES,
+		GENERAL;
 	}
 	
 	public static enum UsageDurationUnit {
@@ -34,7 +34,8 @@ public class Enum {
 	public static enum UnitOfMeasure {
 		HOUR,
 		KG,
-		TIME;
+		TIME,
+		COMBO;
 	}
 
 	public static enum ServiceField {
