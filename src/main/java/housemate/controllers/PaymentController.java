@@ -37,7 +37,7 @@ public class PaymentController {
     }
 
     @GetMapping("/check")
-    public void createPaymentasdsad(HttpServletRequest request) {
+    public void checkPayment(HttpServletRequest request) {
         return;
     }
 }
