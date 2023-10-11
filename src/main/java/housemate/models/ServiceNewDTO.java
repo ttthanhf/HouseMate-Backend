@@ -13,8 +13,10 @@ import housemate.constants.Enum.UnitOfMeasure;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,18 +29,20 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ServiceNewDTO implements Serializable{
+public class ServiceNewDTO{
 
 	private static final long serialVersionUID = 1L;
 
-	@Schema(description = "Title name" )
-	private String titleName;
+	@Schema(description = "Title name")
+	@NotEmpty
+	@Size(min = 10 , max = 255)
+	private String titleName; 
 
 	@Positive(message = "Price must be greater than 0")
 	@Schema(description = "Original price")
 	private int originalPrice;
 	
-	@PositiveOrZero(message = "Salep Price must be greater than 0")
+	@PositiveOrZero(message = "Sale Price must be greater than 0")
 	@Schema(description = "Sale price")
 	private int salePrice;
 
@@ -51,6 +55,7 @@ public class ServiceNewDTO implements Serializable{
 
 	
 	@Schema(description = "Default: AVAILABLE If salePrice Exist -> ONSALE")
+	@JsonInclude(value =Include.NON_NULL)
 	private SaleStatus saleStatus;
 	
 	@Schema(description = "Images Of Service")
@@ -65,7 +70,7 @@ public class ServiceNewDTO implements Serializable{
 			+ "\"type 2\"\r\n"
 			+ "  ]" ,description = "how many types this service has")
 	@JsonInclude(value = Include.NON_NULL)
-	Set<String> typeNameList ;
+	Set<String> typeNameList;
 	
 	@Schema(example = "{\r\n"
 			+ "\"1\": 0,\r\n"
