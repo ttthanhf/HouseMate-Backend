@@ -4,10 +4,16 @@
  */
 package housemate.services;
 
-import housemate.configs.VNPayConfig;
+import com.nimbusds.jose.shaded.gson.JsonObject;
+import housemate.utils.EncryptUtil;
 import housemate.repositories.CartRepository;
 import housemate.utils.AuthorizationUtil;
+import housemate.utils.RandomUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -20,7 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -38,55 +47,71 @@ public class PaymentService {
     @Autowired
     private AuthorizationUtil authorizationUtil;
 
-    private String vnp_Version = "2.1.0";
-    private String vnp_Command = "pay";
-    private String orderType = "other";
-    private String language = "vn";
-    private String bankCode = "NCB";
+//    private String orderType = "other"; // đây là option để cho việc query ra type của payment
+    private final String language = "en";
+    private final String vnp_IpAddr = "127.0.0.1";
 
-    private String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    private String vnp_ReturnUrl = "http://localhost:8080/vnpay_jsp/vnpay_return.jsp";
-    private String vnp_TmnCode = "ME9TNTA9";
-    private String secretKey = "XHHCNMOVFMBAKNPHICPZWAPAJBPUQAKA";
+    @Value("${vnp.version}")
+    private String vnp_Version;
 
-    private String vnp_IpAddr = "127.0.0.1";
+    @Value("${vnp.pay_url}")
+    private String vnp_PayUrl;
+
+    @Value("${vnp.return_check_url}")
+    private String vnp_ReturnUrl;
+
+    @Value("${vnp.api_url}")
+    private String vnp_ApiUrl;
+
+    @Value("${vnp.TmnCode}")
+    private String vnp_TmnCode;
+
+    @Value("${vnp.secretKey}")
+    private String secretKey;
 
     public ResponseEntity<String> createVNPayPayment(HttpServletRequest request) throws UnsupportedEncodingException {
 
-        long pricePerService = 1000000 * 100;
-        int totalService = cartRepository.getTotalCart(authorizationUtil.getUserIdFromAuthorizationHeader(request));
+        long pricePerService = 1000000 * 100; //fake price, must be * 100 because vnpay want it but real price is 1m
+
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        int totalService = cartRepository.getTotalCart(userId);
+
+        //if user dont have cart => can not checkout
+        if (totalService == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("User dont have any item in cart");
+        }
 
         long amount = pricePerService * totalService;
 
-        String vnp_TxnRef = VNPayConfig.getRandomNumber(8);
+        String vnp_TxnRef = RandomUtil.getRandomNumber(8);
+        String vnp_Command = "pay";
 
+        //create param for vnpay
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnp_Version);
         vnp_Params.put("vnp_Command", vnp_Command);
         vnp_Params.put("vnp_TmnCode", vnp_TmnCode);
         vnp_Params.put("vnp_Amount", String.valueOf(amount));
+        vnp_Params.put("vnp_BankCode", "NCB");
         vnp_Params.put("vnp_CurrCode", "VND");
-
-        if (bankCode != null && !bankCode.isEmpty()) {
-            vnp_Params.put("vnp_BankCode", bankCode);
-        }
-
-        vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-        vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang:" + vnp_TxnRef);
-        vnp_Params.put("vnp_OrderType", orderType);
-        vnp_Params.put("vnp_Locale", language);
-        vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
+        vnp_Params.put("vnp_Locale", language);
+//        vnp_Params.put("vnp_OrderType", orderType);  // đây là option để cho việc query ra type của payment
+        vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
+        vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
 
         Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
+        vnp_Params.put("vnp_OrderInfo", userId + "-" + vnp_TxnRef + "-" + vnp_CreateDate);
+
         cld.add(Calendar.MINUTE, 15);
         String vnp_ExpireDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
+        //encode all fielt for export url
         List fieldNames = new ArrayList(vnp_Params.keySet());
         Collections.sort(fieldNames);
         StringBuilder hashData = new StringBuilder();
@@ -109,50 +134,47 @@ public class PaymentService {
             }
         }
         String queryUrl = query.toString();
-        String vnp_SecureHash = VNPayConfig.hmacSHA512(secretKey, hashData.toString());
+
+        //create hash for checksum
+        String vnp_SecureHash = EncryptUtil.hmacSHA512(secretKey, hashData.toString());
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
+
         String paymentUrl = vnp_PayUrl + "?" + queryUrl;
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(paymentUrl);
     }
 
-    public void checkVNPayPayment() {
-        //Command:querydr
+    public ResponseEntity<Object> checkVNPayPayment(String vnp_TxnRef, String vnp_TransactionNo, String vnp_TransactionDate) throws IOException {
 
-        String vnp_RequestId = Config.getRandomNumber(8);
-        String vnp_Version = "2.1.0";
+        String vnp_RequestId = RandomUtil.getRandomNumber(8);
         String vnp_Command = "querydr";
-        String vnp_TmnCode = Config.vnp_TmnCode;
-        String vnp_TxnRef = req.getParameter("order_id");
-        String vnp_OrderInfo = "Kiem tra ket qua GD OrderId:" + vnp_TxnRef;
-        //String vnp_TransactionNo = req.getParameter("transactionNo");
-        String vnp_TransDate = req.getParameter("trans_date");
+        String vnp_OrderInfo = "Result: " + vnp_TxnRef;
 
         Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String vnp_CreateDate = formatter.format(cld.getTime());
 
-        String vnp_IpAddr = Config.getIpAddress(req);
-
+        //create param for vnpay
         JsonObject vnp_Params = new JsonObject();
-
         vnp_Params.addProperty("vnp_RequestId", vnp_RequestId);
         vnp_Params.addProperty("vnp_Version", vnp_Version);
         vnp_Params.addProperty("vnp_Command", vnp_Command);
         vnp_Params.addProperty("vnp_TmnCode", vnp_TmnCode);
         vnp_Params.addProperty("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.addProperty("vnp_OrderInfo", vnp_OrderInfo);
-        //vnp_Params.put("vnp_TransactionNo", vnp_TransactionNo);
-        vnp_Params.addProperty("vnp_TransactionDate", vnp_TransDate);
+        vnp_Params.addProperty("vnp_TransactionNo", vnp_TransactionNo);
+        vnp_Params.addProperty("vnp_TransactionDate", vnp_TransactionDate);
         vnp_Params.addProperty("vnp_CreateDate", vnp_CreateDate);
         vnp_Params.addProperty("vnp_IpAddr", vnp_IpAddr);
 
-        String hash_Data = String.join("|", vnp_RequestId, vnp_Version, vnp_Command, vnp_TmnCode, vnp_TxnRef, vnp_TransDate, vnp_CreateDate, vnp_IpAddr, vnp_OrderInfo);
-        String vnp_SecureHash = Config.hmacSHA512(Config.secretKey, hash_Data.toString());
+        //create hash for checksum
+        String hash_Data = String.join("|", vnp_RequestId, vnp_Version, vnp_Command, vnp_TmnCode, vnp_TxnRef, vnp_TransactionDate, vnp_CreateDate, vnp_IpAddr, vnp_OrderInfo);
+        String vnp_SecureHash = EncryptUtil.hmacSHA512(secretKey, hash_Data);
 
         vnp_Params.addProperty("vnp_SecureHash", vnp_SecureHash);
 
-        URL url = new URL(Config.vnp_ApiUrl);
+        //Send request for vnpay to get status payment info
+        URL url = new URL(vnp_ApiUrl);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
@@ -161,18 +183,13 @@ public class PaymentService {
         wr.writeBytes(vnp_Params.toString());
         wr.flush();
         wr.close();
-        int responseCode = con.getResponseCode();
-        System.out.println("nSending 'POST' request to URL : " + url);
-        System.out.println("Post Data : " + vnp_Params);
-        System.out.println("Response Code : " + responseCode);
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(con.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         String output;
         StringBuffer response = new StringBuffer();
         while ((output = in.readLine()) != null) {
             response.append(output);
         }
         in.close();
-        System.out.println(response.toString());
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
