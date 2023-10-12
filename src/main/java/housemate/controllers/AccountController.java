@@ -7,6 +7,7 @@ import housemate.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -74,6 +75,13 @@ public class AccountController {
     @GetMapping("/admins")
     public ResponseEntity<List<UserAccount>> getAllAdmin() {
         return service.getAllAdmin();
+    }
+
+    @Operation(summary = "Get all admin account")
+    @GetMapping("/current")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<UserAccount> getCurrentUser(HttpServletRequest request) {
+        return service.getCurrentUser(request);
     }
 }
 
