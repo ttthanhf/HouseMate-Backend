@@ -202,24 +202,26 @@ public class TheService  {
 						if (serviceDTO.getServiceChildList().size() < 2)
 							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The package contains at least 2 single services !");
 						if (!serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
-							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The unit of measure of package must be COMBO");
-						for (Integer key : serviceDTO.getServiceChildList().keySet()) {
-							if (serviceRepo.findByServiceId(key).isEmpty())
-								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This service does not existing before");
+							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The unit of measure of package must be COMBO !");
+						for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
+							if (serviceRepo.findByServiceId(singleServiceId).isEmpty())
+								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This service does not existing before !");
+							if(serviceDTO.getServiceChildList().get(singleServiceId) <= 0)
+								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The quantity of single child service must greater than 0 !");
 						}
 					} else {
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The package not allow to set type name list !");
 					}
 				}
 			} catch (Exception ex) {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something Error ! Saved Failed ! ");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something Error ! Saved Failed !");
 			}
 			
 			//map to DTO & save into DB
 			savedService = serviceRepo.save(mapper.map(serviceDTO, Service.class));
 			
 			if (savedService == null)
-				return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed ! ");
+				return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed !");
 			
 			// save typeNameList for single services after saving Service object success
 			if (serviceDTO.getTypeNameList() != null && !serviceDTO.isPackage() && savedService != null) {
@@ -245,7 +247,7 @@ public class TheService  {
 		        }
 			}
 		}catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed ! ");
+			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed !");
 		}
 		
 		return getOne(savedService.getServiceId());
@@ -259,7 +261,7 @@ public class TheService  {
 		try {
 			Service oldService = serviceRepo.findById(serviceId).orElse(null);
 			if (oldService == null) {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The service does not exists");
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The service does not exists !");
 			}
 
 			// Update name
@@ -271,7 +273,7 @@ public class TheService  {
 
 			// update status //TODO: Check based on figma
 			if (serviceDTO.getSalePrice() >= serviceDTO.getOriginalPrice())
-				ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The sale price must be smaller than the original price");
+				ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The sale price must be smaller than the original price !");
 			if (serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED)) {
 				oldService.setSaleStatus(SaleStatus.DISCONTINUED);
 			} else if (serviceDTO.getSalePrice() > 0) {
@@ -313,7 +315,9 @@ public class TheService  {
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The package contains at least 2 single services !");
 					for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
 						if (packageServiceItemRepo.findByPackageServiceIdAndSingleServiceId(serviceId, singleServiceId) == null)
-							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Not allow to change the existing single service item list in this package");
+							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Not allow to change the existing single service item list in this package !");
+						if(serviceDTO.getServiceChildList().get(singleServiceId) <= 0)
+							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The quantity of single child service must greater than 0 !");
 					}
 				} else {
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This id is the package. Not allow to set type name list !");
