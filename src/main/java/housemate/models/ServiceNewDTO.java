@@ -10,8 +10,6 @@ import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -57,6 +55,7 @@ public class ServiceNewDTO {
 	@JsonInclude(value = Include.NON_NULL)
 	private SaleStatus saleStatus;
 
+	@NotEmpty(message = "Require at least one image")
 	@Schema(description = "Images Of Service")
 	private List<String> images;
 
