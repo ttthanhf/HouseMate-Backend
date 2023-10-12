@@ -61,13 +61,8 @@ public class ServicesController {
 	
 	@GetMapping("/topsale")
 	@Operation(summary = "Search service by filter and sort")
-	public ResponseEntity<?> filterAndSortForTopsale(@RequestParam(required = false) Optional<ServiceCategory> category,
-			@RequestParam(required = false) Optional<SaleStatus> saleStatus,
-			@RequestParam(required = false) Optional<Integer> rating,
-			@RequestParam(required = false) Optional<ServiceField> sortBy, // TODO: this sort by price only
-			@RequestParam(required = false) Optional<SortRequired> orderBy) {
-
-		return servDao.searchFilterAllKind("", category, Optional.of(Boolean.TRUE), saleStatus, rating, sortBy, orderBy);
+	public ResponseEntity<?> getTopsale(){
+		return servDao.getTopsale();
 	}
 	
 	@GetMapping("/{id}")

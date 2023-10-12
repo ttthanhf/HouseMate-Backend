@@ -45,22 +45,12 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
     		Sort sort
     		);
 	
-//	@Query("SELECT s FROM Service s WHERE "
-//			+ "s.saleStatus = :saleStatus " 
-//			+ "AND s.avgRating >= :ratingFrom " 
-//			+ "ORDER BY s.numberOfSold DESC "
-//			+ "LIMIT 3 "
-//			)
 	@Query("SELECT s FROM Service s WHERE "
-			+ "s.saleStatus = :saleStatus " 
-			+ "AND s.avgRating >= :ratingFrom " 
+			+ "s.saleStatus = 'ONSALE' " 
 			+ "ORDER BY s.numberOfSold DESC " 
-			+ "LIMIT 3 "
+			+ "LIMIT 4 "
 			)
-    List<Service> searchFilterForTopSale(
-    		@Param("saleStatus")SaleStatus saleStatus,
-    		@Param("ratingFrom")int ratingFrom
-    		);
+    List<Service> findTopSale();
 
 	Optional<Service> findByServiceId(int id);
 	
@@ -69,15 +59,17 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	@Transactional
 	@Modifying
 	@Query(value = "UPDATE Service s SET s.avgRating = "
-					+ "(SELECT COALESCE(AVG(f.rating),0) FROM ServiceFeedback f WHERE f.service = s) "
-			        + "WHERE NOT EXISTS (SELECT 1 FROM ServiceFeedback f WHERE f.service = s)")
+				    + "(SELECT COALESCE(AVG(f.rating),0) FROM ServiceFeedback f WHERE f.service = s) "
+			        + "WHERE NOT EXISTS (SELECT 1 FROM ServiceFeedback f WHERE f.service = s)"
+				    )
 	void updateAvgRating();
 	
 	@Transactional
 	@Modifying
 	@Query(value = "UPDATE Service s SET s.numberOfSold = "
 					+ "(SELECT COALESCE(COUNT(soi),0) FROM ServiceOrderItem soi WHERE soi.service = s) "
-					+ "WHERE NOT EXISTS (SELECT 1 FROM ServiceOrderItem soi WHERE soi.service = s)")
+					+ "WHERE NOT EXISTS (SELECT 1 FROM ServiceOrderItem soi WHERE soi.service = s)"
+					)
 	void updatetheNumberOfSold();
 	
 	}
