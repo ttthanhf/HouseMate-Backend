@@ -187,7 +187,9 @@ public class TheService  {
 				// Set auto sale status
 				if (serviceDTO.getSalePrice() >= serviceDTO.getOriginalPrice())
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The sale price must be smaller than the original price");
-				if (serviceDTO.getSalePrice() > 0)
+				if(serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED))
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Create new service the sale status must be Onsale or Available");
+				else if (serviceDTO.getSalePrice() > 0)
 					serviceDTO.setSaleStatus(SaleStatus.ONSALE);
 				else 
 					serviceDTO.setSaleStatus(SaleStatus.AVAILABLE);
@@ -209,9 +211,8 @@ public class TheService  {
 							if(serviceDTO.getServiceChildList().get(singleServiceId) <= 0)
 								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The quantity of single child service must greater than 0 !");
 						}
-					} else {
+					} else 
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The package not allow to set type name list !");
-					}
 				}
 			} catch (Exception ex) {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something Error ! Saved Failed !");
