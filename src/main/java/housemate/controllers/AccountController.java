@@ -77,7 +77,7 @@ public class AccountController {
         return service.getAllAdmin();
     }
 
-    @Operation(summary = "Get all admin account")
+    @Operation(summary = "Get current logged in user info")
     @GetMapping("/current")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserAccount> getCurrentUser(HttpServletRequest request) {
