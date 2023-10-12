@@ -44,7 +44,7 @@ public class ServiceNewDTO {
 	@Schema(description = "Sale price")
 	private int salePrice;
 
-	@NotNull
+	@NotNull(message = "The unit of measure type must not be empty")
 	@Schema(description = "The Unit of measure in one of these type: KG, HOUR, TIME, COMBO."
 					   + " With package - unit measure default = COMBO")
 	private UnitOfMeasure unitOfMeasure;
@@ -60,7 +60,7 @@ public class ServiceNewDTO {
 	@Schema(description = "Images Of Service")
 	private List<String> images;
 
-	@NotNull(message = "The group type must not be empty")
+	@NotNull(message = "The group type must not be null")
 	@Schema(description = "The Group Type in one of these type: "
 						+ "CLEANING_SERVICE, RETURN_SERVICE, DELIVERY_SERVICE, OTHER")
 	private GroupType groupType;
