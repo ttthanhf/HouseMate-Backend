@@ -88,19 +88,11 @@ public class CommentService {
 
         // if role admin => can remove comment 
         if (userRole.equals(Role.ADMIN) && commentRepository.deleteCommentByAdmin(commentId) != 0) {
-
-            //remove all reply have parent commentId
-            replyCommentRepository.deleteReplyCommentByCommentId(commentId);
-
             return ResponseEntity.status(HttpStatus.ACCEPTED).body("Comment removed with admin role");
         }
 
         //if other role => can remove comment with userId
         if (commentRepository.deleteCommentByUser(commentId, userId) != 0) {
-
-            //remove all reply have parent commentId
-            replyCommentRepository.deleteReplyCommentByCommentId(commentId);
-
             return ResponseEntity.status(HttpStatus.ACCEPTED).body("Comment removed");
         }
 
