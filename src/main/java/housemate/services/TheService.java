@@ -172,6 +172,7 @@ public class TheService  {
 		return ResponseEntity.ok().body(serviceDtoForDetail);
 	}
 
+	@Transactional
 	public ResponseEntity<?> createNew(ServiceNewDTO serviceDTO) {	
 		
 		Service savedService = null;
