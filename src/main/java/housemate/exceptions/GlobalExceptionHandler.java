@@ -4,6 +4,7 @@
  */
 package housemate.exceptions;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -31,5 +32,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
-    }   
+    }  
+    
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<String> handleConverterException(Exception ex) {
+		String mess = ex.getMessage();
+		if (mess.contains("not one of the values accepted for Enum class")) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Error enum for " +  mess.substring(mess.indexOf("Enum class: [")));
+		}
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Convert Json To Object Faild. Some Enum Error");
+	} 
 }

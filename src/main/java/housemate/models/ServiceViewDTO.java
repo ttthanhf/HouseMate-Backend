@@ -42,14 +42,11 @@ public class ServiceViewDTO {
 		@JsonProperty(value = "extensionFeePerMonth")
 		private int extensionFee;
 
-		public ServicePrice setPriceForComboMonth(
-							Service service,
-							int duration_value,
-							UsageDurationUnit duration_unit,
-							int extensionFee
-							){
+		public ServicePrice setPriceForComboMonth(Service service, int duration_value, UsageDurationUnit duration_unit,
+				int extensionFee) {
 			int originalPrice = service.getOriginalPrice() + extensionFee * duration_value;
 			int salePrice = (originalPrice - service.getSalePrice()) * extensionFee * duration_value;
+			if (salePrice < 0) salePrice = 0;
 			return new ServicePrice(duration_value, duration_unit, originalPrice, salePrice, extensionFee);
 		}
 	}
