@@ -40,6 +40,6 @@ public class GlobalExceptionHandler {
 		if (mess.contains("not one of the values accepted for Enum class")) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Error enum for " +  mess.substring(mess.indexOf("Enum class: [")));
 		}
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Convert Json To Object Faild. Some Enum Error");
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Convert Json To Object Faild. Some Error");
 	} 
 }

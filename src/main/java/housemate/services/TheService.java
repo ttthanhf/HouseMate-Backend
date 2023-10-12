@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -177,12 +176,12 @@ public class TheService  {
 				serviceDTO.setSaleStatus(SaleStatus.AVAILABLE);
 
 			// check if single service is not allow to
-			if (!serviceDTO.isPackage() && serviceDTO.getServiceChildList() == null)
+			if (!serviceDTO.isPackage() && serviceDTO.getServiceChildList() != null)
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The single service not allow to set service child list !");
 
 			//check single service id existed in db
 			if (serviceDTO.isPackage()) {
-				if (serviceDTO.getServiceChildList() != null && serviceDTO.getTypeNameList() == null) {
+				if (serviceDTO.getServiceChildList() != null && serviceDTO.getTypeNameList() != null) {
 					if (serviceDTO.getServiceChildList().size() < 2)
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The package contains at least 2 single services !");
 					if (!serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
