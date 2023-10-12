@@ -19,6 +19,7 @@ import housemate.models.ServiceNewDTO;
 import housemate.repositories.ServiceRepository;
 import housemate.services.TheService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -40,9 +41,9 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<SaleStatus>  saleStatus,
 			@RequestParam(required = false) Optional<Integer> rating,
 			@RequestParam(required = false) Optional<ServiceField> sortBy,
-			@RequestParam(required = false) Optional<SortRequired> orderBy) 
-					 {
-		return servDao.searchFilterAllKind(null, category, saleStatus, rating, sortBy, orderBy);
+			@RequestParam(required = false) Optional<SortRequired> orderBy
+			){
+		return servDao.searchFilterAllKind("", category, Optional.of(Boolean.FALSE), saleStatus, rating, sortBy, orderBy);
 	}
 	
 	@GetMapping("/search") 
@@ -53,15 +54,20 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<SaleStatus> saleStatus,
 			@RequestParam(required = false) Optional<Integer> rating,
 			@RequestParam(required = false) Optional<ServiceField> sortBy,
-			@RequestParam(required = false) Optional<SortRequired> orderBy) 
-					{
-		 return servDao.searchFilterAllKind(keyword, category, saleStatus, rating, sortBy, orderBy);
+			@RequestParam(required = false) Optional<SortRequired> orderBy
+			){
+		 return servDao.searchFilterAllKind(keyword, category, Optional.of(Boolean.FALSE), saleStatus, rating, sortBy, orderBy);
 	}
 	
-	@GetMapping("/all")
-	@Operation(summary = "Get the list of all services")
-	public ResponseEntity<?> getAll() {
-		return servDao.getAllAvailable();
+	@GetMapping("/topsale")
+	@Operation(summary = "Search service by filter and sort")
+	public ResponseEntity<?> filterAndSortForTopsale(@RequestParam(required = false) Optional<ServiceCategory> category,
+			@RequestParam(required = false) Optional<SaleStatus> saleStatus,
+			@RequestParam(required = false) Optional<Integer> rating,
+			@RequestParam(required = false) Optional<ServiceField> sortBy, // TODO: this sort by price only
+			@RequestParam(required = false) Optional<SortRequired> orderBy) {
+
+		return servDao.searchFilterAllKind("", category, Optional.of(Boolean.TRUE), saleStatus, rating, sortBy, orderBy);
 	}
 	
 	@GetMapping("/{id}")
@@ -70,9 +76,11 @@ public class ServicesController {
 		return servDao.getOne(id);
 	}
 	
+	
 	//role admin - update later
 	@PostMapping("/new")
 	@Operation(summary = "Create new service")
+	@SecurityRequirement(name = "bearerAuth")
 	public ResponseEntity<?> createNewService(@Valid @RequestBody ServiceNewDTO newServiceDTO) {	
 		return servDao.createNew(newServiceDTO);
 	}
@@ -80,6 +88,7 @@ public class ServicesController {
 	//role admin - update later
 	@PutMapping("/{id}")
 	@Operation(summary = "Update existing services")
+	@SecurityRequirement(name = "bearerAuth")
 	public ResponseEntity<?> updateService(
 			@PathVariable("id") int serviceId,
 			@Valid @RequestBody ServiceNewDTO newServiceDTO) {	
@@ -87,11 +96,12 @@ public class ServicesController {
 
 	}
 	
+	// role admin - update later
+	@GetMapping("/all-kind")
+	@Operation(summary = "get the list of all kind of service")
+	@SecurityRequirement(name = "bearerAuth")
+	public ResponseEntity<?> getAllKind() {
+		return servDao.getAllKind();
+	}
 
-	
-	
-
-	
-	
-	
 }

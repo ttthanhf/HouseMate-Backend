@@ -36,12 +36,30 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	@Query("SELECT s FROM Service s WHERE "
 			+ "s.saleStatus = :saleStatus " 
 			+ "AND LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')) "
-			+ "AND s.avgRating >= :ratingFrom " )
+			+ "AND s.avgRating >= :ratingFrom " 
+			)
     List<Service> searchFilterAllKind(
-    		@Param("saleStatus") SaleStatus saleStatus,
-    		@Param("keyword") String keyword,
-    		@Param("ratingFrom")int ratingFrom ,
+    		@Param("saleStatus")SaleStatus saleStatus,
+    		@Param("keyword")String keyword,
+    		@Param("ratingFrom")int ratingFrom,
     		Sort sort
+    		);
+	
+//	@Query("SELECT s FROM Service s WHERE "
+//			+ "s.saleStatus = :saleStatus " 
+//			+ "AND s.avgRating >= :ratingFrom " 
+//			+ "ORDER BY s.numberOfSold DESC "
+//			+ "LIMIT 3 "
+//			)
+	@Query("SELECT s FROM Service s WHERE "
+			+ "s.saleStatus = :saleStatus " 
+			+ "AND s.avgRating >= :ratingFrom " 
+			+ "ORDER BY s.numberOfSold DESC " 
+			+ "LIMIT 3 "
+			)
+    List<Service> searchFilterForTopSale(
+    		@Param("saleStatus")SaleStatus saleStatus,
+    		@Param("ratingFrom")int ratingFrom
     		);
 
 	Optional<Service> findByServiceId(int id);
@@ -61,7 +79,5 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 					+ "(SELECT COALESCE(COUNT(soi),0) FROM ServiceOrderItem soi WHERE soi.service = s) "
 					+ "WHERE NOT EXISTS (SELECT 1 FROM ServiceOrderItem soi WHERE soi.service = s)")
 	void updatetheNumberOfSold();
-	
-
 	
 	}
