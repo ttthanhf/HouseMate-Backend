@@ -54,6 +54,20 @@ public class TheService  {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Empty Services Now !");
 		return ResponseEntity.ok(serviceList);
 	}
+	
+	public ResponseEntity<?> getAllKind() {
+		List<Service> serviceList = serviceRepo.findAll();
+		if (serviceList == null)
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
+		return ResponseEntity.ok().body(serviceList);
+	}
+	
+	public ResponseEntity<?> getTopsale() {
+		List<Service> serviceList = serviceRepo.findTopSale();
+		if (serviceList == null)
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
+		return ResponseEntity.ok().body(serviceList);
+	}
 
 	public ResponseEntity<?> searchFilterAllKind(
 			String keywordValue ,
@@ -80,9 +94,7 @@ public class TheService  {
 			sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
 		sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
 
-		serviceList = isTopSale == true 
-				? serviceRepo.searchFilterForTopSale(statusValue, ratingValue)
-				: serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, sort);
+		serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, sort);
 		
 		// For sort by price field only
 		if (fieldname.equals(fieldname.PRICE)) {
@@ -268,9 +280,9 @@ public class TheService  {
 						if (!uniqueNames.add(typeName.toLowerCase().trim()))
 							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicated the type name of this service !");
 					}
-				} else {
+				} else 
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This id is the single service. Not allow to set service child list !");
-				}
+				
 				serviceTypeRepo.deleteAllByServiceId(serviceId);
 				for (String element : serviceDTO.getTypeNameList()) {
 					ServiceType type = new ServiceType();
@@ -316,12 +328,6 @@ public class TheService  {
 		return this.getOne(savedService.getServiceId());
 	}
 	
-	public ResponseEntity<?> getAllKind() {
-		List<Service> serviceList = serviceRepo.findAll();
-		if (serviceList == null)
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
-
-		return ResponseEntity.ok().body(serviceList);
-	}
+	
 	
 }
