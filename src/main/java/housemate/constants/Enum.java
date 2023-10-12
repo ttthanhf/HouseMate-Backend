@@ -1,57 +1,60 @@
 package housemate.constants;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
 /*This class contain all kind of Housemate Enum*/
 public class Enum {
 
 	public static enum ServiceCategory {
 		SINGLES,
 		PACKAGES,
-		GENERAL;
+		GENERAL
+		
 	}
-	
+
 	public static enum UsageDurationUnit {
 		DAY,
 		WEEK,
 		MONTH
+		
 	}
 
 	public static enum SortRequired {
 		ASC,
 		DESC
 	}
-	
-	public static enum IdType{
-		SERVICE,
-		PACKAGE;
+
+	public static enum GroupType {
+		CLEANING_SERVICE,
+		RETURN_SERVICE,
+		DELIVERY_SERVICE,
+		OTHER
 	}
 
 	public static enum SaleStatus {
 		AVAILABLE,
 		ONSALE,
-		DISCONTINUED,
+		DISCONTINUED
 	}
 
 	public static enum UnitOfMeasure {
 		HOUR,
 		KG,
 		TIME,
-		COMBO;
+		COMBO
 	}
-
+	
+	@Getter
+	@AllArgsConstructor
 	public static enum ServiceField {
 		NAME("titleName"),
-		PRICE("price"),
-		NUMBER_OF_SOLD("numberOfSold");
+		PRICE("originalPrice"),
+		NUMBER_OF_SOLD("numberOfSold")
+		;
 
 		private String fieldName;
-
-		ServiceField(String fieldName) {
-			this.fieldName = fieldName;
-		}
-
-		public String getFieldName() {
-			return fieldName;
-		}
 	}
 
 }

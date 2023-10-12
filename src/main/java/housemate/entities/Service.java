@@ -4,6 +4,7 @@
  */
 package housemate.entities;
 
+import housemate.constants.Enum.GroupType;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
 import jakarta.persistence.*;
@@ -51,17 +52,17 @@ public class Service {
 	@Column(name = "sale_status", nullable = false)
 	private SaleStatus saleStatus;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "group_type", nullable = false)
+	private GroupType groupType;
+	
 	@Column(name = "avg_rating", columnDefinition = "float default 0")
 	private float avgRating;
 
 	@Column(name = "number_of_sold", columnDefinition = "integer default 0")
 	private int numberOfSold;
-
-	@Column(name = "image_url")
-	private String imageUrl;
 	
 	@Column(name = "isPackage", nullable = false)
 	private boolean isPackage;
-	
 	
 }
