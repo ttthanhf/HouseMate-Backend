@@ -10,8 +10,11 @@ import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -41,7 +44,7 @@ public class ServiceNewDTO {
 	@Schema(description = "Sale price")
 	private int salePrice;
 
-	@NotEmpty
+	@NotNull
 	@Schema(description = "The Unit of measure in one of these type: KG, HOUR, TIME, COMBO."
 					   + " With package - unit measure default = COMBO")
 	private UnitOfMeasure unitOfMeasure;
@@ -57,7 +60,7 @@ public class ServiceNewDTO {
 	@Schema(description = "Images Of Service")
 	private List<String> images;
 
-	@NotEmpty(message = "The group type must not be empty")
+	@NotNull(message = "The group type must not be empty")
 	@Schema(description = "The Group Type in one of these type: "
 						+ "CLEANING_SERVICE, RETURN_SERVICE, DELIVERY_SERVICE, OTHER")
 	private GroupType groupType;
