@@ -33,6 +33,17 @@ public interface CartRepository extends JpaRepository<Cart, Integer> {
 
     @Modifying
     @Transactional
-    @Query("UPDATE Cart c SET c.quantity = :quanlity WHERE c.userId = :userId AND c.serviceId = :serviceId")
-    void updateCartQuantity(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quanlity") int quanlity);
+    @Query("UPDATE Cart c SET c.quantity = :quanlity, c.price = :price, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
+    void updateCartQuantity(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quanlity") int quanlity, @Param("price") int price, @Param("periodId") int periodId);
+
+    @Query("SELECT c.cartId FROM Cart c WHERE c.periodId = :periodId")
+    List<Integer> getAllCartIdByPeriodId(@Param("periodId") int periodId);
+
+    @Query("SELECT c FROM Cart c WHERE c.cartId = :cartId")
+    Cart getCartById(@Param("cartId") int cartId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Cart c SET c.price = :price WHERE c.cartId = :cartId")
+    void updateCartPriceByCartId(@Param("cartId") int cartId, @Param("price") int price);
 }
