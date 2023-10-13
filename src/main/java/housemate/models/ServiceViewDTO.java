@@ -40,8 +40,7 @@ public class ServiceViewDTO {
 		private int originalPrice;
 		private int salePrice;
 
-		public ServicePrice setPriceForComboMonth(Service service, int duration_value, UsageDurationUnit duration_unit,
-				int percentAddedValue) {
+		public ServicePrice setPriceForComboMonth(Service service, int duration_value, UsageDurationUnit duration_unit, int percentAddedValue) {
 			int originalPrice = service.getOriginalPrice() * percentAddedValue/100 ;
 			int salePrice =  service.getSalePrice() * percentAddedValue/100;
 			if (salePrice < 0 || service.getSalePrice() == 0) salePrice = 0; //No sale for this service
