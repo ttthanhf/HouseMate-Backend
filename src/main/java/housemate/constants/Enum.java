@@ -10,14 +10,12 @@ public class Enum {
 		SINGLES,
 		PACKAGES,
 		GENERAL
-		
 	}
 
 	public static enum UsageDurationUnit {
 		DAY,
 		WEEK,
 		MONTH
-		
 	}
 
 	public static enum SortRequired {
@@ -26,7 +24,7 @@ public class Enum {
 	}
 
 	public static enum GroupType {
-		CLEANING_SERVICE,
+		HOURLY_SERVICE,
 		RETURN_SERVICE,
 		DELIVERY_SERVICE,
 		OTHER
