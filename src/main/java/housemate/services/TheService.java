@@ -225,7 +225,7 @@ public class TheService  {
 							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The unit of measure of package must be COMBO !");
 						for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
 							if (serviceRepo.findByServiceId(singleServiceId).isEmpty())
-								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This service does not existing before !");
+								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This single service does not existing in provided list !");
 							if(serviceDTO.getServiceChildList().get(singleServiceId) <= 0)
 								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The quantity of single child service must greater than 0 !");
 						}
