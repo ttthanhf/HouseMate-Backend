@@ -4,6 +4,8 @@
  */
 package housemate.entities;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import housemate.constants.Enum.GroupType;
@@ -71,9 +73,11 @@ public class Service {
 	@Transient
 	private final String mainImg = "bit.ly/3tsNi4d";
 	
+	@JsonInclude(value = Include.NON_NULL)
 	@Transient
-	private int numberOfReview;
+	private Integer numberOfReview;
 	
+	@JsonInclude(value = Include.NON_NULL)
 	@Transient
-	private int numberOfComment;
+	private Integer numberOfComment;
 }
