@@ -6,6 +6,7 @@ package housemate.repositories;
 
 import housemate.entities.OrderItem;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +24,8 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
     @Transactional
     @Query("DELETE FROM OrderItem o WHERE o.orderId = :orderId")
     void removeAllOrderItemByUserIdAndOrderId(@Param("orderId") int orderId);
+
+    @Query("SELECT o FROM OrderItem o WHERE o.orderId = :orderId")
+    List<OrderItem> getAllOrderItemByOrderId(@Param("orderId") int orderId);
+
 }
