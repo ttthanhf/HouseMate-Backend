@@ -70,4 +70,10 @@ public class Service {
 	//TODO: Update Img Later
 	@Transient
 	private final String mainImg = "bit.ly/3tsNi4d";
+	
+	@Transient
+	private int numberOfReview;
+	
+	@Transient
+	private int numberOfComment;
 }

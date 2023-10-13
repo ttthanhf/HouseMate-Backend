@@ -32,14 +32,17 @@ public class ServiceFeedback {
     private int taskId;
     
     @ManyToOne
-    @JoinColumn(name = "service_id")
+    @JoinColumn(name = "service_id", insertable = false, updatable = false)
     private Service service;
+    
+    @Column(name = "service_id")
+    private int serviceId;
     
     @Column(name = "customer_id")
     private int customerId;
 
     @Column(name = "content")
-    private int content;
+    private String content;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

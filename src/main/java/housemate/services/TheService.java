@@ -29,6 +29,8 @@ import housemate.entities.Service;
 import housemate.entities.ServiceType;
 import housemate.models.ServiceNewDTO;
 import housemate.models.ServiceViewDTO;
+import housemate.repositories.CommentRepository;
+import housemate.repositories.FeedbackRepository;
 import housemate.repositories.PackageServiceItemRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
@@ -49,6 +51,12 @@ public class TheService  {
 	
 	@Autowired
 	PackageServiceItemRepository packageServiceItemRepo;
+	
+	@Autowired
+	CommentRepository commentRepo;
+	
+	@Autowired
+	FeedbackRepository feedbackRepo;
 	
 	ModelMapper mapper = new ModelMapper();	
 	
@@ -147,7 +155,10 @@ public class TheService  {
 		
 		if (service == null) 
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found this service !");
-			
+		
+		
+		service.setNumberOfReview(feedbackRepo.findAllByServiceId(serviceId).size());
+		service.setNumberOfComment(commentRepo.getAllCommentByServiceId(serviceId).size());
 		serviceDtoForDetail.setService(service);
 			
 		if (!service.isPackage()) { // this is a service
