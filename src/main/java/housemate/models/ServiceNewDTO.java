@@ -10,11 +10,11 @@ import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,13 +35,14 @@ public class ServiceNewDTO {
 	@Schema(description = "Title name")
 	private String titleName;
 
-	@Positive(message = "Price must be greater than 0")
+	@Min(value = 1000, message = "Price must from 1,000 VND upper")
 	@Schema(description = "Original price")
-	private int originalPrice;
+	private Integer originalPrice;
 
-	@PositiveOrZero(message = "Sale Price must be greater than 0")
+	@Min(value = 0, message = "The percent for sale price must from 0 - 100%" )
+	@Max(value = 100, message = "The percent for sale price must from 0 - 100%" )
 	@Schema(description = "Sale price")
-	private int salePrice;
+	private Integer salePrice;
 
 	@NotNull(message = "The unit of measure type must not be empty")
 	@Schema(description = "The Unit of measure in one of these type: KG, HOUR, TIME, COMBO."

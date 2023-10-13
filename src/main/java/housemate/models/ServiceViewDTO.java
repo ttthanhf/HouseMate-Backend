@@ -38,13 +38,15 @@ public class ServiceViewDTO {
 		private int durationValue;
 		private UsageDurationUnit durationUnit;
 		private int originalPrice;
-		private int salePrice;
+		private int priceAfterSale;
 
 		public ServicePrice setPriceForComboMonth(Service service, int duration_value, UsageDurationUnit duration_unit, int percentAddedValue) {
-			int originalPrice = service.getOriginalPrice() * percentAddedValue/100 ;
-			int salePrice =  service.getSalePrice() * percentAddedValue/100;
-			if (salePrice < 0 || service.getSalePrice() == 0) salePrice = 0; //No sale for this service
-			return new ServicePrice(duration_value, duration_unit, originalPrice, salePrice);
+			int originalPrice = service.getOriginalPrice() * percentAddedValue / 100;
+			int priceAfterSale = service.getPriceAfterSale() * percentAddedValue / 100;
+			if (priceAfterSale < 0 || service.getSalePrice() == 0)
+				priceAfterSale = 0; // No sale for this service
+
+			return new ServicePrice(duration_value, duration_unit, originalPrice, priceAfterSale);
 		}
 	}
 

@@ -44,6 +44,9 @@ public class Service {
 
 	@Column(name = "sale_price")
 	private int salePrice;
+	
+	@Transient
+	private int priceAfterSale;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "unit_of_measure", nullable = false)
@@ -80,4 +83,11 @@ public class Service {
 	@JsonInclude(value = Include.NON_NULL)
 	@Transient
 	private Integer numberOfComment;
+	
+	@PostLoad
+	@PrePersist
+	private void preDoing() {
+		priceAfterSale = originalPrice - originalPrice*salePrice/100;
+		this.setPriceAfterSale(priceAfterSale);
+	}
 }
