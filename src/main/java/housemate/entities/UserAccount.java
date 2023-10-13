@@ -50,6 +50,9 @@ public class UserAccount {
     @Column(name = "avatar")
     private String avatar;
 
+    @Column(name = "address")
+    private String address;
+
     @JsonIgnore
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
