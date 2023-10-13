@@ -29,9 +29,10 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ServiceNewDTO {
 
-	@Schema(description = "Title name")
+	
 	@NotEmpty
 	@Size(min = 5, max = 255)
+	@Schema(description = "Title name")
 	private String titleName;
 
 	@Positive(message = "Price must be greater than 0")

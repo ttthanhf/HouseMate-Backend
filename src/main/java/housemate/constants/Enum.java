@@ -2,7 +2,6 @@ package housemate.constants;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 /*This class contain all kind of Housemate Enum*/
 public class Enum {
@@ -51,8 +50,7 @@ public class Enum {
 	public static enum ServiceField {
 		NAME("titleName"),
 		PRICE("originalPrice"),
-		NUMBER_OF_SOLD("numberOfSold")
-		;
+		NUMBER_OF_SOLD("numberOfSold");
 
 		private String fieldName;
 	}

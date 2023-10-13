@@ -22,7 +22,6 @@ public class TheServiceAspect {
 	
 	private Logger LOG = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-	
 	@Pointcut("within(housemate.services.TheService)")
 	public void updateService() {
 	}

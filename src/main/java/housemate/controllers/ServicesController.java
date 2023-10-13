@@ -43,7 +43,7 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<ServiceField> sortBy,
 			@RequestParam(required = false) Optional<SortRequired> orderBy
 			){
-		return servDao.searchFilterAllKind("", category, Optional.of(Boolean.FALSE), saleStatus, rating, sortBy, orderBy);
+		return servDao.searchFilterAllKind("", category, saleStatus, rating, sortBy, orderBy);
 	}
 	
 	@GetMapping("/search") 
@@ -56,7 +56,7 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<ServiceField> sortBy,
 			@RequestParam(required = false) Optional<SortRequired> orderBy
 			){
-		 return servDao.searchFilterAllKind(keyword, category, Optional.of(Boolean.FALSE), saleStatus, rating, sortBy, orderBy);
+		 return servDao.searchFilterAllKind(keyword, category, saleStatus, rating, sortBy, orderBy);
 	}
 	
 	@GetMapping("/topsale")
