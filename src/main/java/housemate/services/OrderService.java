@@ -100,6 +100,7 @@ public class OrderService {
         listOrderItem = orderItemRepository.saveAll(listOrderItem);
         order.setListOrderItem(listOrderItem);
         order.setTotalPrice(totalPrice);
+        order = orderRepository.save(order);
         return ResponseEntity.status(HttpStatus.OK).body(order);
     }
 

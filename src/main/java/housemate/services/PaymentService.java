@@ -5,8 +5,10 @@
 package housemate.services;
 
 import com.nimbusds.jose.shaded.gson.JsonObject;
+import housemate.entities.Order;
 import housemate.utils.EncryptUtil;
 import housemate.repositories.CartRepository;
+import housemate.repositories.OrderRepository;
 import housemate.utils.AuthorizationUtil;
 import housemate.utils.RandomUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,10 +44,10 @@ import org.springframework.stereotype.Service;
 public class PaymentService {
 
     @Autowired
-    private CartRepository cartRepository;
+    private AuthorizationUtil authorizationUtil;
 
     @Autowired
-    private AuthorizationUtil authorizationUtil;
+    private OrderRepository orderRepository;
 
 //    private String orderType = "other"; // đây là option để cho việc query ra type của payment
     private final String language = "en";
@@ -70,18 +72,16 @@ public class PaymentService {
     private String secretKey;
 
     public ResponseEntity<String> createVNPayPayment(HttpServletRequest request) throws UnsupportedEncodingException {
-
-        long pricePerService = 1000000 * 100; //fake price, must be * 100 because vnpay want it but real price is 1m
-
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        int totalService = cartRepository.getTotalCart(userId);
 
-        //if user dont have cart => can not checkout
-        if (totalService == 0) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("User dont have any item in cart");
+        Order order = orderRepository.getOrderNotCompleteByUserId(userId);
+
+        //if user dont have order => can not pay
+        if (order == null || order.getTotalPrice() == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("User dont have order");
         }
 
-        long amount = pricePerService * totalService;
+        long amount = order.getTotalPrice() * 100;
 
         String vnp_TxnRef = RandomUtil.getRandomNumber(8);
         String vnp_Command = "pay";
