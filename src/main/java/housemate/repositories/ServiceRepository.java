@@ -32,6 +32,7 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	@Query( value = "SELECT s FROM Service s WHERE s.saleStatus <> 'DISCONTINUED'")
 	List<Service> findAllAvailable(); 
 	
+	List<Service> findAllByIsPackageFalse();
 	
 	@Query("SELECT s FROM Service s WHERE "
 			+ "s.saleStatus = :saleStatus " 
