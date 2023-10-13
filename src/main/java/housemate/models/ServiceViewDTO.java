@@ -3,7 +3,6 @@ package housemate.models;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import housemate.constants.Enum.UsageDurationUnit;
 import housemate.entities.PackageServiceItem;
 import housemate.entities.Service;
@@ -29,7 +28,8 @@ public class ServiceViewDTO {
 
 	List<ServicePrice> priceList;
 
-	List<String> images; // Update later
+	//TODO: Update imgList later 
+	List<String> images; 
 
 	@Data
 	@NoArgsConstructor
@@ -39,15 +39,13 @@ public class ServiceViewDTO {
 		private UsageDurationUnit durationUnit;
 		private int originalPrice;
 		private int salePrice;
-		@JsonProperty(value = "extensionFeePerMonth")
-		private int extensionFee;
 
 		public ServicePrice setPriceForComboMonth(Service service, int duration_value, UsageDurationUnit duration_unit,
-				int extensionFee) {
-			int originalPrice = service.getOriginalPrice() + extensionFee * duration_value;
-			int salePrice = (originalPrice - service.getSalePrice()) * extensionFee * duration_value;
-			if (salePrice < 0) salePrice = 0;
-			return new ServicePrice(duration_value, duration_unit, originalPrice, salePrice, extensionFee);
+				int percentAddedValue) {
+			int originalPrice = service.getOriginalPrice() * percentAddedValue/100 ;
+			int salePrice =  service.getSalePrice() * percentAddedValue/100;
+			if (salePrice < 0 || service.getSalePrice() == 0) salePrice = 0; //No sale for this service
+			return new ServicePrice(duration_value, duration_unit, originalPrice, salePrice);
 		}
 	}
 

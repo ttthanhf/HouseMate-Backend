@@ -15,7 +15,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
@@ -74,7 +73,6 @@ public class TheService  {
 	public ResponseEntity<?> searchFilterAllKind(
 			String keywordValue ,
 			Optional<ServiceCategory> category,
-			Optional<Boolean> topsale,
 			Optional<SaleStatus> saleStatus,
 			Optional<Integer> rating,
 			Optional<ServiceField> sortBy,
@@ -85,7 +83,6 @@ public class TheService  {
 		
 		ServiceCategory cateogryValue = category.orElse(ServiceCategory.GENERAL);
 		SaleStatus statusValue = saleStatus.orElse(SaleStatus.AVAILABLE); 
-		boolean isTopSale = topsale.orElse(false);
 		Integer ratingValue = rating.orElse(0); 
 		ServiceField fieldname = sortBy.orElse(ServiceField.PRICE);
 		SortRequired requireOrder = orderBy.orElse(SortRequired.ASC);
@@ -164,10 +161,21 @@ public class TheService  {
 		//set combo price for each service
 		List<ServicePrice> priceList = new ArrayList<>();
 		ServicePrice servicePrice = new ServicePrice();
-		priceList.add(servicePrice.setPriceForComboMonth(service, 3, UsageDurationUnit.MONTH, 0));
-		priceList.add(servicePrice.setPriceForComboMonth(service, 6, UsageDurationUnit.MONTH, 10000));//extension fee 15000/month for 6 months
-		priceList.add(servicePrice.setPriceForComboMonth(service, 12, UsageDurationUnit.MONTH, 20000));//extension fee 20000/month for 12 months
+		priceList.add(servicePrice.setPriceForComboMonth(service, 3, UsageDurationUnit.MONTH, 100));
+		priceList.add(servicePrice.setPriceForComboMonth(service, 6, UsageDurationUnit.MONTH, 120));
+		priceList.add(servicePrice.setPriceForComboMonth(service, 12, UsageDurationUnit.MONTH, (120*110)/100));
 		serviceDtoForDetail.setPriceList(priceList);
+		
+		//TODO: Update imgList later 
+		List<String> imgList = new ArrayList<>();
+		imgList.add("https://t.ly/itj2o");
+		imgList.add("https://t.ly/sRTe7");
+		imgList.add("https://t.ly/9xEHO");
+		imgList.add("bit.ly/48Ua85g");
+		imgList.add("bit.ly/45vftNa");
+		imgList.add("bit.ly/3tsNi4d");
+		
+		serviceDtoForDetail.setImages(imgList);
 			
 		return ResponseEntity.ok().body(serviceDtoForDetail);
 	}
@@ -240,7 +248,7 @@ public class TheService  {
 				int savedServiceId = savedService.getServiceId();
 				Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
 				for(Integer singleServiceId : childServiceSet.keySet()) {
-					PackageServiceItem item = new PackageServiceItem();
+					PackageServiceItem item = new PackageServiceItem(); //save package service item
 					item.setPackageServiceId(savedServiceId);
 					item.setSingleServiceId(singleServiceId);
 					item.setQuantity(childServiceSet.get(singleServiceId));
