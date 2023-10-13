@@ -5,18 +5,14 @@
 package housemate.models;
 
 import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
-import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 /**
  *
  * @author ThanhF
  */
-@Getter
-@Setter
+@Data
 public class CartAddDTO {
 
     @Positive
@@ -29,7 +25,6 @@ public class CartAddDTO {
     @Positive
     private int quantity;
 
-    @PastOrPresent
-    @Hidden
-    private LocalDateTime date;
+    @Positive
+    private int periodId;
 }

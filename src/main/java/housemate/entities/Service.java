@@ -5,6 +5,7 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 /**
  *
@@ -12,48 +13,15 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(name = "Service")
+@Data
 public class Service {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "service_id")
-    private int id;
+    private int serviceId;
 
-    @Column(name = "title_name", unique = true)
-    private String titleName;
+    @Column(name = "original_price")
+    private int originalPrice;
 
-    @Column(name = "unit_of_measure")
-    private String unitOfMeasure;
-
-    @Column(name = "sale_price")
-    private int salePrice;
-
-    @Column(name = "description", length = 5000)
-    private String description;
-
-    @Column(name = "sale_status")
-    private String saleStatus;
-
-    @Column(name = "rating")
-    private float rating;
-
-    @Column(name = "creator_id")
-    private int creatorId;
-
-    @Column(name = "created_at")
-    private int createdAt;
-
-    public Service(int id, String titleName, String unitOfMeasure, int salePrice, String description, String saleStatus, float rating, int creatorId, int createdAt) {
-        this.id = id;
-        this.titleName = titleName;
-        this.unitOfMeasure = unitOfMeasure;
-        this.salePrice = salePrice;
-        this.description = description;
-        this.saleStatus = saleStatus;
-        this.rating = rating;
-        this.creatorId = creatorId;
-        this.createdAt = createdAt;
-    }
-
-    
 }
-

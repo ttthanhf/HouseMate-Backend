@@ -4,8 +4,12 @@
  */
 package housemate.entities;
 
-import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Data;
 
 /**
@@ -13,28 +17,18 @@ import lombok.Data;
  * @author ThanhF
  */
 @Entity
-@Table(name = "carts")
 @Data
-public class Cart {
+@Table(name = "period_service")
+public class Period {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cart_id")
-    private int cartId;
-
-    @Column(name = "user_id")
-    @Hidden
-    private int userId;
-
-    @Column(name = "service_id")
-    private int serviceId;
-
-    @Column(name = "quantity")
-    private int quantity;
-
-    @Column(name = "price")
-    private int price;
-
     @Column(name = "period_id")
     private int periodId;
+
+    @Column(name = "period_name")
+    private String periodName;
+
+    @Column(name = "percent")
+    private float percent;
 }

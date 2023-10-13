@@ -8,9 +8,10 @@ import housemate.entities.Cart;
 import housemate.mappers.CartMapper;
 import housemate.models.CartAddDTO;
 import housemate.repositories.CartRepository;
+import housemate.repositories.PeriodRepository;
+import housemate.repositories.ServiceRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,12 @@ public class CartService {
     private CartRepository cartRepository;
 
     @Autowired
+    private PeriodRepository periodRepository;
+
+    @Autowired
+    private ServiceRepository serviceRepository;
+
+    @Autowired
     private AuthorizationUtil authorizationUtil;
 
     @Autowired
@@ -42,18 +49,26 @@ public class CartService {
     public ResponseEntity<String> addToCart(HttpServletRequest request, CartAddDTO cartAdd) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         int serviceId = cartAdd.getServiceId();
+        int servicePrice = serviceRepository.getPriceByServiceId(serviceId);
+        int periodId = cartAdd.getPeriodId();
+        Float percent = periodRepository.getPeriodByid(periodId).getPercent();
+        if (percent == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("PeriodId not found");
+        }
+        int price = (int) (servicePrice * cartAdd.getQuantity() * percent);
 
         //if have item in cart -> update quantity only
         if (cartRepository.getCartByUserIdAndServiceId(userId, serviceId) != null) {
             int quanlity = cartAdd.getQuantity();
-            cartRepository.updateCartQuantity(userId, serviceId, quanlity);
+            cartRepository.updateCartQuantity(userId, serviceId, quanlity, price, periodId);
             return ResponseEntity.status(HttpStatus.OK).body("Updated to cart");
         }
 
         //if dont have item in cart -> create new item in cart
-        cartAdd.setDate(LocalDateTime.now());
         cartAdd.setUserId(userId);
         Cart cart = cartMapper.mapToEntity(cartAdd);
+        cart.setPrice(price);
+
         cartRepository.save(cart);
         return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
     }
@@ -64,5 +79,19 @@ public class CartService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cart not found");
         }
         return ResponseEntity.status(HttpStatus.OK).body("Removed");
+    }
+
+    public void updateAllCartPriceWhenPeriodIdChange(int periodId, Float percent) {
+        List<Integer> listCartId = cartRepository.getAllCartIdByPeriodId(periodId);
+
+        //update all cart item price when period id change
+        for (int cartId : listCartId) {
+            Cart cart = cartRepository.getCartById(cartId);
+            int serviceId = cart.getServiceId();
+            int servicePrice = serviceRepository.getPriceByServiceId(serviceId);
+            int serviceQuantity = cart.getQuantity();
+            int price = (int) (servicePrice * serviceQuantity * percent);
+            cartRepository.updateCartPriceByCartId(cart.getCartId(), price);
+        }
     }
 }
