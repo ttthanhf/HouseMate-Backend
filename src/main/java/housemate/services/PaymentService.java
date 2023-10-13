@@ -6,8 +6,11 @@ package housemate.services;
 
 import com.nimbusds.jose.shaded.gson.JsonObject;
 import housemate.entities.Order;
-import housemate.utils.EncryptUtil;
+import housemate.entities.OrderItem;
+import housemate.models.UserInfoOrderDTO;
 import housemate.repositories.CartRepository;
+import housemate.repositories.OrderItemRepository;
+import housemate.utils.EncryptUtil;
 import housemate.repositories.OrderRepository;
 import housemate.utils.AuthorizationUtil;
 import housemate.utils.RandomUtil;
@@ -30,6 +33,8 @@ import java.util.TimeZone;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -49,7 +54,12 @@ public class PaymentService {
     @Autowired
     private OrderRepository orderRepository;
 
-//    private String orderType = "other"; // đây là option để cho việc query ra type của payment
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
+
     private final String language = "en";
     private final String vnp_IpAddr = "127.0.0.1";
 
@@ -59,7 +69,7 @@ public class PaymentService {
     @Value("${vnp.pay_url}")
     private String vnp_PayUrl;
 
-    @Value("${vnp.return_check_url}")
+    @Value("${vnp.return_url}")
     private String vnp_ReturnUrl;
 
     @Value("${vnp.api_url}")
@@ -71,7 +81,8 @@ public class PaymentService {
     @Value("${vnp.secretKey}")
     private String secretKey;
 
-    public ResponseEntity<String> createVNPayPayment(HttpServletRequest request) throws UnsupportedEncodingException {
+    public ResponseEntity<String> createVNPayPayment(HttpServletRequest request, UserInfoOrderDTO userInfoOrderDTO) throws UnsupportedEncodingException {
+
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
@@ -80,6 +91,12 @@ public class PaymentService {
         if (order == null || order.getTotalPrice() == 0) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("User dont have order");
         }
+
+        order.setAddress(userInfoOrderDTO.getAddress());
+        order.setEmail(userInfoOrderDTO.getEmail());
+        order.setPhone(userInfoOrderDTO.getPhone());
+        order.setFullName(userInfoOrderDTO.getFullName());
+        orderRepository.save(order);
 
         long amount = order.getTotalPrice() * 100;
 
@@ -96,7 +113,7 @@ public class PaymentService {
         vnp_Params.put("vnp_CurrCode", "VND");
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
         vnp_Params.put("vnp_Locale", language);
-//        vnp_Params.put("vnp_OrderType", orderType);  // đây là option để cho việc query ra type của payment
+        vnp_Params.put("vnp_OrderType", "other"); //options, can remove
         vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
 
@@ -105,7 +122,7 @@ public class PaymentService {
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
-        vnp_Params.put("vnp_OrderInfo", userId + "-" + vnp_TxnRef + "-" + vnp_CreateDate);
+        vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang:" + vnp_TxnRef);
 
         cld.add(Calendar.MINUTE, 15);
         String vnp_ExpireDate = formatter.format(cld.getTime());
@@ -141,10 +158,10 @@ public class PaymentService {
 
         String paymentUrl = vnp_PayUrl + "?" + queryUrl;
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(paymentUrl);
+        return ResponseEntity.status(HttpStatus.OK).body(paymentUrl);
     }
 
-    public ResponseEntity<Object> checkVNPayPayment(String vnp_TxnRef, String vnp_TransactionNo, String vnp_TransactionDate) throws IOException {
+    public ResponseEntity<String> checkVNPayPayment(HttpServletRequest request, String vnp_TxnRef, String vnp_TransactionNo, String vnp_TransactionDate) throws IOException {
 
         String vnp_RequestId = RandomUtil.getRandomNumber(8);
         String vnp_Command = "querydr";
@@ -190,6 +207,29 @@ public class PaymentService {
             response.append(output);
         }
         in.close();
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+
+        //check response
+        Pattern patternResponseCode = Pattern.compile("\"vnp_ResponseCode\":\"(\\d{2})\"");
+        Matcher matcherResponseCode = patternResponseCode.matcher(response.toString());
+
+        if (!matcherResponseCode.find()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find RsCode");
+        }
+        String responseCode = matcherResponseCode.group(1);
+        if (!"00".equals(responseCode)) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Payment fail");
+        }
+
+        //remove all cart exist in order and set complete order to true
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        Order order = orderRepository.getOrderNotCompleteByUserId(userId);
+        List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
+        for (OrderItem orderItem : listOrderItem) {
+            cartRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
+        }
+        order.setComplete(true);
+        orderRepository.save(order);
+
+        return ResponseEntity.status(HttpStatus.OK).body("Payment sucess");
     }
 }
