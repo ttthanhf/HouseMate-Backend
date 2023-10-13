@@ -51,6 +51,16 @@ public class OrderService {
     @Autowired
     private UserRepository userRepository;
 
+    public ResponseEntity<List<Order>> getAllOrderComplete(HttpServletRequest request) {
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        List<Order> listOrder = orderRepository.getAllOrderCompleteByUserId(userId);
+        for (Order order : listOrder) {
+            List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
+            order.setListOrderItem(listOrderItem);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(listOrder);
+    }
+
     public ResponseEntity<?> createCheckout(HttpServletRequest request, CheckoutCreateDTO checkoutCreateDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
