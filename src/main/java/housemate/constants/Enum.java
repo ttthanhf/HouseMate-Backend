@@ -40,6 +40,7 @@ public class Enum {
 		HOUR,
 		KG,
 		TIME,
+		BOTTLE,
 		COMBO
 	}
 	

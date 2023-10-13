@@ -215,8 +215,6 @@ public class TheService  {
 				}
 
 				// Set auto sale status
-				if (serviceDTO.getSalePrice() >= serviceDTO.getOriginalPrice())
-					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The sale price must be smaller than the original price");
 				if(serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Create new service the sale status must be Onsale or Available");
 				else if (serviceDTO.getSalePrice() > 0)
@@ -225,7 +223,15 @@ public class TheService  {
 					serviceDTO.setSaleStatus(SaleStatus.AVAILABLE);
 
 				// check if single service is not allow to
-				if (!serviceDTO.isPackage() && serviceDTO.getServiceChildList() != null)
+				if (!serviceDTO.isPackage() && serviceDTO.getServiceChildList() == null) {
+					Set<String> typeNameList = serviceDTO.getTypeNameList();
+					Set<String> uniqueNames = new HashSet<>();
+					// check any type name have equal ignore case
+					for (String typeName : typeNameList) {
+						if (!uniqueNames.add(typeName.toLowerCase().trim()))
+							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicated the type name in this service !");
+					}
+				} else
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The single service not allow to set service child list !");
 
 				// check single service id existed in db
@@ -244,6 +250,9 @@ public class TheService  {
 					} else 
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The package not allow to set type name list !");
 				}
+				
+				//TODO CHECK IMAGES CONSTRAINTS HERE IF HAVE
+				
 			} catch (Exception ex) {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something Error ! Saved Failed !");
 			}
@@ -279,6 +288,7 @@ public class TheService  {
 					sumSingleServiceSalePrice += (serviceRepo.findByServiceId(singleServiceId).orElse(null).getOriginalPrice() * item.getQuantity());
 					packageServiceItemRepo.save(item);
 		        }
+								
 				//check original price of package
 				if(serviceDTO.getOriginalPrice() != sumSingleServiceSalePrice) {
 					TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -288,6 +298,10 @@ public class TheService  {
 				}
 				savedService.setOriginalPrice(sumSingleServiceSalePrice);
 				serviceRepo.save(savedService);
+				
+				//TODO SAVE IMAGES
+
+				
 			}
 		}catch (Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -316,8 +330,6 @@ public class TheService  {
 			}
 
 			// update status //TODO: Check based on figma
-			if (serviceDTO.getSalePrice() >= serviceDTO.getOriginalPrice())
-				ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The sale price must be smaller than the original price !");
 			if (serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED)) {
 				oldService.setSaleStatus(SaleStatus.DISCONTINUED);
 			} else if (serviceDTO.getSalePrice() > 0) {
@@ -333,6 +345,7 @@ public class TheService  {
 				if (serviceDTO.getTypeNameList() != null && serviceDTO.getServiceChildList() == null) {
 					Set<String> typeNameList = serviceDTO.getTypeNameList();
 					Set<String> uniqueNames = new HashSet<>();
+					//check any type name have equal ignore case
 					for (String typeName : typeNameList) {
 						if (!uniqueNames.add(typeName.toLowerCase().trim()))
 							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicated the type name of this service !");
@@ -368,8 +381,7 @@ public class TheService  {
 				}
 				Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
 				for (Integer singleServiceId : childServiceSet.keySet()) {
-					PackageServiceItem item = packageServiceItemRepo
-							.findByPackageServiceIdAndSingleServiceId(serviceId, singleServiceId).orElse(null);
+					PackageServiceItem item = packageServiceItemRepo.findByPackageServiceIdAndSingleServiceId(serviceId, singleServiceId).orElse(null);
 					item.setQuantity(childServiceSet.get(singleServiceId));
 					packageServiceItemRepo.save(item);
 				}
@@ -381,6 +393,7 @@ public class TheService  {
 			oldService.setOriginalPrice(serviceDTO.getOriginalPrice());
 			oldService.setSalePrice(serviceDTO.getSalePrice());
 			oldService.setGroupType(serviceDTO.getGroupType());
+			//TODO: UPDATE IMAGES
 			savedService = serviceRepo.save(oldService);
 
 		} catch (Exception e) {
@@ -389,6 +402,8 @@ public class TheService  {
 
 		return this.getOne(savedService.getServiceId());
 	}
+	
+	//TODO: DELETE SERVICE LATER
 	
 	
 	
