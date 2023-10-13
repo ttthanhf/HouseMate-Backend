@@ -97,11 +97,12 @@ public class TheService  {
 		ServiceField fieldname = sortBy.orElse(ServiceField.PRICE);
 		SortRequired requireOrder = orderBy.orElse(SortRequired.ASC);
 		
-		Sort sort;
 		// sort by field
+		Sort sort;
 		if (requireOrder.equals(SortRequired.ASC))
 			sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
-		sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
+		else
+			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
 
 		serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, sort);
 		
