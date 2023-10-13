@@ -65,6 +65,12 @@ public class ServicesController {
 		return servDao.getTopsale();
 	}
 	
+	@GetMapping("/single")
+	@Operation(summary = "This will help you to get single service list only")
+	public ResponseEntity<?> getAllSingleService(){
+		return servDao.getAllSingleService();
+	}
+	
 	@GetMapping("/{id}")
 	@Operation(summary = "Get one service and view in details")
 	public ResponseEntity<?> getOne(@PathVariable int id) {

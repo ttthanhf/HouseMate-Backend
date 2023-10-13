@@ -4,6 +4,8 @@
  */
 package housemate.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import housemate.constants.Enum.GroupType;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
@@ -65,4 +67,7 @@ public class Service {
 	@Column(name = "isPackage", nullable = false)
 	private boolean isPackage;
 	
+	//TODO: Update Img Later
+	@Transient
+	private final String mainImg = "bit.ly/3tsNi4d";
 }

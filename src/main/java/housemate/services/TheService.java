@@ -11,10 +11,13 @@ import java.util.Optional;
 import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
@@ -58,6 +61,13 @@ public class TheService  {
 	
 	public ResponseEntity<?> getAllKind() {
 		List<Service> serviceList = serviceRepo.findAll();
+		if (serviceList == null)
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
+		return ResponseEntity.ok().body(serviceList);
+	}
+	
+	public ResponseEntity<?> getAllSingleService() {
+		List<Service> serviceList = serviceRepo.findAllByIsPackageFalse();
 		if (serviceList == null)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
 		return ResponseEntity.ok().body(serviceList);
@@ -226,7 +236,8 @@ public class TheService  {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something Error ! Saved Failed !");
 			}
 			
-			//map to DTO & save into DB
+			//after check all then
+			//map to DTO & save SavedService into DB to get new service Id;
 			savedService = serviceRepo.save(mapper.map(serviceDTO, Service.class));
 			
 			if (savedService == null)
@@ -247,15 +258,27 @@ public class TheService  {
 			if(serviceDTO.getServiceChildList() != null && serviceDTO.isPackage() && savedService != null) {
 				int savedServiceId = savedService.getServiceId();
 				Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
+				int sumSingleServiceSalePrice = 0;
 				for(Integer singleServiceId : childServiceSet.keySet()) {
 					PackageServiceItem item = new PackageServiceItem(); //save package service item
 					item.setPackageServiceId(savedServiceId);
 					item.setSingleServiceId(singleServiceId);
 					item.setQuantity(childServiceSet.get(singleServiceId));
+					sumSingleServiceSalePrice += (serviceRepo.findByServiceId(singleServiceId).orElse(null).getOriginalPrice() * item.getQuantity());
 					packageServiceItemRepo.save(item);
 		        }
+				//check original price of package
+				if(serviceDTO.getOriginalPrice() != sumSingleServiceSalePrice) {
+					TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+							"The original price of package must be the sum of all single service child list ! "
+						  + "\nThe original price of package should be " + sumSingleServiceSalePrice);
+				}
+				savedService.setOriginalPrice(sumSingleServiceSalePrice);
+				serviceRepo.save(savedService);
 			}
 		}catch (Exception e) {
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed !");
 		}
 		
