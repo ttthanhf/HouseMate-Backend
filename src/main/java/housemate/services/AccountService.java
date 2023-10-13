@@ -5,6 +5,8 @@ import housemate.entities.UserAccount;
 import housemate.mappers.AccountMapper;
 import housemate.models.UpdateAccountDTO;
 import housemate.repositories.UserRepository;
+import housemate.utils.AuthorizationUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,9 @@ public class AccountService {
 
     @Autowired
     AccountMapper accountMapper;
+
+    @Autowired
+    AuthorizationUtil authorizationUtil;
 
     public ResponseEntity<List<UserAccount>> getAll() {
         return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
@@ -69,5 +74,10 @@ public class AccountService {
     public ResponseEntity<List<UserAccount>> getAllAdmin() {
         List<UserAccount> staffs = userRepository.findByRole(Role.ADMIN);
         return ResponseEntity.status(HttpStatus.OK).body(staffs);
+    }
+
+    public ResponseEntity<UserAccount> getCurrentUser(HttpServletRequest request) {
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        return getInfo(userId);
     }
 }
