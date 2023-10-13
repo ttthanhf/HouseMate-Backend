@@ -37,4 +37,7 @@ public class Cart {
 
     @Column(name = "period_id")
     private int periodId;
+
+    @Transient
+    private Service service;
 }

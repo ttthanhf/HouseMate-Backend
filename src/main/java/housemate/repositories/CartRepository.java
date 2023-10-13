@@ -23,10 +23,18 @@ public interface CartRepository extends JpaRepository<Cart, Integer> {
     @Query("SELECT c FROM Cart c WHERE c.userId = :userId")
     List<Cart> getCartByUserId(@Param("userId") int userId);
 
+    @Query("SELECT c FROM Cart c WHERE c.cartId = :cartId")
+    Cart getCartById(@Param("cartId") int cartId);
+
     @Modifying
     @Transactional
     @Query("DELETE FROM Cart c WHERE c.userId = :userId AND c.id = :cartId")
     int deleteCart(@Param("userId") int userId, @Param("cartId") int cartId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Cart c WHERE c.userId = :userId")
+    int deleteAllCartByUserId(@Param("userId") int userId);
 
     @Query("SELECT c FROM Cart c WHERE c.userId = :userId AND c.serviceId = :serviceId")
     Cart getCartByUserIdAndServiceId(@Param("userId") int userId, @Param("serviceId") int serviceId);
@@ -38,9 +46,6 @@ public interface CartRepository extends JpaRepository<Cart, Integer> {
 
     @Query("SELECT c.cartId FROM Cart c WHERE c.periodId = :periodId")
     List<Integer> getAllCartIdByPeriodId(@Param("periodId") int periodId);
-
-    @Query("SELECT c FROM Cart c WHERE c.cartId = :cartId")
-    Cart getCartById(@Param("cartId") int cartId);
 
     @Modifying
     @Transactional

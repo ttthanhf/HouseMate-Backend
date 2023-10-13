@@ -41,16 +41,32 @@ public class CartService {
     private CartMapper cartMapper;
 
     public ResponseEntity<List<Cart>> getCart(HttpServletRequest request) {
+
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         List<Cart> listCart = cartRepository.getCartByUserId(userId);
+
+        //set service item in cart
+        for (Cart cart : listCart) {
+            cart.setService(serviceRepository.getServiceByServiceId(cart.getServiceId()));
+        }
+
         return ResponseEntity.status(HttpStatus.OK).body(listCart);
     }
 
     public ResponseEntity<String> addToCart(HttpServletRequest request, CartAddDTO cartAdd) {
+
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         int serviceId = cartAdd.getServiceId();
-        int servicePrice = serviceRepository.getPriceByServiceId(serviceId);
+
+        //if have sale price => servicePrice = sale price
+        int servicePrice = serviceRepository.getOriginalPriceByServiceId(serviceId);
+        int salePrice = serviceRepository.getSalePriceByServiceId(serviceId);
+        if (salePrice != 0) {
+            servicePrice = salePrice;
+        }
         int periodId = cartAdd.getPeriodId();
+
+        //check period id exist or not
         Float percent = periodRepository.getPeriodByid(periodId).getPercent();
         if (percent == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("PeriodId not found");
@@ -81,6 +97,14 @@ public class CartService {
         return ResponseEntity.status(HttpStatus.OK).body("Removed");
     }
 
+    public ResponseEntity<String> removeAllCartByUserId(HttpServletRequest request) {
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        if (cartRepository.deleteAllCartByUserId(userId) == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cart not found");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body("Removed All Cart");
+    }
+
     public void updateAllCartPriceWhenPeriodIdChange(int periodId, Float percent) {
         List<Integer> listCartId = cartRepository.getAllCartIdByPeriodId(periodId);
 
@@ -88,7 +112,14 @@ public class CartService {
         for (int cartId : listCartId) {
             Cart cart = cartRepository.getCartById(cartId);
             int serviceId = cart.getServiceId();
-            int servicePrice = serviceRepository.getPriceByServiceId(serviceId);
+
+            //if have sale price => servicePrice = sale price
+            int servicePrice = serviceRepository.getOriginalPriceByServiceId(serviceId);
+            int salePrice = serviceRepository.getSalePriceByServiceId(serviceId);
+            if (salePrice != 0) {
+                servicePrice = salePrice;
+            }
+
             int serviceQuantity = cart.getQuantity();
             int price = (int) (servicePrice * serviceQuantity * percent);
             cartRepository.updateCartPriceByCartId(cart.getCartId(), price);

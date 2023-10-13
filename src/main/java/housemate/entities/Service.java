@@ -24,4 +24,13 @@ public class Service {
     @Column(name = "original_price")
     private int originalPrice;
 
+    @Column(name = "sale_price")
+    private int salePrice;
+
+    @Column(name = "title_name")
+    private String titleName;
+
+    @Transient
+    private String image;
+
 }
