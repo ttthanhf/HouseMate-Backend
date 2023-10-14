@@ -5,7 +5,6 @@
 package housemate.controllers;
 
 import housemate.entities.Cart;
-import housemate.models.CartAddDTO;
 import housemate.models.CartUpdateDTO;
 import housemate.services.CartService;
 import io.swagger.v3.oas.annotations.Operation;
