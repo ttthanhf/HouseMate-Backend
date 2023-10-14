@@ -86,19 +86,20 @@ public class CartService {
             return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
         }
 
-        int periodId_default = 1;// default for add to cart
-        Float percent = periodRepository.getPeriodByid(periodId_default).getPercent();
-        int pricePerQuantity = (int) (servicePrice * percent);
-
         //if dont have item in cart -> create new item in cart
+        int quantity = cartDTO.getQuantity();
+        int periodId = cartDTO.getPeriodId();
+        Float percent = periodRepository.getPeriodByid(periodId).getPercent();
+        int price = (int) (servicePrice * percent * quantity);
+
         Cart cart = new Cart();
         cart.setUserId(userId);
         cart.setServiceId(serviceId);
-        cart.setPeriodId(periodId_default);
-        cart.setQuantity(1); // default for add to cart
-        cart.setPrice(pricePerQuantity);
-
+        cart.setPeriodId(periodId);
+        cart.setQuantity(quantity);
+        cart.setPrice(price);
         cartRepository.save(cart);
+
         return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
     }
 
