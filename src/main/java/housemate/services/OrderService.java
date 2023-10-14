@@ -61,9 +61,12 @@ public class OrderService {
         return ResponseEntity.status(HttpStatus.OK).body(listOrder);
     }
 
-    public ResponseEntity<Order> getOrderNotComplete(HttpServletRequest request) {
+    public ResponseEntity<?> getOrderNotComplete(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
+        if (order == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Order not found");
+        }
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         order.setListOrderItem(listOrderItem);
         return ResponseEntity.status(HttpStatus.OK).body(order);

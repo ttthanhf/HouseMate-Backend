@@ -31,7 +31,7 @@ public class OrderController {
     OrderService orderService;
 
     @Operation(summary = "Create checkout")
-    @PostMapping("/checkout")
+    @PostMapping("/checkout/create")
     public ResponseEntity<?> createCheckout(HttpServletRequest request, @RequestBody CheckoutCreateDTO checkoutCreateDTO) {
         return orderService.createCheckout(request, checkoutCreateDTO);
     }
@@ -42,9 +42,9 @@ public class OrderController {
         return orderService.getAllOrderComplete(request);
     }
 
-    @Operation(summary = "Get all Order complete")
+    @Operation(summary = "Get all Order not complete")
     @GetMapping("/checkout")
-    public ResponseEntity<Order> getOrderNotComplete(HttpServletRequest request) {
+    public ResponseEntity<?> getOrderNotComplete(HttpServletRequest request) {
         return orderService.getOrderNotComplete(request);
     }
 }
