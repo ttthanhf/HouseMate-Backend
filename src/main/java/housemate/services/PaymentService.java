@@ -86,7 +86,7 @@ public class PaymentService {
 
         //if user dont have order => can not pay
         if (order == null || order.getTotalPrice() == 0) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("User dont have order");
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("This person does not have ordered before");
         }
 
         order.setAddress(userInfoOrderDTO.getAddress());

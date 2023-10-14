@@ -19,13 +19,13 @@ public class CartUpdateDTO {
     @Hidden
     private int userId;
 
-    @Positive
+    @Positive(message = "Service Id must be greater than 0")
     private int serviceId;
 
-    @Positive
+    @Positive(message = "Quantity must be greater than 0")
     @Max(value = 3)
     private int quantity;
 
-    @Positive
+    @Positive(message = "Period Id must be greater than 0")
     private int periodId;
 }
