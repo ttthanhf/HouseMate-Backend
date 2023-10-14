@@ -39,4 +39,3 @@ src/main/resources/application.properties
 nbactions.xml
 nb-configuration.xml
 /src/main/java/housemate/exceptions/ApiException.java
-/src/main/resources/application.properties
