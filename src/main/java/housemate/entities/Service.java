@@ -44,7 +44,7 @@ public class Service {
 	@Column(name = "sale_price")
 	private int salePrice;
 	
-	@Transient
+	@Column(name = "price_after_sale")
 	private int priceAfterSale;
 
 	@Enumerated(EnumType.STRING)
@@ -83,12 +83,5 @@ public class Service {
 	@Transient
 	private Integer numberOfComment;
 	
-	@PostLoad
-	@PrePersist
-	@PostUpdate
-	private void preDoing() {
-		priceAfterSale = originalPrice - originalPrice*salePrice/100;
-		this.setPriceAfterSale(priceAfterSale);
-	}
 
 }
