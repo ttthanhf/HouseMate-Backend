@@ -63,10 +63,6 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 			        + "WHERE NOT EXISTS (SELECT 1 FROM ServiceFeedback f WHERE f.service = s)"
 				    )
 	void updateAvgRating();
-
-    @Modifying
-    @Query("UPDATE Service s SET s.priceAfterSale = s.originalPrice - s.originalPrice*s.salePrice/100")
-    void updatePriceAfterSale();
     
     @Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
     int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
