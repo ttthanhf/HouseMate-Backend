@@ -14,7 +14,7 @@ import lombok.Data;
  * @author ThanhF
  */
 @Data
-public class CartUpdateDTO {
+public class CartDTO {
 
     @Hidden
     private int userId;
@@ -23,7 +23,6 @@ public class CartUpdateDTO {
     private int serviceId;
 
     @Positive(message = "Quantity must be greater than 0")
-    @Max(value = 3)
     private int quantity;
 
     @Positive(message = "Period Id must be greater than 0")
