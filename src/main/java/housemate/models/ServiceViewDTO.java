@@ -20,10 +20,10 @@ public class ServiceViewDTO {
 
 	private Service service;
 
-	@JsonInclude(value = Include.NON_EMPTY)
+	@JsonInclude(value = Include.NON_NULL)
 	private List<ServiceType> typeList;
 
-	@JsonInclude(value = Include.NON_EMPTY)
+	@JsonInclude(value = Include.NON_NULL)
 	private List<PackageServiceItem> packageServiceItemList;
 
 	List<ServicePrice> priceList;

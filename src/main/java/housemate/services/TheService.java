@@ -212,49 +212,61 @@ public class TheService  {
 			// Check all before saving object service
 			try {
 				// Check duplicate title name
-				if (serviceRepo.findByTitleNameIgnoreCase(serviceDTO.getTitleName().trim()) != null) 
-					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The title name has existed before !");
-				
+				if (serviceRepo.findByTitleNameIgnoreCase(serviceDTO.getTitleName().trim()) != null)
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+							.body("The title name has existed before !");
+
 				// Set auto sale status
-				if(serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED))
-					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Create new service the sale status must be Onsale or Available");
+				if (serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED))
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+							.body("Create new service the sale status must be Onsale or Available");
 				else if (serviceDTO.getSalePrice() > 0)
 					serviceDTO.setSaleStatus(SaleStatus.ONSALE);
 				else
 					serviceDTO.setSaleStatus(SaleStatus.AVAILABLE);
 
 				// check if single service is not allow to
-				if (!serviceDTO.isPackage() && serviceDTO.getServiceChildList() == null) {
-					Set<String> typeNameList = serviceDTO.getTypeNameList();
-					Set<String> uniqueNames = new HashSet<>();
-					// check any type name have equal ignore case
-					for (String typeName : typeNameList) {
-						if (!uniqueNames.add(typeName.toLowerCase().trim()))
-							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicated the type name in this service !");
+				if (!serviceDTO.getIsPackage()) {
+					if (serviceDTO.getServiceChildList() != null)
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+								.body("The single service not allow to set service child list !");
+					if (serviceDTO.getTypeNameList() != null) {
+						Set<String> typeNameList = serviceDTO.getTypeNameList();
+						Set<String> uniqueNames = new HashSet<>();
+						// check any type name have equal ignore case
+						for (String typeName : typeNameList)
+							if (!uniqueNames.add(typeName.toLowerCase().trim()))
+								return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+										.body("Duplicated the type name in this service !");
 					}
-				} else
-					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The single service not allow to set service child list !");
 
+				}
+				
 				// check single service id existed in db
-				if (serviceDTO.isPackage()) {
-					if (serviceDTO.getServiceChildList() != null && serviceDTO.getTypeNameList() == null) {
-						if (serviceDTO.getServiceChildList().size() < 2)
-							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The package contains at least 2 single services !");
-						if (!serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
-							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The unit of measure of package must be COMBO !");
-						for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
-							if (serviceRepo.findByServiceId(singleServiceId).isEmpty())
-								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This single service does not existing in provided list !");
-							if(serviceDTO.getServiceChildList().get(singleServiceId) <= 0)
-								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The quantity of single child service must greater than 0 !");
-						}
-					} else 
-						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The package not allow to set type name list !");
+				if (serviceDTO.getIsPackage()) {
+					if (serviceDTO.getTypeNameList() != null)
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+								.body("The package not allow to set type name list !");
+					if (serviceDTO.getServiceChildList() == null || serviceDTO.getServiceChildList().size() < 2)
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+								.body("The package contains at least 2 single services !");
+					if (!serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+								.body("The unit of measure of package must be COMBO !");
+					for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
+						if (serviceRepo.findByServiceId(singleServiceId).isEmpty())
+							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Single service child id "
+									+ singleServiceId + " does not existing in provided list !");
+						if (serviceDTO.getServiceChildList().get(singleServiceId) <= 0)
+							return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+									.body("The quantity of single child service must greater than 0 !");
+					}
 				}
 				
 				//TODO CHECK IMAGES CONSTRAINTS HERE IF HAVE
 				
 			} catch (Exception ex) {
+				ex.printStackTrace();
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something Error ! Saved Failed !");
 			}
 			
@@ -265,7 +277,7 @@ public class TheService  {
 				return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed !");
 			
 			// save typeNameList for single services after saving Service object success
-			if (serviceDTO.getTypeNameList() != null && !serviceDTO.isPackage() && savedService != null) {
+			if (serviceDTO.getTypeNameList() != null && !serviceDTO.getIsPackage() && savedService != null) {
 				int savedServiceId = savedService.getServiceId();
 				for (String element : serviceDTO.getTypeNameList()) {
 					ServiceType type = new ServiceType();
@@ -276,19 +288,20 @@ public class TheService  {
 			}
 			
 			//save child service for package after saving Service Object success
-			if(serviceDTO.getServiceChildList() != null && serviceDTO.isPackage() && savedService != null) {
+			if (serviceDTO.getServiceChildList() != null && serviceDTO.getIsPackage() && savedService != null) {
 				int savedServiceId = savedService.getServiceId();
 				Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
 				int sumSingleServiceSalePrice = 0;
-				for(Integer singleServiceId : childServiceSet.keySet()) {
-					PackageServiceItem item = new PackageServiceItem(); //save package service item
+				for (Integer singleServiceId : childServiceSet.keySet()) {
+					PackageServiceItem item = new PackageServiceItem(); // save package service item
 					item.setPackageServiceId(savedServiceId);
 					item.setSingleServiceId(singleServiceId);
 					item.setQuantity(childServiceSet.get(singleServiceId));
-					sumSingleServiceSalePrice += (serviceRepo.findByServiceId(singleServiceId).orElse(null).getOriginalPrice() * item.getQuantity());
+					sumSingleServiceSalePrice += (serviceRepo.findByServiceId(singleServiceId).orElse(null)
+												 .getOriginalPrice() * item.getQuantity());
 					packageServiceItemRepo.save(item);
-		        }
-								
+				}
+			
 				//check original price of package
 				if(serviceDTO.getOriginalPrice() != sumSingleServiceSalePrice) {
 					TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -304,6 +317,7 @@ public class TheService  {
 			}
 		} catch (Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed !");
 		}
 		
@@ -317,15 +331,13 @@ public class TheService  {
 
 		try {
 			Service oldService = serviceRepo.findById(serviceId).orElse(null);
-			if (oldService == null) 
+			if (oldService == null)
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The service does not exists !");
-			
 
 			// Update name
-			if (!serviceDTO.getTitleName().equalsIgnoreCase(oldService.getTitleName())) 
-				if (serviceRepo.findByTitleNameIgnoreCase(serviceDTO.getTitleName().trim()) != null) 
+			if (!serviceDTO.getTitleName().equalsIgnoreCase(oldService.getTitleName()))
+				if (serviceRepo.findByTitleNameIgnoreCase(serviceDTO.getTitleName().trim()) != null)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The title name has existed before !");
-			
 
 			// update status //TODO: Check based on figma
 			if (serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED))
@@ -335,19 +347,34 @@ public class TheService  {
 			else
 				oldService.setSaleStatus(SaleStatus.AVAILABLE);
 
-			
+			//check is package
+			if (oldService.isPackage() && serviceDTO.getIsPackage().equals(false))
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+						.body("This sevice id is the package service. Not allow to change the status of is package !"
+								+ " \nSet this isPackage to be true please");
+			else if (!oldService.isPackage() && serviceDTO.getIsPackage().equals(true))
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+						.body("This sevice id is the single service. Not allow to change the status of is package !"
+								+ " \nSet this isPackage to be false please");
+				
 			//update typeNameList for single services
+			// check type name of each single service is unique);
 			if (!oldService.isPackage()) {
+				if (serviceDTO.getServiceChildList() != null)
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+							.body("This sevice id is the single service. Not allow to set service child list !");
+				if (serviceDTO.getTypeNameList() == null)
+					serviceTypeRepo.deleteAllByServiceId(serviceId);
 				// check type name of each single service is unique ignore case after request
-				if (serviceDTO.getTypeNameList() != null && serviceDTO.getServiceChildList() == null) {
+				if (serviceDTO.getTypeNameList() != null) {
 					Set<String> typeNameList = serviceDTO.getTypeNameList();
 					Set<String> uniqueNames = new HashSet<>();
-					//check any type name have equal ignore case
-					for (String typeName : typeNameList) {
+					// check any type name have equal ignore case
+					for (String typeName : typeNameList) 
 						if (!uniqueNames.add(typeName.toLowerCase().trim()))
-							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicated the type name of this service !");
-					}
-					//Reset Type Name List and Update 
+							return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+									.body("Duplicated the type name of this service !");
+					// Reset Type Name List and Update
 					serviceTypeRepo.deleteAllByServiceId(serviceId);
 					for (String element : serviceDTO.getTypeNameList()) {
 						ServiceType type = new ServiceType();
@@ -355,45 +382,50 @@ public class TheService  {
 						type.setTypeName(element);
 						serviceTypeRepo.save(type);
 					}
-				} else if(serviceDTO.getTypeNameList() == null) {
-					serviceTypeRepo.deleteAllByServiceId(serviceId);
-				} else
-					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This id is the single service. Not allow to set service child list !");
-			}
-
+				}
+			}	
+			  
+				
 
 			// check single service id existed in db
 			if (oldService.isPackage()) {
-				if (serviceDTO.getServiceChildList() != null && serviceDTO.getTypeNameList() == null) {
-					if (serviceDTO.getServiceChildList().size() < 2)
-						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The package contains at least 2 single services !");
-					for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
-						if (packageServiceItemRepo.findByPackageServiceIdAndSingleServiceId(serviceId, singleServiceId) == null)
-							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Not allow to change the existing single service item list in this package !");
-						if(serviceDTO.getServiceChildList().get(singleServiceId) <= 0)
-							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The quantity of single child service must greater than 0 !");
-					}
-				} else 
-					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This id is the package. Not allow to set type name list !");
-				
+				if (serviceDTO.getTypeNameList() != null)
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+							.body("The package not allow to set type name list !");
+				if (serviceDTO.getServiceChildList() == null || serviceDTO.getServiceChildList().size() < 2)
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+							.body("The package contains at least 2 single services !");
+				if (!serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+							.body("The unit of measure of package must be COMBO !");
 				Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
 				for (Integer singleServiceId : childServiceSet.keySet()) {
-					PackageServiceItem item = packageServiceItemRepo.findByPackageServiceIdAndSingleServiceId(serviceId, singleServiceId).orElse(null);
+					if (packageServiceItemRepo.findByPackageServiceIdAndSingleServiceId(serviceId, singleServiceId).isEmpty())
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The single service id "
+								+ singleServiceId + " is not allow in here !"
+								+ " \nNot allow to change the existing single service item list in this package !");
+					if (serviceDTO.getServiceChildList().get(singleServiceId) <= 0)
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+								.body("The new quantity of single child service must greater than 0 !");
+					PackageServiceItem item = packageServiceItemRepo
+							.findByPackageServiceIdAndSingleServiceId(serviceId, singleServiceId).orElse(null);
 					item.setQuantity(childServiceSet.get(singleServiceId));
 					packageServiceItemRepo.save(item);
 				}
 			}
-
+					
 			// check typename list and single service list ok then save all into db
 			oldService.setTitleName(serviceDTO.getTitleName());
 			oldService.setDescription(serviceDTO.getDescription());
 			oldService.setOriginalPrice(serviceDTO.getOriginalPrice());
 			oldService.setSalePrice(serviceDTO.getSalePrice());
 			oldService.setGroupType(serviceDTO.getGroupType());
+			
 			//TODO: UPDATE IMAGES
 			savedService = serviceRepo.save(oldService);
 
 		} catch (Exception e) {
+			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Update Failed ! ");
 		}
 
