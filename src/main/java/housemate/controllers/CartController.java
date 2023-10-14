@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,7 @@ public class CartController {
 
     @Operation(summary = "Add to cart. When cart already exist -> update quantity only")
     @PostMapping("/add")
-    public ResponseEntity<String> addCart(HttpServletRequest request, @RequestBody CartAddDTO cartAdd) {
+    public ResponseEntity<String> addCart(HttpServletRequest request, @Valid @RequestBody CartAddDTO cartAdd) {
         return cartService.addToCart(request, cartAdd);
     }
 
