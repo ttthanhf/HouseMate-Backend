@@ -42,7 +42,7 @@ public class OrderController {
         return orderService.getAllOrderComplete(request);
     }
 
-    @Operation(summary = "Get all Order not complete")
+    @Operation(summary = "Get Order not complete")
     @GetMapping("/checkout")
     public ResponseEntity<?> getOrderNotComplete(HttpServletRequest request) {
         return orderService.getOrderNotComplete(request);
