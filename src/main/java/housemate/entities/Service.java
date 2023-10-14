@@ -44,8 +44,8 @@ public class Service {
 	@Column(name = "sale_price")
 	private int salePrice;
 	
-	@Column(name = "price_after_sale")
-	private int priceAfterSale;
+	@Column(name = "final_price")
+	private int finalPrice;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "unit_of_measure", nullable = false)
@@ -83,5 +83,11 @@ public class Service {
 	@Transient
 	private Integer numberOfComment;
 	
+	@PrePersist
+	@PreUpdate
+	private void preDoing() {
+		finalPrice = originalPrice - originalPrice * salePrice / 100;
+		this.setFinalPrice(finalPrice);
+	}
 
 }
