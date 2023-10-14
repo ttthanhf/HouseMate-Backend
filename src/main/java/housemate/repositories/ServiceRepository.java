@@ -65,12 +65,7 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 				    )
 	void updateAvgRating();
 	
-	@Transactional
-	@Modifying
-	@Query(value = "UPDATE Service s SET s.numberOfSold = "
-					+ "(SELECT COALESCE(COUNT(soi),0) FROM ServiceOrderItem soi WHERE soi.service = s) "
-					+ "WHERE NOT EXISTS (SELECT 1 FROM ServiceOrderItem soi WHERE soi.service = s)"
-					)
-	void updatetheNumberOfSold();
+	//TODO: WRITE QUERY TO UPDATE NUMBER OF SOLD SIMILAR TO QUERY ABOVE 
+	//void updatetheNumberOfSold();
 	
 	}
