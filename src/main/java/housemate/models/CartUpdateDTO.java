@@ -5,6 +5,7 @@
 package housemate.models;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
@@ -13,7 +14,7 @@ import lombok.Data;
  * @author ThanhF
  */
 @Data
-public class CartAddDTO {
+public class CartUpdateDTO {
 
     @Hidden
     private int userId;
@@ -21,4 +22,10 @@ public class CartAddDTO {
     @Positive
     private int serviceId;
 
+    @Positive
+    @Max(value = 3)
+    private int quantity;
+
+    @Positive
+    private int periodId;
 }
