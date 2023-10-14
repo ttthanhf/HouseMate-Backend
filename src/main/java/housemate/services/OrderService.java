@@ -8,12 +8,14 @@ import housemate.entities.Cart;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
 import housemate.entities.Period;
+import housemate.entities.Service;
 import housemate.entities.UserAccount;
 import housemate.models.CheckoutCreateDTO;
 import housemate.repositories.CartRepository;
 import housemate.repositories.OrderItemRepository;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.PeriodRepository;
+import housemate.repositories.ServiceRepository;
 import housemate.repositories.UserRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,33 +26,35 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
 /**
  *
  * @author ThanhF
  */
-@Service
+@org.springframework.stereotype.Service
 public class OrderService {
-
+    
     @Autowired
     private AuthorizationUtil authorizationUtil;
-
+    
     @Autowired
     private CartRepository cartRepository;
-
+    
     @Autowired
     private PeriodRepository periodRepository;
-
+    
     @Autowired
     private OrderRepository orderRepository;
-
+    
     @Autowired
     private OrderItemRepository orderItemRepository;
-
+    
+    @Autowired
+    private ServiceRepository serviceRepository;
+    
     @Autowired
     private UserRepository userRepository;
-
+    
     public ResponseEntity<List<Order>> getAllOrderComplete(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         List<Order> listOrder = orderRepository.getAllOrderCompleteByUserId(userId);
@@ -60,7 +64,7 @@ public class OrderService {
         }
         return ResponseEntity.status(HttpStatus.OK).body(listOrder);
     }
-
+    
     public ResponseEntity<?> getOrderNotComplete(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
@@ -68,10 +72,14 @@ public class OrderService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No any order have been created or in not complete");
         }
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
+        for (OrderItem orderItem : listOrderItem) {
+            Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+            orderItem.setService(service);
+        }
         order.setListOrderItem(listOrderItem);
         return ResponseEntity.status(HttpStatus.OK).body(order);
     }
-
+    
     public ResponseEntity<String> createCheckout(HttpServletRequest request, CheckoutCreateDTO checkoutCreateDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
@@ -120,12 +128,12 @@ public class OrderService {
             totalPrice += cart.getPrice();
             listOrderItem.add(orderItem);
         }
-
+        
         listOrderItem = orderItemRepository.saveAll(listOrderItem);
         order.setListOrderItem(listOrderItem);
         order.setTotalPrice(totalPrice);
         order = orderRepository.save(order);
         return ResponseEntity.status(HttpStatus.OK).body("Order created");
     }
-
+    
 }
