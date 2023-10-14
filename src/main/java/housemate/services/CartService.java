@@ -7,8 +7,6 @@ package housemate.services;
 import housemate.entities.Cart;
 import housemate.entities.Period;
 import housemate.entities.Service;
-import housemate.mappers.CartMapper;
-import housemate.models.CartAddDTO;
 import housemate.models.CartUpdateDTO;
 import housemate.repositories.CartRepository;
 import housemate.repositories.PeriodRepository;
