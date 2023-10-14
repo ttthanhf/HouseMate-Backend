@@ -39,9 +39,6 @@ public class CartService {
     @Autowired
     private AuthorizationUtil authorizationUtil;
 
-    @Autowired
-    private CartMapper cartMapper;
-
     public ResponseEntity<List<Cart>> getCart(HttpServletRequest request) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
@@ -55,10 +52,9 @@ public class CartService {
         return ResponseEntity.status(HttpStatus.OK).body(listCart);
     }
 
-    public ResponseEntity<String> addToCart(HttpServletRequest request, CartAddDTO cartAdd) {
+    public ResponseEntity<String> addToCart(HttpServletRequest request, int serviceId) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        int serviceId = cartAdd.getServiceId();
 
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
@@ -96,8 +92,9 @@ public class CartService {
         int pricePerQuantity = (int) (servicePrice * percent);
 
         //if dont have item in cart -> create new item in cart
-        cartAdd.setUserId(userId);
-        Cart cart = cartMapper.mapToEntity(cartAdd);
+        Cart cart = new Cart();
+        cart.setUserId(userId);
+        cart.setServiceId(serviceId);
         cart.setPeriodId(periodId_default);
         cart.setQuantity(1); // default for add to cart
         cart.setPrice(pricePerQuantity);
