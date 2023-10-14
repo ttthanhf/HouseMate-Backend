@@ -89,6 +89,7 @@ public class PaymentService {
         order.setEmail(userInfoOrderDTO.getEmail());
         order.setPhone(userInfoOrderDTO.getPhone());
         order.setFullName(userInfoOrderDTO.getFullName());
+        order.setPaymentMethod("vnpay"); // set cứng
         orderRepository.save(order);
 
         long amount = order.getTotalPrice() * 100;

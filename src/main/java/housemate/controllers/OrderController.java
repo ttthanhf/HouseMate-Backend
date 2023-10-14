@@ -32,7 +32,7 @@ public class OrderController {
 
     @Operation(summary = "Create checkout")
     @PostMapping("/checkout/create")
-    public ResponseEntity<?> createCheckout(HttpServletRequest request, @RequestBody CheckoutCreateDTO checkoutCreateDTO) {
+    public ResponseEntity<String> createCheckout(HttpServletRequest request, @RequestBody CheckoutCreateDTO checkoutCreateDTO) {
         return orderService.createCheckout(request, checkoutCreateDTO);
     }
 
