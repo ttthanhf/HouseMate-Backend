@@ -5,9 +5,11 @@
 package housemate.services;
 
 import housemate.entities.Cart;
+import housemate.entities.Period;
 import housemate.entities.Service;
 import housemate.mappers.CartMapper;
 import housemate.models.CartAddDTO;
+import housemate.models.CartUpdateDTO;
 import housemate.repositories.CartRepository;
 import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
@@ -68,29 +70,78 @@ public class CartService {
         if (salePrice != 0) {
             servicePrice = salePrice;
         }
-        int periodId = cartAdd.getPeriodId();
 
-        //check period id exist or not
-        Float percent = periodRepository.getPeriodByid(periodId).getPercent();
-        if (percent == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("PeriodId not found");
-        }
-        int price = (int) (servicePrice * cartAdd.getQuantity() * percent);
-
-        //if have item in cart -> update quantity only
+        //if have item in cart -> update quantity and price only
         if (cartRepository.getCartByUserIdAndServiceId(userId, serviceId) != null) {
-            int quanlity = cartAdd.getQuantity();
-            cartRepository.updateCartQuantity(userId, serviceId, quanlity, price, periodId);
-            return ResponseEntity.status(HttpStatus.OK).body("Updated to cart");
+
+            Cart cart = cartRepository.getCartByUserIdAndServiceId(userId, serviceId);
+
+            int quantity = cart.getQuantity();
+            //if quantity > 3 => block
+            if (quantity == 3) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Quantity of each service in cart not bigger than 3");
+            }
+
+            int periodId = cart.getPeriodId();
+            Float percent = periodRepository.getPeriodByid(periodId).getPercent();
+            int pricePerQuantity = (int) (servicePrice * percent);
+            int price = pricePerQuantity * (quantity + 1);// add quantity by one
+
+            cartRepository.updateCart(userId, serviceId, quantity, price, periodId);
+            return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
         }
+
+        int periodId_default = 1;// default for add to cart
+        Float percent = periodRepository.getPeriodByid(periodId_default).getPercent();
+        int pricePerQuantity = (int) (servicePrice * percent);
 
         //if dont have item in cart -> create new item in cart
         cartAdd.setUserId(userId);
         Cart cart = cartMapper.mapToEntity(cartAdd);
-        cart.setPrice(price);
+        cart.setPeriodId(periodId_default);
+        cart.setQuantity(1); // default for add to cart
+        cart.setPrice(pricePerQuantity);
 
         cartRepository.save(cart);
         return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
+    }
+
+    public ResponseEntity<String> updateToCart(HttpServletRequest request, CartUpdateDTO cartUpdate) {
+
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        int serviceId = cartUpdate.getServiceId();
+
+        //if service not found => NOT_FOUND
+        Service service = serviceRepository.getServiceByServiceId(serviceId);
+        if (service == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Service not found");
+        }
+
+        //if servicer not exist in cart => NOT_FOUND
+        if (cartRepository.getCartByUserIdAndServiceId(userId, serviceId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Service not exist in cart");
+        }
+
+        //check period id exist or not
+        int periodId = cartUpdate.getPeriodId();
+        Period period = periodRepository.getPeriodByid(periodId);
+        if (period == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id not found");
+        }
+        Float percent = period.getPercent();
+
+        int quantity = cartUpdate.getQuantity();
+
+        //if have sale price => servicePrice = sale price
+        int servicePrice = service.getOriginalPrice();
+        int salePrice = serviceRepository.getSalePriceByServiceId(serviceId);
+        if (salePrice != 0) {
+            servicePrice = salePrice;
+        }
+        int price = (int) (servicePrice * quantity * percent);
+
+        cartRepository.updateCart(userId, serviceId, quantity, price, periodId);
+        return ResponseEntity.status(HttpStatus.OK).body("Updated to cart");
     }
 
     public ResponseEntity<String> removeCart(HttpServletRequest request, int cartId) {
