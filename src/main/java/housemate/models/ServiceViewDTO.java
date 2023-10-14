@@ -46,7 +46,7 @@ public class ServiceViewDTO {
 			if (priceAfterSale < 0 || service.getSalePrice() == 0)
 				priceAfterSale = 0; // No sale for this service
 
-			return new ServicePrice(duration_value, duration_unit, originalPrice, priceAfterSale);
+			return new ServicePrice(duration_value, duration_unit, originalPrice, (int) priceAfterSale);
 		}
 	}
 

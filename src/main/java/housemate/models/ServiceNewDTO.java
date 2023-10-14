@@ -30,7 +30,7 @@ import lombok.Setter;
 public class ServiceNewDTO {
 
 	
-	@NotEmpty
+	@NotEmpty(message = "Title name must not be empty")
 	@Size(min = 5, max = 255)
 	@Schema(description = "Title name")
 	private String titleName;

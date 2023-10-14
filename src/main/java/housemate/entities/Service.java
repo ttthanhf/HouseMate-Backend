@@ -85,6 +85,7 @@ public class Service {
 	
 	@PostLoad
 	@PrePersist
+	@PostUpdate
 	private void preDoing() {
 		priceAfterSale = originalPrice - originalPrice*salePrice/100;
 		this.setPriceAfterSale(priceAfterSale);
