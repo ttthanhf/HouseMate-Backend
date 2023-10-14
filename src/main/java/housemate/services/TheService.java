@@ -11,13 +11,11 @@ import java.util.Optional;
 import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
@@ -32,6 +30,7 @@ import housemate.models.ServiceViewDTO;
 import housemate.repositories.CommentRepository;
 import housemate.repositories.FeedbackRepository;
 import housemate.repositories.PackageServiceItemRepository;
+import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
 import housemate.models.ServiceViewDTO.ServicePrice;
@@ -57,6 +56,9 @@ public class TheService  {
 	
 	@Autowired
 	FeedbackRepository feedbackRepo;
+	
+	@Autowired
+	PeriodRepository periodRepo;
 	
 	ModelMapper mapper = new ModelMapper();	
 	
@@ -183,9 +185,9 @@ public class TheService  {
 		//set combo price for each service
 		List<ServicePrice> priceList = new ArrayList<>();
 		ServicePrice servicePrice = new ServicePrice();
-		priceList.add(servicePrice.setPriceForComboMonth(service, 3, UsageDurationUnit.MONTH, 100));
-		priceList.add(servicePrice.setPriceForComboMonth(service, 6, UsageDurationUnit.MONTH, 120));
-		priceList.add(servicePrice.setPriceForComboMonth(service, 12, UsageDurationUnit.MONTH, (120*110)/100));
+		priceList.add(servicePrice.setPriceForComboMonth(service, 3, UsageDurationUnit.MONTH, periodRepo.getPeriodByid(3).getPercent()));
+		priceList.add(servicePrice.setPriceForComboMonth(service, 6, UsageDurationUnit.MONTH, periodRepo.getPeriodByid(3).getPercent()));
+		priceList.add(servicePrice.setPriceForComboMonth(service, 12, UsageDurationUnit.MONTH,periodRepo.getPeriodByid(3).getPercent()));
 		serviceDtoForDetail.setPriceList(priceList);
 		
 		//TODO: Update imgList later 

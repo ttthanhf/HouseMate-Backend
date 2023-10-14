@@ -6,8 +6,6 @@ package housemate.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import housemate.constants.Enum.GroupType;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
@@ -17,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 
 /**
  *
@@ -90,4 +89,5 @@ public class Service {
 		priceAfterSale = originalPrice - originalPrice*salePrice/100;
 		this.setPriceAfterSale(priceAfterSale);
 	}
+
 }

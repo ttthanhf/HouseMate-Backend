@@ -18,8 +18,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
                 description = "An API for the software system provides single service and package service for student apartments."
         ),
         servers = {
-            @Server(url = "https://housemateb.thanhf.dev"),
-            @Server(url = "http://localhost:8080")
+            @Server(url = "http://localhost:8080"),
+            @Server(url = "https://housemateb.thanhf.dev")
         }
 )
 public class HouseMateApplication {

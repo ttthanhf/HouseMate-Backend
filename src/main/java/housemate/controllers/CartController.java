@@ -15,14 +15,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  *
@@ -45,14 +38,20 @@ public class CartController {
     }
 
     @Operation(summary = "Add to cart. When cart already exist -> update quantity only")
-    @PostMapping("/")
-    public ResponseEntity<String> addCart(HttpServletRequest request, @RequestBody CartAddDTO cartAdd) {
+    @PostMapping("/add")
+    public ResponseEntity<String> addCart(HttpServletRequest request, @Valid @RequestBody CartAddDTO cartAdd) {
         return cartService.addToCart(request, cartAdd);
     }
 
     @Operation(summary = "Detele cart when cart exist")
-    @DeleteMapping("/{cartId}")
-    public ResponseEntity<String> removeCart(HttpServletRequest request, @Valid @PathVariable int cartId) {
+    @DeleteMapping("/remove/{cartId}")
+    public ResponseEntity<String> removeCart(HttpServletRequest request, @PathVariable int cartId) {
         return cartService.removeCart(request, cartId);
+    }
+
+    @Operation(summary = "Detele all cart when cart exist (Be careful when doing this)")
+    @DeleteMapping("/remove/all")
+    public ResponseEntity<String> removeCart(HttpServletRequest request) {
+        return cartService.removeAllCartByUserId(request);
     }
 }
