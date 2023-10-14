@@ -30,6 +30,9 @@ public class Service {
     @Column(name = "title_name")
     private String titleName;
 
+    @Column(name = "number_of_sold")
+    private int numberOfSold;
+
     @Transient
     private String image;
 
