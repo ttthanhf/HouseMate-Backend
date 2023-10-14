@@ -60,9 +60,9 @@ public class CartService {
         }
         //if have sale price => servicePrice = sale price
         int servicePrice = service.getOriginalPrice();
-        int salePrice = serviceRepository.getSalePriceByServiceId(serviceId);
-        if (salePrice != 0) {
-            servicePrice = salePrice;
+        int finalPrice = serviceRepository.getFinalPriceByServiceId(serviceId);
+        if (finalPrice != 0) {
+            servicePrice = finalPrice;
         }
 
         //if have item in cart -> update quantity and price only
@@ -129,9 +129,9 @@ public class CartService {
 
         //if have sale price => servicePrice = sale price
         int servicePrice = service.getOriginalPrice();
-        int salePrice = serviceRepository.getSalePriceByServiceId(serviceId);
-        if (salePrice != 0) {
-            servicePrice = salePrice;
+        int finalPrice = serviceRepository.getFinalPriceByServiceId(serviceId);
+        if (finalPrice != 0) {
+            servicePrice = finalPrice;
         }
         int price = (int) (servicePrice * quantity * percent);
 
@@ -165,9 +165,9 @@ public class CartService {
 
             //if have sale price => servicePrice = sale price
             int servicePrice = serviceRepository.getOriginalPriceByServiceId(serviceId);
-            int salePrice = serviceRepository.getSalePriceByServiceId(serviceId);
-            if (salePrice != 0) {
-                servicePrice = salePrice;
+            int finalPrice = serviceRepository.getFinalPriceByServiceId(serviceId);
+            if (finalPrice != 0) {
+                servicePrice = finalPrice;
             }
 
             int serviceQuantity = cart.getQuantity();
