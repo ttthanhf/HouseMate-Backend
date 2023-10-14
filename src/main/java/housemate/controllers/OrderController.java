@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/order")
 @CrossOrigin
-@Tag(name = "Checkout")
+@Tag(name = "Order")
 @SecurityRequirement(name = "bearerAuth")
 public class OrderController {
 
@@ -31,7 +31,7 @@ public class OrderController {
     OrderService orderService;
 
     @Operation(summary = "Create checkout")
-    @PostMapping("/checkout/create")
+    @PostMapping("/create")
     public ResponseEntity<String> createCheckout(HttpServletRequest request, @RequestBody CheckoutCreateDTO checkoutCreateDTO) {
         return orderService.createCheckout(request, checkoutCreateDTO);
     }
