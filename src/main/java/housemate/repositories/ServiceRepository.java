@@ -21,8 +21,8 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
     @Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
     int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
 
-    @Query("SELECT s.salePrice FROM Service s WHERE s.serviceId = :serviceId")
-    int getSalePriceByServiceId(@Param("serviceId") int serviceId);
+    @Query("SELECT s.finalPrice FROM Service s WHERE s.serviceId = :serviceId")
+    int getFinalPriceByServiceId(@Param("serviceId") int serviceId);
 
     @Query("SELECT s FROM Service s WHERE s.serviceId = :serviceId")
     Service getServiceByServiceId(@Param("serviceId") int serviceId);

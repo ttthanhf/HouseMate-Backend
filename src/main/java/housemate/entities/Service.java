@@ -24,14 +24,17 @@ public class Service {
     @Column(name = "original_price")
     private int originalPrice;
 
-    @Column(name = "sale_price")
-    private int salePrice;
+    @Column(name = "final_price")
+    private int finalPrice;
 
     @Column(name = "title_name")
     private String titleName;
 
     @Column(name = "number_of_sold")
     private int numberOfSold;
+
+    @Column(name = "is_package")
+    private boolean isPackage;
 
     @Transient
     private String image;
