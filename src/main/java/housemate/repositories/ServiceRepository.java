@@ -64,6 +64,10 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 				    )
 	void updateAvgRating();
 
+    @Modifying
+    @Query("UPDATE Service s SET s.priceAfterSale = s.originalPrice - s.originalPrice*s.salePrice/100")
+    void updatePriceAfterSale();
+    
     @Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
     int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
 
@@ -76,5 +80,7 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
     @Modifying
     @Query("UPDATE Service s SET s.numberOfSold = s.numberOfSold + :quantity WHERE s.serviceId = :serviceId")
     void updateNumberOfSoldByServiceId(@Param("serviceId") int serviceId, int quantity);
+    
+
 
 }
