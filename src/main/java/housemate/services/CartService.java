@@ -53,7 +53,7 @@ public class CartService {
     public ResponseEntity<String> addToCart(HttpServletRequest request, CartDTO cartDTO) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        int serviceId = cartDTO.getUserId();
+        int serviceId = cartDTO.getServiceId();
 
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {

@@ -38,7 +38,7 @@ public class CartController {
     }
 
     @Operation(summary = "Add to cart. When cart already exist -> update quantity +1 only")
-    @PostMapping("/add/{serviceId}")
+    @PostMapping("/add")
     public ResponseEntity<String> addCart(HttpServletRequest request, @Valid @RequestBody CartDTO cartDTO) {
         return cartService.addToCart(request, cartDTO);
     }
@@ -57,7 +57,7 @@ public class CartController {
 
     @Operation(summary = "Detele all cart when cart exist (Be careful when doing this)")
     @DeleteMapping("/remove/all")
-    public ResponseEntity<String> removeCart(HttpServletRequest request) {
+    public ResponseEntity<String> removeAllCart(HttpServletRequest request) {
         return cartService.removeAllCartByUserId(request);
     }
 }
