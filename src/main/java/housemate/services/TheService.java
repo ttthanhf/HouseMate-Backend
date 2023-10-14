@@ -120,10 +120,10 @@ public class TheService  {
 		// For sort by price field only
 		if (fieldname.equals(fieldname.PRICE)) {
 			Comparator<Service> theComparator = Comparator
-					.comparingDouble(service -> (service.getOriginalPrice() - service.getSalePrice()));
-			if (requireOrder.equals(SortRequired.DESC)) {
+					.comparingDouble(service -> service.getOriginalPrice() - service.getSalePrice());
+			if (requireOrder.equals(SortRequired.DESC))
 				theComparator = theComparator.reversed();
-			}
+			
 			Collections.sort(serviceList, theComparator);
 		}
 		
@@ -142,9 +142,8 @@ public class TheService  {
 			serviceList = updateListByCategory;
 		}
 		
-		if (serviceList.isEmpty() || serviceList == null){
+		if (serviceList.isEmpty() || serviceList == null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
-		}
 		
 		return ResponseEntity.ok(serviceList);
 	}
@@ -158,7 +157,6 @@ public class TheService  {
 		
 		if (service == null) 
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found this service !");
-		
 		
 		service.setNumberOfReview(feedbackRepo.findAllByServiceId(serviceId).size());
 		service.setNumberOfComment(commentRepo.getAllCommentByServiceId(serviceId).size());
@@ -187,15 +185,8 @@ public class TheService  {
 		List<ServicePrice> priceList = new ArrayList<>();
 		ServicePrice servicePrice = new ServicePrice();
 		List<Period> periodService = periodRepo.findAll();
-		periodService.forEach(s -> 
-					priceList.add(
-						servicePrice.setPriceForComboMonth(
-									service,
-									s.getPeriodId(),
-									UsageDurationUnit.MONTH,
-									s.getPercent()
-							   ))
-							  );
+		periodService.forEach(s -> priceList.add(
+				servicePrice.setPriceForComboMonth(service, s.getPeriodId(), UsageDurationUnit.MONTH, s.getPercent())));
 		
 		serviceDtoForDetail.setPriceList(priceList);
 		
@@ -221,16 +212,15 @@ public class TheService  {
 			// Check all before saving object service
 			try {
 				// Check duplicate title name
-				if (serviceRepo.findByTitleNameIgnoreCase(serviceDTO.getTitleName().trim()) != null) {
+				if (serviceRepo.findByTitleNameIgnoreCase(serviceDTO.getTitleName().trim()) != null) 
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The title name has existed before !");
-				}
-
+				
 				// Set auto sale status
 				if(serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Create new service the sale status must be Onsale or Available");
 				else if (serviceDTO.getSalePrice() > 0)
 					serviceDTO.setSaleStatus(SaleStatus.ONSALE);
-				else 
+				else
 					serviceDTO.setSaleStatus(SaleStatus.AVAILABLE);
 
 				// check if single service is not allow to
@@ -268,8 +258,7 @@ public class TheService  {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something Error ! Saved Failed !");
 			}
 			
-			//after check all then
-			//map to DTO & save SavedService into DB to get new service Id;
+			//after check all then map to DTO & save SavedService into DB to get new service Id;
 			savedService = serviceRepo.save(mapper.map(serviceDTO, Service.class));
 			
 			if (savedService == null)
@@ -311,10 +300,9 @@ public class TheService  {
 				serviceRepo.save(savedService);
 				
 				//TODO SAVE IMAGES
-
 				
 			}
-		}catch (Exception e) {
+		} catch (Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed !");
 		}
@@ -329,28 +317,26 @@ public class TheService  {
 
 		try {
 			Service oldService = serviceRepo.findById(serviceId).orElse(null);
-			if (oldService == null) {
+			if (oldService == null) 
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The service does not exists !");
-			}
+			
 
 			// Update name
-			if (!serviceDTO.getTitleName().equalsIgnoreCase(oldService.getTitleName())) {
-				if (serviceRepo.findByTitleNameIgnoreCase(serviceDTO.getTitleName().trim()) != null) {
+			if (!serviceDTO.getTitleName().equalsIgnoreCase(oldService.getTitleName())) 
+				if (serviceRepo.findByTitleNameIgnoreCase(serviceDTO.getTitleName().trim()) != null) 
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The title name has existed before !");
-				}
-			}
+			
 
 			// update status //TODO: Check based on figma
-			if (serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED)) {
+			if (serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED))
 				oldService.setSaleStatus(SaleStatus.DISCONTINUED);
-			} else if (serviceDTO.getSalePrice() > 0) {
+			else if (serviceDTO.getSalePrice() > 0)
 				oldService.setSaleStatus(SaleStatus.ONSALE);
-			} else
+			else
 				oldService.setSaleStatus(SaleStatus.AVAILABLE);
 
 			
-			// binding for Set
-			// update typeNameList for single services
+			//update typeNameList for single services
 			if (!oldService.isPackage()) {
 				// check type name of each single service is unique ignore case after request
 				if (serviceDTO.getTypeNameList() != null && serviceDTO.getServiceChildList() == null) {
@@ -387,9 +373,9 @@ public class TheService  {
 						if(serviceDTO.getServiceChildList().get(singleServiceId) <= 0)
 							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The quantity of single child service must greater than 0 !");
 					}
-				} else {
+				} else 
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This id is the package. Not allow to set type name list !");
-				}
+				
 				Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
 				for (Integer singleServiceId : childServiceSet.keySet()) {
 					PackageServiceItem item = packageServiceItemRepo.findByPackageServiceIdAndSingleServiceId(serviceId, singleServiceId).orElse(null);
@@ -415,7 +401,6 @@ public class TheService  {
 	}
 	
 	//TODO: DELETE SERVICE LATER
-	
 	
 	
 }
