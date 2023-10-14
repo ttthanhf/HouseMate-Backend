@@ -65,14 +65,14 @@ public class OrderService {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
         if (order == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Order not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No any order have been created or in not complete");
         }
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         order.setListOrderItem(listOrderItem);
         return ResponseEntity.status(HttpStatus.OK).body(order);
     }
 
-    public ResponseEntity<?> createCheckout(HttpServletRequest request, CheckoutCreateDTO checkoutCreateDTO) {
+    public ResponseEntity<String> createCheckout(HttpServletRequest request, CheckoutCreateDTO checkoutCreateDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
         int totalPrice = 0;
@@ -83,14 +83,16 @@ public class OrderService {
             order = new Order();
             order.setUserId(userId);
             order.setComplete(false);
-            order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
-            order.setFullName(user.getFullName());
-            order.setEmail(user.getEmailAddress());
-            order.setPhone(user.getPhoneNumber());
-            order.setAddress(user.getAddress());
+            order.setFullName(user.getFullName() != null ? user.getFullName() : "");
+            order.setEmail(user.getEmailAddress() != null ? user.getEmailAddress() : "");
+            order.setPhone(user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
+            order.setAddress(user.getAddress() != null ? user.getAddress() : "");
             order.setPaymentMethod("");
             order = orderRepository.save(order);
         }
+
+        //update newset time
+        order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 
         //remove all order item
         orderItemRepository.removeAllOrderItemByUserIdAndOrderId(order.getOrderId());
@@ -122,7 +124,7 @@ public class OrderService {
         order.setListOrderItem(listOrderItem);
         order.setTotalPrice(totalPrice);
         order = orderRepository.save(order);
-        return ResponseEntity.status(HttpStatus.OK).body(order);
+        return ResponseEntity.status(HttpStatus.OK).body("Order created");
     }
 
 }

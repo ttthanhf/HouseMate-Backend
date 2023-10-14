@@ -17,4 +17,5 @@ public class UserInfoOrderDTO {
     private String phone;
     private String fullName;
     private String email;
+
 }
