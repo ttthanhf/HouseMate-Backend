@@ -86,7 +86,7 @@ public class Service {
 	@PrePersist
 	@PreUpdate
 	private void preDoing() {
-		finalPrice = originalPrice - originalPrice * salePrice / 100;
+		finalPrice = salePrice == 0 ? originalPrice : originalPrice - originalPrice * salePrice / 100;
 		this.setFinalPrice(finalPrice);
 	}
 
