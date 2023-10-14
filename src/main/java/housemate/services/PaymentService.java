@@ -12,6 +12,7 @@ import housemate.repositories.CartRepository;
 import housemate.repositories.OrderItemRepository;
 import housemate.utils.EncryptUtil;
 import housemate.repositories.OrderRepository;
+import housemate.repositories.ServiceRepository;
 import housemate.utils.AuthorizationUtil;
 import housemate.utils.RandomUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -49,6 +50,9 @@ public class PaymentService {
 
     @Autowired
     private OrderItemRepository orderItemRepository;
+
+    @Autowired
+    private ServiceRepository serviceRepository;
 
     @Autowired
     private CartRepository cartRepository;
@@ -219,6 +223,7 @@ public class PaymentService {
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         for (OrderItem orderItem : listOrderItem) {
+            serviceRepository.updateNumberOfSoldByServiceId(orderItem.getServiceId(), orderItem.getQuantity());
             cartRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
         }
         order.setComplete(true);
