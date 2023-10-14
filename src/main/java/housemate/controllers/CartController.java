@@ -39,9 +39,9 @@ public class CartController {
     }
 
     @Operation(summary = "Add to cart. When cart already exist -> update quantity +1 only")
-    @PostMapping("/add")
-    public ResponseEntity<String> addCart(HttpServletRequest request, @Valid @RequestBody CartAddDTO cartAdd) {
-        return cartService.addToCart(request, cartAdd);
+    @PostMapping("/add/{serviceId}")
+    public ResponseEntity<String> addCart(HttpServletRequest request, @PathVariable int serviceId) {
+        return cartService.addToCart(request, serviceId);
     }
 
     @Operation(summary = "update to cart.")
