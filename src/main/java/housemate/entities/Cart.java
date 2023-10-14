@@ -6,12 +6,7 @@ package housemate.entities;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
 
 /**
  *
@@ -19,17 +14,13 @@ import lombok.ToString;
  */
 @Entity
 @Table(name = "carts")
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
-@ToString
+@Data
 public class Cart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cart_id")
-    private int id;
+    private int cartId;
 
     @Column(name = "user_id")
     @Hidden
@@ -41,6 +32,12 @@ public class Cart {
     @Column(name = "quantity")
     private int quantity;
 
-    @Column(name = "date")
-    private LocalDateTime date;
+    @Column(name = "price")
+    private int price;
+
+    @Column(name = "period_id")
+    private int periodId;
+
+    @Transient
+    private Service service;
 }
