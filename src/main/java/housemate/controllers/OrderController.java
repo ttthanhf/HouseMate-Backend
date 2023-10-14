@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.*;
  * @author ThanhF
  */
 @RestController
-@RequestMapping("/order")
+@RequestMapping("/checkout")
 @CrossOrigin
-@Tag(name = "Order")
+@Tag(name = "Checkout")
 @SecurityRequirement(name = "bearerAuth")
 public class OrderController {
 
@@ -43,7 +43,7 @@ public class OrderController {
     }
 
     @Operation(summary = "Get Order not complete")
-    @GetMapping("/checkout")
+    @GetMapping()
     public ResponseEntity<?> getOrderNotComplete(HttpServletRequest request) {
         return orderService.getOrderNotComplete(request);
     }
