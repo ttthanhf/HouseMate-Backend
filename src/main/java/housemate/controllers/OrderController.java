@@ -36,9 +36,15 @@ public class OrderController {
         return orderService.createCheckout(request, checkoutCreateDTO);
     }
 
-    @Operation(summary = "Get all Order")
-    @GetMapping("/")
+    @Operation(summary = "Get all Order complete")
+    @GetMapping("/complete")
     public ResponseEntity<List<Order>> getAllOrderComplete(HttpServletRequest request) {
         return orderService.getAllOrderComplete(request);
+    }
+
+    @Operation(summary = "Get all Order complete")
+    @GetMapping("/checkout")
+    public ResponseEntity<Order> getOrderNotComplete(HttpServletRequest request) {
+        return orderService.getOrderNotComplete(request);
     }
 }

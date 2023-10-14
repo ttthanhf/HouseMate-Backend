@@ -5,6 +5,7 @@
 package housemate.services;
 
 import housemate.entities.Cart;
+import housemate.entities.Service;
 import housemate.mappers.CartMapper;
 import housemate.models.CartAddDTO;
 import housemate.repositories.CartRepository;
@@ -16,13 +17,12 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
 /**
  *
  * @author ThanhF
  */
-@Service
+@org.springframework.stereotype.Service
 public class CartService {
 
     @Autowired
@@ -58,8 +58,12 @@ public class CartService {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         int serviceId = cartAdd.getServiceId();
 
+        Service service = serviceRepository.getServiceByServiceId(serviceId);
+        if (service == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Service not found");
+        }
         //if have sale price => servicePrice = sale price
-        int servicePrice = serviceRepository.getOriginalPriceByServiceId(serviceId);
+        int servicePrice = service.getOriginalPrice();
         int salePrice = serviceRepository.getSalePriceByServiceId(serviceId);
         if (salePrice != 0) {
             servicePrice = salePrice;
