@@ -83,6 +83,7 @@ public class OrderService {
             order = new Order();
             order.setUserId(userId);
             order.setComplete(false);
+            order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
             order.setFullName(user.getFullName() != null ? user.getFullName() : "");
             order.setEmail(user.getEmailAddress() != null ? user.getEmailAddress() : "");
             order.setPhone(user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
