@@ -6,6 +6,7 @@ package housemate.controllers;
 
 import housemate.models.UserInfoOrderDTO;
 import housemate.services.PaymentService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,11 +32,13 @@ public class PaymentController {
     PaymentService paymentService;
 
     @PostMapping("/create")
+    @Operation(summary = "Create payment and response url vnpay")
     public ResponseEntity<String> createPayment(HttpServletRequest request, @Valid @RequestBody UserInfoOrderDTO userInfoOrderDTO) throws UnsupportedEncodingException {
         return paymentService.createVNPayPayment(request, userInfoOrderDTO);
     }
 
     @GetMapping("/check")
+    @Operation(summary = "Check payment success or not")
     public ResponseEntity<String> checkPayment(HttpServletRequest request, @RequestParam String vnp_TxnRef, @RequestParam String vnp_TransactionNo, @RequestParam String vnp_PayDate) throws IOException {
         return paymentService.checkVNPayPayment(request, vnp_TxnRef, vnp_TransactionNo, vnp_PayDate);
     }
