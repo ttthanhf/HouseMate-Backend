@@ -6,7 +6,6 @@ package housemate.repositories;
 
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -17,6 +16,7 @@ import housemate.constants.Enum.SaleStatus;
 import housemate.entities.Service;
 import jakarta.transaction.Transactional;
 
+
 /**
  *
  * @author ThanhF
@@ -24,8 +24,7 @@ import jakarta.transaction.Transactional;
 @Transactional
 @Repository
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
-
-	//get all services for admin
+	
 	List<Service> findAll(); 
 	
 	//get all available services for customer
@@ -64,8 +63,18 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 			        + "WHERE NOT EXISTS (SELECT 1 FROM ServiceFeedback f WHERE f.service = s)"
 				    )
 	void updateAvgRating();
-	
-	//TODO: WRITE QUERY TO UPDATE NUMBER OF SOLD SIMILAR TO QUERY ABOVE 
-	//void updatetheNumberOfSold();
-	
-	}
+
+    @Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
+    int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
+
+    @Query("SELECT s.salePrice FROM Service s WHERE s.serviceId = :serviceId")
+    int getSalePriceByServiceId(@Param("serviceId") int serviceId);
+
+    @Query("SELECT s FROM Service s WHERE s.serviceId = :serviceId")
+    Service getServiceByServiceId(@Param("serviceId") int serviceId);
+
+    @Modifying
+    @Query("UPDATE Service s SET s.numberOfSold = s.numberOfSold + :quantity WHERE s.serviceId = :serviceId")
+    void updateNumberOfSoldByServiceId(@Param("serviceId") int serviceId, int quantity);
+
+}

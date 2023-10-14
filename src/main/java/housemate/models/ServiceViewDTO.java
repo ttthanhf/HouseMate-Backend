@@ -35,14 +35,14 @@ public class ServiceViewDTO {
 	@NoArgsConstructor
 	@AllArgsConstructor
 	public static class ServicePrice { // let this class to access directly
-		private int durationValue;
+		private float durationValue;
 		private UsageDurationUnit durationUnit;
-		private int originalPrice;
-		private int priceAfterSale;
+		private float originalPrice;
+		private float priceAfterSale;
 
-		public ServicePrice setPriceForComboMonth(Service service, int duration_value, UsageDurationUnit duration_unit, int percentAddedValue) {
-			int originalPrice = service.getOriginalPrice() * percentAddedValue / 100;
-			int priceAfterSale = service.getPriceAfterSale() * percentAddedValue / 100;
+		public ServicePrice setPriceForComboMonth(Service service, int duration_value, UsageDurationUnit duration_unit, float percentAddedValue) {
+			float originalPrice = service.getOriginalPrice() * percentAddedValue ;
+			float priceAfterSale = service.getPriceAfterSale() * percentAddedValue ;
 			if (priceAfterSale < 0 || service.getSalePrice() == 0)
 				priceAfterSale = 0; // No sale for this service
 
