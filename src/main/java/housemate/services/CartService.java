@@ -7,7 +7,7 @@ package housemate.services;
 import housemate.entities.Cart;
 import housemate.entities.Period;
 import housemate.entities.Service;
-import housemate.models.CartUpdateDTO;
+import housemate.models.CartDTO;
 import housemate.repositories.CartRepository;
 import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
@@ -50,9 +50,10 @@ public class CartService {
         return ResponseEntity.status(HttpStatus.OK).body(listCart);
     }
 
-    public ResponseEntity<String> addToCart(HttpServletRequest request, int serviceId) {
+    public ResponseEntity<String> addToCart(HttpServletRequest request, CartDTO cartDTO) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        int serviceId = cartDTO.getUserId();
 
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
@@ -70,16 +71,16 @@ public class CartService {
 
             Cart cart = cartRepository.getCartByUserIdAndServiceId(userId, serviceId);
 
-            int quantity = cart.getQuantity();
-            //if quantity > 3 => block
-            if (quantity == 3) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Quantity of each service in cart not bigger than 3");
-            }
+            int quantity = cart.getQuantity() + cartDTO.getQuantity();
 
+            int periodIdCartDTO = cartDTO.getPeriodId();
             int periodId = cart.getPeriodId();
+            if (periodId != periodIdCartDTO) {
+                periodId = periodIdCartDTO;
+            }
             Float percent = periodRepository.getPeriodByid(periodId).getPercent();
             int pricePerQuantity = (int) (servicePrice * percent);
-            int price = pricePerQuantity * (quantity + 1);// add quantity by one
+            int price = pricePerQuantity * quantity;
 
             cartRepository.updateCart(userId, serviceId, quantity, price, periodId);
             return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
@@ -101,10 +102,10 @@ public class CartService {
         return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
     }
 
-    public ResponseEntity<String> updateToCart(HttpServletRequest request, CartUpdateDTO cartUpdate) {
+    public ResponseEntity<String> updateToCart(HttpServletRequest request, CartDTO cartDTO) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        int serviceId = cartUpdate.getServiceId();
+        int serviceId = cartDTO.getServiceId();
 
         //if service not found => NOT_FOUND
         Service service = serviceRepository.getServiceByServiceId(serviceId);
@@ -118,14 +119,14 @@ public class CartService {
         }
 
         //check period id exist or not
-        int periodId = cartUpdate.getPeriodId();
+        int periodId = cartDTO.getPeriodId();
         Period period = periodRepository.getPeriodByid(periodId);
         if (period == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id not found");
         }
         Float percent = period.getPercent();
 
-        int quantity = cartUpdate.getQuantity();
+        int quantity = cartDTO.getQuantity();
 
         //if have sale price => servicePrice = sale price
         int servicePrice = service.getOriginalPrice();

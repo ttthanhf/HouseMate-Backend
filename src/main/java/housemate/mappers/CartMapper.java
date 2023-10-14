@@ -5,7 +5,7 @@
 package housemate.mappers;
 
 import housemate.entities.Cart;
-import housemate.models.CartUpdateDTO;
+import housemate.models.CartDTO;
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CartMapper {
 
-    public Cart mapToEntity(CartUpdateDTO cartDTO) {
+    public Cart mapToEntity(CartDTO cartDTO) {
         Cart cart = new Cart();
         cart.setServiceId(cartDTO.getServiceId());
         cart.setUserId(cartDTO.getUserId());

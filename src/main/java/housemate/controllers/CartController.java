@@ -5,7 +5,7 @@
 package housemate.controllers;
 
 import housemate.entities.Cart;
-import housemate.models.CartUpdateDTO;
+import housemate.models.CartDTO;
 import housemate.services.CartService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -39,14 +39,14 @@ public class CartController {
 
     @Operation(summary = "Add to cart. When cart already exist -> update quantity +1 only")
     @PostMapping("/add/{serviceId}")
-    public ResponseEntity<String> addCart(HttpServletRequest request, @PathVariable int serviceId) {
-        return cartService.addToCart(request, serviceId);
+    public ResponseEntity<String> addCart(HttpServletRequest request, @Valid @RequestBody CartDTO cartDTO) {
+        return cartService.addToCart(request, cartDTO);
     }
 
     @Operation(summary = "update to cart.")
     @PutMapping("/update")
-    public ResponseEntity<String> addCart(HttpServletRequest request, @Valid @RequestBody CartUpdateDTO cartUpdate) {
-        return cartService.updateToCart(request, cartUpdate);
+    public ResponseEntity<String> updateCart(HttpServletRequest request, @Valid @RequestBody CartDTO cartDTO) {
+        return cartService.updateToCart(request, cartDTO);
     }
 
     @Operation(summary = "Detele cart when cart exist")
