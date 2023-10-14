@@ -23,6 +23,7 @@ import housemate.constants.Enum.SortRequired;
 import housemate.constants.Enum.UnitOfMeasure;
 import housemate.constants.Enum.UsageDurationUnit;
 import housemate.entities.PackageServiceItem;
+import housemate.entities.Period;
 import housemate.entities.Service;
 import housemate.entities.ServiceType;
 import housemate.models.ServiceNewDTO;
@@ -185,9 +186,17 @@ public class TheService  {
 		//set combo price for each service
 		List<ServicePrice> priceList = new ArrayList<>();
 		ServicePrice servicePrice = new ServicePrice();
-		priceList.add(servicePrice.setPriceForComboMonth(service, 3, UsageDurationUnit.MONTH, periodRepo.getPeriodByid(3).getPercent()));
-		priceList.add(servicePrice.setPriceForComboMonth(service, 6, UsageDurationUnit.MONTH, periodRepo.getPeriodByid(3).getPercent()));
-		priceList.add(servicePrice.setPriceForComboMonth(service, 12, UsageDurationUnit.MONTH,periodRepo.getPeriodByid(3).getPercent()));
+		List<Period> periodService = periodRepo.findAll();
+		periodService.forEach(s -> 
+					priceList.add(
+						servicePrice.setPriceForComboMonth(
+									service,
+									s.getPeriodId(),
+									UsageDurationUnit.MONTH,
+									s.getPercent()
+							   ))
+							  );
+		
 		serviceDtoForDetail.setPriceList(priceList);
 		
 		//TODO: Update imgList later 
