@@ -16,7 +16,6 @@ import housemate.constants.Enum.SaleStatus;
 import housemate.entities.Service;
 import jakarta.transaction.Transactional;
 
-
 /**
  *
  * @author ThanhF
