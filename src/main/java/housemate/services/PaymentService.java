@@ -8,7 +8,7 @@ import com.nimbusds.jose.shaded.gson.JsonObject;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
 import housemate.models.UserInfoOrderDTO;
-import housemate.repositories.CartRepository;
+import housemate.repositories.CartItemRepository;
 import housemate.repositories.OrderItemRepository;
 import housemate.utils.EncryptUtil;
 import housemate.repositories.OrderRepository;
@@ -22,11 +22,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +57,7 @@ public class PaymentService {
     private ServiceRepository serviceRepository;
 
     @Autowired
-    private CartRepository cartRepository;
+    private CartItemRepository cartItemRepository;
 
     private final String language = "en";
     private final String vnp_IpAddr = "127.0.0.1";
@@ -115,15 +117,17 @@ public class PaymentService {
         vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
 
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-        String vnp_CreateDate = formatter.format(cld.getTime());
+        ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh");
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        String vnp_CreateDate = now.format(formatter);
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
         vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang:" + vnp_TxnRef);
 
-        cld.add(Calendar.MINUTE, 15);
-        String vnp_ExpireDate = formatter.format(cld.getTime());
+        ZonedDateTime expireDate = now.plusMinutes(15);
+
+        String vnp_ExpireDate = expireDate.format(formatter);
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
         //encode all fields for export url
@@ -165,9 +169,10 @@ public class PaymentService {
         String vnp_Command = "querydr";
         String vnp_OrderInfo = "Result: " + vnp_TxnRef;
 
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-        String vnp_CreateDate = formatter.format(cld.getTime());
+        ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh");
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        String vnp_CreateDate = now.format(formatter);
 
         //create param for vnpay
         JsonObject vnp_Params = new JsonObject();
@@ -209,11 +214,16 @@ public class PaymentService {
         //check response
         Pattern patternResponseCode = Pattern.compile("\"vnp_ResponseCode\":\"(\\d{2})\"");
         Matcher matcherResponseCode = patternResponseCode.matcher(response.toString());
+        Pattern patternResponseMessage = Pattern.compile("\"vnp_Message\":\"(\\d{2})\"");
+        Matcher matcherResponseMessage = patternResponseMessage.matcher(response.toString());
 
         if (!matcherResponseCode.find()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find RsCode");
         }
         String responseCode = matcherResponseCode.group(1);
+        if ("94".equals(responseCode)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Dulication request");
+        }
         if (!"00".equals(responseCode)) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Payment fail");
         }
@@ -224,7 +234,7 @@ public class PaymentService {
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         for (OrderItem orderItem : listOrderItem) {
             serviceRepository.updateNumberOfSoldByServiceId(orderItem.getServiceId(), orderItem.getQuantity());
-            cartRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
+            cartItemRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
         }
         order.setComplete(true);
         orderRepository.save(order);
