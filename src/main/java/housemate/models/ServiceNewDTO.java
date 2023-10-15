@@ -29,7 +29,7 @@ import lombok.Setter;
 public class ServiceNewDTO {
 
 	@NotEmpty(message = "Title name must not be empty")
-	@Size(min = 5, max = 255)
+	@Size(min = 5, max = 255, message = "Title name must have length from 5 to 255")
 	@Schema(description = "Title name")
 	private String titleName;
 
