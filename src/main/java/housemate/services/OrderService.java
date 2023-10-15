@@ -144,12 +144,12 @@ public class OrderService {
             int finalPriceService = serviceRepository.getFinalPriceByServiceId(cart.getServiceId());
             int finalPriceCart = (int) (finalPriceService * percent);
             orderItem.setFinalPrice(finalPriceCart);
-            finalPrice += finalPriceCart;
+            finalPrice += finalPriceCart * quantity;
 
             int originalPriceService = serviceRepository.getOriginalPriceByServiceId(cart.getServiceId());
             int originalPriceCart = (int) (originalPriceService * percent);
             orderItem.setOriginalPrice(originalPriceCart);
-            subTotal += originalPriceCart;
+            subTotal += originalPriceCart * quantity;
 
             listOrderItem.add(orderItem);
         }

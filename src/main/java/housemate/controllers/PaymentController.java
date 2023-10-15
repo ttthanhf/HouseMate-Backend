@@ -39,7 +39,7 @@ public class PaymentController {
 
     @GetMapping("/check")
     @Operation(summary = "Check payment success or not")
-    public ResponseEntity<String> checkPayment(HttpServletRequest request, @RequestParam String vnp_TxnRef, @RequestParam String vnp_TransactionNo, @RequestParam String vnp_PayDate) throws IOException {
+    public ResponseEntity<?> checkPayment(HttpServletRequest request, @RequestParam String vnp_TxnRef, @RequestParam String vnp_TransactionNo, @RequestParam String vnp_PayDate) throws IOException {
         return paymentService.checkVNPayPayment(request, vnp_TxnRef, vnp_TransactionNo, vnp_PayDate);
     }
 }
