@@ -239,7 +239,6 @@ public class TheService  {
 								return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 										.body("Duplicated the type name in this service !");
 					}
-
 				}
 				
 				// check single service id existed in db
