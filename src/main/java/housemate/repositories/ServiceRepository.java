@@ -54,14 +54,6 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	Optional<Service> findByServiceId(int id);
 	
 	Service findByTitleNameIgnoreCase(String titleName);
-	
-	@Transactional
-	@Modifying
-	@Query(value = "UPDATE Service s SET s.avgRating = "
-				    + "(SELECT COALESCE(AVG(f.rating),0) FROM ServiceFeedback f WHERE f.service = s) "
-			        + "WHERE NOT EXISTS (SELECT 1 FROM ServiceFeedback f WHERE f.service = s)"
-				    )
-	void updateAvgRating();
     
     @Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
     int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
