@@ -4,12 +4,11 @@
  */
 package housemate.services;
 
-import housemate.entities.CartItem;
+import housemate.entities.Cart;
 import housemate.entities.Period;
 import housemate.entities.Service;
 import housemate.models.CartDTO;
-import housemate.models.CartItemDTO;
-import housemate.repositories.CartItemRepository;
+import housemate.repositories.CartRepository;
 import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.utils.AuthorizationUtil;
@@ -27,7 +26,7 @@ import org.springframework.http.ResponseEntity;
 public class CartService {
 
     @Autowired
-    private CartItemRepository cartItemRepository;
+    private CartRepository cartRepository;
 
     @Autowired
     private PeriodRepository periodRepository;
@@ -38,61 +37,34 @@ public class CartService {
     @Autowired
     private AuthorizationUtil authorizationUtil;
 
-    public ResponseEntity<CartDTO> getCart(HttpServletRequest request) {
-
-        int subTotal = 0;
-        int finalTotal = 0;
+    public ResponseEntity<List<Cart>> getCart(HttpServletRequest request) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 
-        CartDTO cartDTO = new CartDTO();
+        List<Cart> listCart = cartRepository.getAllCartByUserId(userId);
 
-        List<CartItem> listCartItem = cartItemRepository.getAllCartItemByUserId(userId);
+        for (Cart cart : listCart) {
 
-        for (CartItem cartItem : listCartItem) {
+            Service service = serviceRepository.getServiceByServiceId(cart.getServiceId());
+            cart.setService(service);
 
-            Service service = serviceRepository.getServiceByServiceId(cartItem.getServiceId());
-            Period period = periodRepository.getPeriodByid(cartItem.getPeriodId());
+            Period period = periodRepository.getPeriodByid(cart.getPeriodId());
 
-            //total original price of service
-            int totalOriginalServicePrice = (int) (service.getOriginalPriceService() * cartItem.getQuantity() * period.getPercent());
-            cartItem.setTotalOriginalPriceCartItem(totalOriginalServicePrice);
-            subTotal += totalOriginalServicePrice;//total original price of cart
+            int finalPriceService = (int) (period.getPercent() * service.getFinalPrice());
+            cart.setFinalPrice(finalPriceService);
 
-            //total final price of service
-            int totalFinalServicePrice = (int) (service.getFinalPriceService() * cartItem.getQuantity() * period.getPercent());
-            cartItem.setTotalFinalPriceCartItem(totalFinalServicePrice);
-            finalTotal += totalFinalServicePrice; //total final price of cart
+            int originalPriceService = (int) (period.getPercent() * service.getOriginalPrice());
+            cart.setOriginPrice(originalPriceService);
 
-            //total discount price of service
-            cartItem.setTotalDiscountPriceCartItem(totalOriginalServicePrice - totalFinalServicePrice);
-
-            List<Period> listPeriod = periodRepository.findAll();
-            for (Period periodItem : listPeriod) {
-
-                int finalPrice = (int) (periodItem.getPercent() * service.getFinalPriceService());
-                periodItem.setFinalPrice(finalPrice);
-
-                int originalPrice = (int) (periodItem.getPercent() * service.getOriginalPriceService());
-                periodItem.setOriginalPrice(originalPrice);
-            }
-            service.setListPeriodPrice(listPeriod);
-            cartItem.setService(service);
         }
 
-        cartDTO.setUserId(userId);
-        cartDTO.setListCartItem(listCartItem);
-        cartDTO.setDiscountPriceCart(subTotal - finalTotal);
-        cartDTO.setFinalTotalPriceCart(finalTotal);
-        cartDTO.setSubTotalCart(subTotal);
-
-        return ResponseEntity.status(HttpStatus.OK).body(cartDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(listCart);
     }
 
-    public ResponseEntity<String> addToCart(HttpServletRequest request, CartItemDTO cartItemDTO) {
+    public ResponseEntity<String> addToCart(HttpServletRequest request, CartDTO carDTO) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        int serviceId = cartItemDTO.getServiceId();
+        int serviceId = carDTO.getServiceId();
 
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
@@ -100,41 +72,41 @@ public class CartService {
         }
 
         //if have item in cart -> update quantity and price only
-        if (cartItemRepository.getCartByUserIdAndServiceId(userId, serviceId) != null) {
+        if (cartRepository.getCartByUserIdAndServiceId(userId, serviceId) != null) {
 
-            CartItem cartItem = cartItemRepository.getCartByUserIdAndServiceId(userId, serviceId);
+            Cart cart = cartRepository.getCartByUserIdAndServiceId(userId, serviceId);
 
-            int quantity = cartItem.getQuantity() + cartItemDTO.getQuantity();
+            int quantity = cart.getQuantity() + carDTO.getQuantity();
 
             //if quantity set > 9999 => bad request
             if (quantity > 9999) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Maxium quanity one item in cart is 9999");
             }
 
-            int periodId = cartItemDTO.getPeriodId();
+            int periodId = carDTO.getPeriodId();
 
-            cartItemRepository.updateCart(userId, serviceId, quantity, periodId);
+            cartRepository.updateCart(userId, serviceId, quantity, periodId);
             return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
         }
 
         //if dont have item in cart -> create new item in cart
-        int quantity = cartItemDTO.getQuantity();
-        int periodId = cartItemDTO.getPeriodId();
+        int quantity = carDTO.getQuantity();
+        int periodId = carDTO.getPeriodId();
 
-        CartItem cartItem = new CartItem();
-        cartItem.setUserId(userId);
-        cartItem.setServiceId(serviceId);
-        cartItem.setPeriodId(periodId);
-        cartItem.setQuantity(quantity);
-        cartItemRepository.save(cartItem);
+        Cart cart = new Cart();
+        cart.setUserId(userId);
+        cart.setServiceId(serviceId);
+        cart.setPeriodId(periodId);
+        cart.setQuantity(quantity);
+        cartRepository.save(cart);
 
         return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
     }
 
-    public ResponseEntity<String> updateToCart(HttpServletRequest request, CartItemDTO cartItemDTO) {
+    public ResponseEntity<String> updateToCart(HttpServletRequest request, CartDTO cartDTO) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        int serviceId = cartItemDTO.getServiceId();
+        int serviceId = cartDTO.getServiceId();
 
         //if service not found => NOT_FOUND
         Service service = serviceRepository.getServiceByServiceId(serviceId);
@@ -143,30 +115,30 @@ public class CartService {
         }
 
         //if servicer not exist in cart => NOT_FOUND
-        if (cartItemRepository.getCartByUserIdAndServiceId(userId, serviceId) == null) {
+        if (cartRepository.getCartByUserIdAndServiceId(userId, serviceId) == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Service not exist in cart");
         }
 
         //check period id exist or not
-        int periodId = cartItemDTO.getPeriodId();
+        int periodId = cartDTO.getPeriodId();
         Period period = periodRepository.getPeriodByid(periodId);
         if (period == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id not found");
         }
 
         //if quantity set > 9999 => bad request
-        int quantity = cartItemDTO.getQuantity();
+        int quantity = cartDTO.getQuantity();
         if (quantity > 9999) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Maxium quanity one item in cart is 9999");
         }
 
-        cartItemRepository.updateCart(userId, serviceId, quantity, periodId);
+        cartRepository.updateCart(userId, serviceId, quantity, periodId);
         return ResponseEntity.status(HttpStatus.OK).body("Updated to cart");
     }
 
     public ResponseEntity<String> removeCart(HttpServletRequest request, int cartId) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        if (cartItemRepository.deleteCart(userId, cartId) == 0) {
+        if (cartRepository.deleteCart(userId, cartId) == 0) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cart not found");
         }
         return ResponseEntity.status(HttpStatus.OK).body("Removed");
@@ -174,30 +146,9 @@ public class CartService {
 
     public ResponseEntity<String> removeAllCartByUserId(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        if (cartItemRepository.deleteAllCartByUserId(userId) == 0) {
+        if (cartRepository.deleteAllCartByUserId(userId) == 0) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cart not found");
         }
         return ResponseEntity.status(HttpStatus.OK).body("Removed All Cart");
     }
-
-//    public void updateAllCartPriceWhenPeriodIdChange(int periodId, Float percent) {
-//        List<Integer> listCartId = cartItemRepository.getAllCartIdByPeriodId(periodId);
-//
-//        //update all cart item price when period id change
-//        for (int cartId : listCartId) {
-//            CartItem cartItem = cartItemRepository.getCartById(cartId);
-//            int serviceId = cartItem.getServiceId();
-//
-//            //if have sale price => servicePrice = sale price
-//            int servicePrice = serviceRepository.getOriginalPriceByServiceId(serviceId);
-//            int finalPrice = serviceRepository.getFinalPriceByServiceId(serviceId);
-//            if (finalPrice != 0) {
-//                servicePrice = finalPrice;
-//            }
-//
-//            int serviceQuantity = cartItem.getQuantity();
-//            int price = (int) (servicePrice * serviceQuantity * percent);
-//            cartItemRepository.updateCartPriceByCartId(cartItem.getCartId(), price);
-//        }
-//    }
 }

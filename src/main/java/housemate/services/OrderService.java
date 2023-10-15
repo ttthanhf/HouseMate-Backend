@@ -4,14 +4,14 @@
  */
 package housemate.services;
 
-import housemate.entities.CartItem;
+import housemate.entities.Cart;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
 import housemate.entities.Period;
 import housemate.entities.Service;
 import housemate.entities.UserAccount;
 import housemate.models.CheckoutCreateDTO;
-import housemate.repositories.CartItemRepository;
+import housemate.repositories.CartRepository;
 import housemate.repositories.OrderItemRepository;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.PeriodRepository;
@@ -38,7 +38,7 @@ public class OrderService {
     private AuthorizationUtil authorizationUtil;
 
     @Autowired
-    private CartItemRepository cartItemRepository;
+    private CartRepository cartRepository;
 
     @Autowired
     private PeriodRepository periodRepository;
@@ -61,12 +61,19 @@ public class OrderService {
         for (Order order : listOrder) {
             List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
             order.setListOrderItem(listOrderItem);
+            order.setDiscountPrice(order.getSubTotal() - order.getFinalPrice());
         }
         return ResponseEntity.status(HttpStatus.OK).body(listOrder);
     }
 
     public ResponseEntity<?> getOrderNotComplete(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+
+        List<Cart> listCart = cartRepository.getAllCartByUserId(userId);
+        if (listCart.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No any item in cart");
+        }
+
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
         if (order == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No any order have been created or in not complete");
@@ -75,15 +82,20 @@ public class OrderService {
         for (OrderItem orderItem : listOrderItem) {
             Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
             orderItem.setService(service);
+            orderItem.setDiscountPrice(orderItem.getOriginalPrice() - orderItem.getFinalPrice());
         }
+        order.setDiscountPrice(order.getSubTotal() - order.getFinalPrice());
         order.setListOrderItem(listOrderItem);
         return ResponseEntity.status(HttpStatus.OK).body(order);
     }
 
     public ResponseEntity<String> createCheckout(HttpServletRequest request, CheckoutCreateDTO checkoutCreateDTO) {
+
+        int finalPrice = 0;
+        int subTotal = 0;
+
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
-        int totalPrice = 0;
 
         //if order not exist or all order complete => create new order
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
@@ -112,26 +124,40 @@ public class OrderService {
         for (int cartId : listCartId) {
 
             //if cart user not found => bad
-            CartItem cartItem = cartItemRepository.getCartById(cartId);
-            if (cartItem == null || (cartItem.getUserId() != userId)) {
+            Cart cart = cartRepository.getCartById(cartId);
+            if (cart == null || (cart.getUserId() != userId)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some cartId not found");
             }
 
             //create new order item
             OrderItem orderItem = new OrderItem();
-            orderItem.setServiceId(cartItem.getServiceId());
-            Period period = periodRepository.getPeriodByid(cartItem.getPeriodId());
-            orderItem.setPeriodName(period.getPeriodName());
-            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setServiceId(cart.getServiceId());
+            orderItem.setQuantity(cart.getQuantity());
             orderItem.setOrderId(order.getOrderId());
-//            orderItem.setPrice(cartItem.getPrice());
-//            totalPrice += cartItem.getPrice();
+
+            Period period = periodRepository.getPeriodByid(cart.getPeriodId());
+            orderItem.setPeriodName(period.getPeriodName());
+
+            float percent = periodRepository.getPeriodByid(cart.getPeriodId()).getPercent();
+            int quantity = cart.getQuantity();
+
+            int finalPriceService = serviceRepository.getFinalPriceByServiceId(cart.getServiceId());
+            int finalPriceCart = (int) (quantity * finalPriceService * percent);
+            orderItem.setFinalPrice(finalPriceCart);
+            finalPrice += finalPriceCart;
+
+            int originalPriceService = serviceRepository.getOriginalPriceByServiceId(cart.getServiceId());
+            int originalPriceCart = (int) (quantity * originalPriceService * percent);
+            orderItem.setOriginalPrice(originalPriceCart);
+            subTotal += originalPriceCart;
+
             listOrderItem.add(orderItem);
         }
 
         listOrderItem = orderItemRepository.saveAll(listOrderItem);
         order.setListOrderItem(listOrderItem);
-        order.setTotalPrice(totalPrice);
+        order.setFinalPrice(finalPrice);
+        order.setSubTotal(subTotal);
         order = orderRepository.save(order);
         return ResponseEntity.status(HttpStatus.OK).body("Order created");
     }

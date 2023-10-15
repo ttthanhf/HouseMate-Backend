@@ -4,7 +4,7 @@
  */
 package housemate.repositories;
 
-import housemate.entities.CartItem;
+import housemate.entities.Cart;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,49 +18,45 @@ import org.springframework.stereotype.Repository;
  * @author ThanhF
  */
 @Repository
-public interface CartItemRepository extends JpaRepository<CartItem, Integer> {
+public interface CartRepository extends JpaRepository<Cart, Integer> {
 
-    @Query("SELECT c FROM CartItem c WHERE c.userId = :userId")
-    List<CartItem> getAllCartItemByUserId(@Param("userId") int userId);
+    @Query("SELECT c FROM Cart c WHERE c.userId = :userId")
+    List<Cart> getAllCartByUserId(@Param("userId") int userId);
 
-    @Query("SELECT c FROM CartItem c WHERE c.cartId = :cartId")
-    CartItem getCartById(@Param("cartId") int cartId);
+    @Query("SELECT c FROM Cart c WHERE c.cartId = :cartId")
+    Cart getCartById(@Param("cartId") int cartId);
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM CartItem c WHERE c.userId = :userId AND c.id = :cartId")
+    @Query("DELETE FROM Cart c WHERE c.userId = :userId AND c.id = :cartId")
     int deleteCart(@Param("userId") int userId, @Param("cartId") int cartId);
 
     @Modifying
     @Transactional
-    @Query("UPDATE CartItem c SET c.quantity = :quantity, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
+    @Query("UPDATE Cart c SET c.quantity = :quantity, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
     void updateCart(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quantity") int quantity, @Param("periodId") int periodId);
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM CartItem c WHERE c.userId = :userId")
+    @Query("DELETE FROM Cart c WHERE c.userId = :userId")
     int deleteAllCartByUserId(@Param("userId") int userId);
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM CartItem c WHERE c.userId = :userId AND c.serviceId = :serviceId")
+    @Query("DELETE FROM Cart c WHERE c.userId = :userId AND c.serviceId = :serviceId")
     int deleteCartByUserIdAndServiceId(@Param("userId") int userId, @Param("serviceId") int serviceId);
 
-    @Query("SELECT c FROM CartItem c WHERE c.userId = :userId AND c.serviceId = :serviceId")
-    CartItem getCartByUserIdAndServiceId(@Param("userId") int userId, @Param("serviceId") int serviceId);
+    @Query("SELECT c FROM Cart c WHERE c.userId = :userId AND c.serviceId = :serviceId")
+    Cart getCartByUserIdAndServiceId(@Param("userId") int userId, @Param("serviceId") int serviceId);
 
     @Modifying
     @Transactional
-    @Query("UPDATE CartItem c SET c.quantity = :quanlity, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
+    @Query("UPDATE Cart c SET c.quantity = :quanlity, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
     void updateCartQuantity(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quanlity") int quanlity, @Param("periodId") int periodId);
 
-    @Query("SELECT c.cartId FROM CartItem c WHERE c.periodId = :periodId")
+    @Query("SELECT c.cartId FROM Cart c WHERE c.periodId = :periodId")
     List<Integer> getAllCartIdByPeriodId(@Param("periodId") int periodId);
 
-//    @Modifying
-//    @Transactional
-//    @Query("UPDATE CartItem c SET c.price = :price WHERE c.cartId = :cartId")
-//    void updateCartPriceByCartId(@Param("cartId") int cartId, @Param("price") int price);
-    @Query("SELECT sum(c.quantity) FROM CartItem c WHERE c.userId = :userId")
+    @Query("SELECT sum(c.quantity) FROM Cart c WHERE c.userId = :userId")
     int getTotalQuantityCart(@Param("userId") int userId);
 }

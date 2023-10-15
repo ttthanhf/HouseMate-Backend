@@ -4,14 +4,15 @@
  */
 package housemate.controllers;
 
+import housemate.entities.Cart;
 import housemate.models.CartDTO;
-import housemate.models.CartItemDTO;
 import housemate.services.CartService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,20 +33,20 @@ public class CartController {
 
     @Operation(summary = "Get user cart by userId in token")
     @GetMapping("/")
-    public ResponseEntity<CartDTO> getCart(HttpServletRequest request) {
+    public ResponseEntity<List<Cart>> getCart(HttpServletRequest request) {
         return cartService.getCart(request);
     }
 
     @Operation(summary = "Add to cart. When cart already exist -> update quantity and period only")
     @PostMapping("/add")
-    public ResponseEntity<String> addCart(HttpServletRequest request, @Valid @RequestBody CartItemDTO cartItemDTO) {
-        return cartService.addToCart(request, cartItemDTO);
+    public ResponseEntity<String> addCart(HttpServletRequest request, @Valid @RequestBody CartDTO cartDTO) {
+        return cartService.addToCart(request, cartDTO);
     }
 
     @Operation(summary = "Update cart.")
     @PutMapping("/update")
-    public ResponseEntity<String> updateCart(HttpServletRequest request, @Valid @RequestBody CartItemDTO cartItemDTO) {
-        return cartService.updateToCart(request, cartItemDTO);
+    public ResponseEntity<String> updateCart(HttpServletRequest request, @Valid @RequestBody CartDTO cartDTO) {
+        return cartService.updateToCart(request, cartDTO);
     }
 
     @Operation(summary = "Detele cart when cart exist")
