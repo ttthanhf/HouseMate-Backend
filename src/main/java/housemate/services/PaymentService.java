@@ -93,7 +93,7 @@ public class PaymentService {
         }
 
         order.setAddress(userInfoOrderDTO.getAddress());
-        order.setEmail(userInfoOrderDTO.getEmail());
+        order.setEmail(authorizationUtil.getEMailFromAuthorizationHeader(request));
         order.setPhone(userInfoOrderDTO.getPhone());
         order.setFullName(userInfoOrderDTO.getFullName());
         order.setPaymentMethod("vnpay"); // set cứng

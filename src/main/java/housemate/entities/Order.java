@@ -38,8 +38,8 @@ public class Order {
     @Column(name = "full_name")
     private String fullName;
 
-    @Column(name = "email")
-    private String email;
+    @Column(name = "address")
+    private String address;
 
     @Column(name = "phone")
     private String phone;
@@ -57,7 +57,7 @@ public class Order {
     private int subTotal;
 
     @Transient
-    private String address;
+    private String email;
 
     @Transient
     private int discountPrice;
