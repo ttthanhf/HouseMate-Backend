@@ -25,8 +25,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @author ThanhF
  */
 @Component
-public class AuthorizationFilter extends OncePerRequestFilter 
-{
+public class AuthorizationFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -34,8 +33,8 @@ public class AuthorizationFilter extends OncePerRequestFilter
     @Autowired
     JwtPayloadMapper jwtPayloadMapper;
 
-
-    private final List<String> excludedUrls = Arrays.asList("/swagger-ui", "/auth", "/v3/api-docs", "/comment/services", "/period/all", "/services");
+    private final List<String> excludedUrls = Arrays.asList("/swagger-ui", "/auth", "/v3/api-docs", "/comment/services",
+            "/period/all", "/services");
     private final List<String> excludedUrlsRegex = Arrays.asList(RegexConstants.REPLY_COMMENT_REGEX);
 
     @Override
@@ -72,7 +71,7 @@ public class AuthorizationFilter extends OncePerRequestFilter
                 setResponseUnAuthorized(response, "Token Invalid");
                 return;
             }
-        } catch (Exception e) { //phải là exception mới bắt lỗi unvalid signature được
+        } catch (Exception e) { // phải là exception mới bắt lỗi unvalid signature được
             setResponseUnAuthorized(response, "Token Invalid");
             return;
         }
@@ -82,14 +81,14 @@ public class AuthorizationFilter extends OncePerRequestFilter
 
     private boolean isUrlExcluded(String url) {
 
-        //check url start with excludedUrls
+        // check url start with excludedUrls
         for (String excludedUrl : excludedUrls) {
             if (url.startsWith(excludedUrl)) {
                 return true;
             }
         }
 
-        //check url match with excludedUrlsRegex
+        // check url match with excludedUrlsRegex
         for (String excludedUrlRegex : excludedUrlsRegex) {
             if (url.matches(excludedUrlRegex)) {
                 return true;

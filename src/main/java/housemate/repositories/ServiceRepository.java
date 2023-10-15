@@ -23,51 +23,46 @@ import jakarta.transaction.Transactional;
 @Transactional
 @Repository
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
-	
-	List<Service> findAll(); 
-	
-	//get all available services for customer
-	@Query( value = "SELECT s FROM Service s WHERE s.saleStatus <> 'DISCONTINUED'")
-	List<Service> findAllAvailable(); 
-	
+
+	List<Service> findAll();
+
+	// get all available services for customer
+	@Query(value = "SELECT s FROM Service s WHERE s.saleStatus <> 'DISCONTINUED'")
+	List<Service> findAllAvailable();
+
 	List<Service> findAllByIsPackageFalse();
-	
+
 	@Query("SELECT s FROM Service s WHERE "
-			+ "s.saleStatus = :saleStatus " 
+			+ "s.saleStatus = :saleStatus "
 			+ "AND LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')) "
-			+ "AND s.avgRating >= :ratingFrom " 
-			)
-    List<Service> searchFilterAllKind(
-    		@Param("saleStatus")SaleStatus saleStatus,
-    		@Param("keyword")String keyword,
-    		@Param("ratingFrom")int ratingFrom,
-    		Sort sort
-    		);
-	
+			+ "AND s.avgRating >= :ratingFrom ")
+	List<Service> searchFilterAllKind(
+			@Param("saleStatus") SaleStatus saleStatus,
+			@Param("keyword") String keyword,
+			@Param("ratingFrom") int ratingFrom,
+			Sort sort);
+
 	@Query("SELECT s FROM Service s WHERE "
-			+ "s.saleStatus = 'ONSALE' " 
-			+ "ORDER BY s.numberOfSold DESC " 
-			+ "LIMIT 4 "
-			)
-    List<Service> findTopSale();
+			+ "s.saleStatus = 'ONSALE' "
+			+ "ORDER BY s.numberOfSold DESC "
+			+ "LIMIT 4 ")
+	List<Service> findTopSale();
 
 	Optional<Service> findByServiceId(int id);
-	
+
 	Service findByTitleNameIgnoreCase(String titleName);
-    
-    @Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
-    int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
 
-    @Query("SELECT s.salePrice FROM Service s WHERE s.serviceId = :serviceId")
-    int getSalePriceByServiceId(@Param("serviceId") int serviceId);
+	@Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
+	int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
 
-    @Query("SELECT s FROM Service s WHERE s.serviceId = :serviceId")
-    Service getServiceByServiceId(@Param("serviceId") int serviceId);
+	@Query("SELECT s.salePrice FROM Service s WHERE s.serviceId = :serviceId")
+	int getSalePriceByServiceId(@Param("serviceId") int serviceId);
 
-    @Modifying
-    @Query("UPDATE Service s SET s.numberOfSold = s.numberOfSold + :quantity WHERE s.serviceId = :serviceId")
-    void updateNumberOfSoldByServiceId(@Param("serviceId") int serviceId, int quantity);
-    
+	@Query("SELECT s FROM Service s WHERE s.serviceId = :serviceId")
+	Service getServiceByServiceId(@Param("serviceId") int serviceId);
 
+	@Modifying
+	@Query("UPDATE Service s SET s.numberOfSold = s.numberOfSold + :quantity WHERE s.serviceId = :serviceId")
+	void updateNumberOfSoldByServiceId(@Param("serviceId") int serviceId, int quantity);
 
 }
