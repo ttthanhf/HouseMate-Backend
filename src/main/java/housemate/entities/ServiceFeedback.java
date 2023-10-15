@@ -34,7 +34,7 @@ public class ServiceFeedback {
     @ManyToOne
     @JoinColumn(name = "service_id", insertable = false, updatable = false)
     private Service service;
-    
+
     @Column(name = "service_id")
     private int serviceId;
     
@@ -50,6 +50,4 @@ public class ServiceFeedback {
     @Column(name = "rating", columnDefinition = "float default 0")
     private Float rating;
 
-
 }
-
