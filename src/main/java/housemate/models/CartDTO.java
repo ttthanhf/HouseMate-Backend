@@ -4,9 +4,8 @@
  */
 package housemate.models;
 
-import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Positive;
+import housemate.entities.CartItem;
+import java.util.List;
 import lombok.Data;
 
 /**
@@ -16,15 +15,13 @@ import lombok.Data;
 @Data
 public class CartDTO {
 
-    @Hidden
     private int userId;
 
-    @Positive(message = "Service Id must be greater than 0")
-    private int serviceId;
+    private int subTotal;
 
-    @Positive(message = "Quantity must be greater than 0")
-    private int quantity;
+    private int discountPrice;
 
-    @Positive(message = "Period Id must be greater than 0")
-    private int periodId;
+    private int finalTotalPrice;
+
+    private List<CartItem> listCartItem;
 }

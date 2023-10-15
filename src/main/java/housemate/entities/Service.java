@@ -5,6 +5,7 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
+import java.util.List;
 import lombok.Data;
 
 /**
@@ -35,6 +36,9 @@ public class Service {
 
     @Column(name = "is_package")
     private boolean isPackage;
+
+    @Transient
+    private List<Period> listPeriodPrice;
 
     @Transient
     private String image;
