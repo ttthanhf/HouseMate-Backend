@@ -5,30 +5,36 @@
 package housemate.models;
 
 import housemate.constants.Cycle;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Set;
 
 /**
- *
- * @author ThanhF
+ * @author hdang09
  */
 @Data
 public class HourlyScheduleDTO {
-    @Positive
-    private int serviceId;
 
-    @FutureOrPresent
-    private Date pickupDate;
+    private Cycle cycle = Cycle.ONLY_ONE_TIME;  // Default: Only one time
 
-    @FutureOrPresent
-    private Date receivedDate;
+    @FutureOrPresent(message = "Date must be in the present or future")
+    private LocalDate date;
 
-    private Cycle cycle;
-
-    @NotNull
-    @NotEmpty
     private String note;
 
+    @Positive(message = "Service ID must be a positive number")
+    private int serviceId;
+
+    @NotNull(message = "Time ranges must not be null")
+    private Set<LocalTime> timeRanges;
+
+    @NotNull(message = "Type must not be null")
+    @NotEmpty(message = "Type must not be empty")
+    private String type; // TODO: Fix String type
 }

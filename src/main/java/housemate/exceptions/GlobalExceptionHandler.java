@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,13 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity.badRequest().body(errors);
+    }
+
+    @ExceptionHandler(DateTimeParseException.class)
+    public ResponseEntity<String> handleDateTimeParseException(DateTimeParseException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                "Invalid time format. Please provide date in yyyy/MM/dd format, and time in HH:mm format."
+        );
     }
 
 //    @ExceptionHandler(Exception.class)

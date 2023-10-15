@@ -5,34 +5,36 @@
 package housemate.models;
 
 import housemate.constants.Cycle;
-import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  *
- * @author ThanhF
+ * @author hdang09
  */
 @Data
 public class DeliveryScheduleDTO {
-    @Positive
+    private Cycle cycle = Cycle.ONLY_ONE_TIME;  // Default: Only one time
+
+    @FutureOrPresent(message = "Date must be in the present or future")
+    private LocalDate date;
+
+    private String note;
+
+    @Min(value = 1, message = "Quantity must be larger than 0")
+    @Min(value = 10, message = "Quantity must be less than 10")
+    private int quantity = 1;  // Default: 1
+
+    @Positive(message = "Service ID must be a positive number")
     private int serviceId;
 
-    @FutureOrPresent
-    private Date deliveryDate;
+    @FutureOrPresent(message = "Time must be in the present or future")
+    private LocalTime time;
 
+    @NotNull(message = "Type must not be null")
+    @NotEmpty(message = "Type must not be empty")
     private String type; // TODO: Fix type of this
-
-    @Positive // TODO: Validate max for quantity
-    private int quantity;
-
-    private Cycle cycle;
-
-    @NotNull
-    @NotEmpty
-    private String note;
 }
