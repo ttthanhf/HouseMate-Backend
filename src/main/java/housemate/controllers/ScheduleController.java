@@ -1,6 +1,6 @@
 package housemate.controllers;
 
-import housemate.models.CleanlinessScheduleDTO;
+import housemate.models.ReturnScheduleDTO;
 import housemate.models.DeliveryScheduleDTO;
 import housemate.models.HourlyScheduleDTO;
 import housemate.services.ScheduleService;
@@ -26,19 +26,19 @@ public class ScheduleController {
     @Autowired
     ScheduleService service;
 
-    @Operation(summary = "Create schedule for HOURLY_GROUP")
+    @Operation(summary = "Create schedule for Hourly Service")
     @PostMapping("/create/hourly")
     public ResponseEntity<String> createHourlySchedule(@Valid @RequestBody HourlyScheduleDTO hourlyScheduleDTO) {
         return service.createHourlySchedule(hourlyScheduleDTO);
     }
 
-    @Operation(summary = "Create schedule for CLEANLINESS_GROUP")
-    @PostMapping("/create/cleanliness")
-    public ResponseEntity<String> createCleanlinessSchedule(@Valid @RequestBody CleanlinessScheduleDTO cleanlinessScheduleDTO) {
-        return service.createCleanlinessSchedule(cleanlinessScheduleDTO);
+    @Operation(summary = "Create schedule for Return Service")
+    @PostMapping("/create/return")
+    public ResponseEntity<String> createReturnSchedule(@Valid @RequestBody ReturnScheduleDTO returnScheduleDTO) {
+        return service.createReturnSchedule(returnScheduleDTO);
     }
 
-    @Operation(summary = "Create schedule for DELIVERY_GROUP")
+    @Operation(summary = "Create schedule for Delivery Service")
     @PostMapping("/create/delivery")
     public ResponseEntity<String> createDeliverySchedule(@Valid @RequestBody DeliveryScheduleDTO deliveryScheduleDTO) {
         return service.createDeliverySchedule(deliveryScheduleDTO);

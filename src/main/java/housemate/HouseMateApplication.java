@@ -33,8 +33,4 @@ public class HouseMateApplication {
     public static void main(String[] args) {
         SpringApplication.run(HouseMateApplication.class, args);
     }
-
-//    @PostConstruct
-//    void init() { TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh")); }
-
 }
