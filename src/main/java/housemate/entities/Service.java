@@ -5,7 +5,6 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
-import java.util.List;
 import lombok.Data;
 
 /**
@@ -23,10 +22,10 @@ public class Service {
     private int serviceId;
 
     @Column(name = "original_price")
-    private int originalPriceService;
+    private int originalPrice;
 
     @Column(name = "final_price")
-    private int finalPriceService;
+    private int finalPrice;
 
     @Column(name = "title_name")
     private String titleName;
@@ -34,13 +33,7 @@ public class Service {
     @Column(name = "number_of_sold")
     private int numberOfSold;
 
-    @Column(name = "is_package")
-    private boolean isPackage;
-
     @Transient
     private String image;
-
-    @Transient
-    private List<Period> listPeriodPrice;
 
 }

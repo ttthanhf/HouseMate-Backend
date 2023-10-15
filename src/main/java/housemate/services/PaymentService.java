@@ -8,7 +8,7 @@ import com.nimbusds.jose.shaded.gson.JsonObject;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
 import housemate.models.UserInfoOrderDTO;
-import housemate.repositories.CartItemRepository;
+import housemate.repositories.CartRepository;
 import housemate.repositories.OrderItemRepository;
 import housemate.utils.EncryptUtil;
 import housemate.repositories.OrderRepository;
@@ -57,7 +57,7 @@ public class PaymentService {
     private ServiceRepository serviceRepository;
 
     @Autowired
-    private CartItemRepository cartItemRepository;
+    private CartRepository cartRepository;
 
     private final String language = "en";
     private final String vnp_IpAddr = "127.0.0.1";
@@ -87,7 +87,7 @@ public class PaymentService {
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
 
         //if user dont have order => can not pay
-        if (order == null || order.getTotalPrice() == 0) {
+        if (order == null || order.getFinalPrice() == 0) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("This person does not have ordered before");
         }
 
@@ -98,7 +98,7 @@ public class PaymentService {
         order.setPaymentMethod("vnpay"); // set cứng
         orderRepository.save(order);
 
-        long amount = order.getTotalPrice() * 100;
+        long amount = order.getFinalPrice() * 100;
 
         String vnp_TxnRef = RandomUtil.getRandomNumber(8);
         String vnp_Command = "pay";
@@ -231,7 +231,7 @@ public class PaymentService {
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         for (OrderItem orderItem : listOrderItem) {
             serviceRepository.updateNumberOfSoldByServiceId(orderItem.getServiceId(), orderItem.getQuantity());
-            cartItemRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
+            cartRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
         }
         order.setComplete(true);
         orderRepository.save(order);

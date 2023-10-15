@@ -21,7 +21,7 @@ import lombok.Data;
 @Entity
 @Table(name = "carts")
 @Data
-public class CartItem {
+public class Cart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,14 +42,12 @@ public class CartItem {
     private int periodId;
 
     @Transient
-    private int totalFinalPriceCartItem;
+    private int originPrice;
 
     @Transient
-    private int totalOriginalPriceCartItem;
-
-    @Transient
-    private int totalDiscountPriceCartItem;
+    private int finalPrice;
 
     @Transient
     private Service service;
+
 }

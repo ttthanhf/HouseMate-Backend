@@ -53,8 +53,14 @@ public class Order {
     @Column(name = "is_complete")
     private boolean isComplete;
 
-    @Column(name = "total_price")
-    private int totalPrice;
+    @Column(name = "final_price")
+    private int finalPrice;
+
+    @Column(name = "sub_total")
+    private int subTotal;
+
+    @Transient
+    private int discountPrice;
 
     @Transient
     private List<OrderItem> listOrderItem;
