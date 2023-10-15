@@ -17,11 +17,11 @@ public class CartDTO {
 
     private int userId;
 
-    private int subTotal;
+    private int subTotalCart;
 
-    private int discountPrice;
+    private int discountPriceCart;
 
-    private int finalTotalPrice;
+    private int finalTotalPriceCart;
 
     private List<CartItem> listCartItem;
 }

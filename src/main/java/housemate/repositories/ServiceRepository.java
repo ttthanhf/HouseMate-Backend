@@ -18,10 +18,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
 
-    @Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
+    @Query("SELECT s.originalPriceService FROM Service s WHERE s.serviceId = :serviceId")
     int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
 
-    @Query("SELECT s.finalPrice FROM Service s WHERE s.serviceId = :serviceId")
+    @Query("SELECT s.finalPriceService FROM Service s WHERE s.serviceId = :serviceId")
     int getFinalPriceByServiceId(@Param("serviceId") int serviceId);
 
     @Query("SELECT s FROM Service s WHERE s.serviceId = :serviceId")

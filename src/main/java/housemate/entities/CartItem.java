@@ -38,11 +38,17 @@ public class CartItem {
     @Column(name = "quantity")
     private int quantity;
 
-    @Column(name = "price")
-    private int price;
-
     @Column(name = "period_id")
     private int periodId;
+
+    @Transient
+    private int totalFinalPriceCartItem;
+
+    @Transient
+    private int totalOriginalPriceCartItem;
+
+    @Transient
+    private int totalDiscountPriceCartItem;
 
     @Transient
     private Service service;

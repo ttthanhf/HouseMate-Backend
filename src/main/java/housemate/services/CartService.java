@@ -50,20 +50,30 @@ public class CartService {
         List<CartItem> listCartItem = cartItemRepository.getAllCartItemByUserId(userId);
 
         for (CartItem cartItem : listCartItem) {
+
             Service service = serviceRepository.getServiceByServiceId(cartItem.getServiceId());
-
             Period period = periodRepository.getPeriodByid(cartItem.getPeriodId());
-            subTotal += service.getOriginalPrice() * cartItem.getQuantity() * period.getPercent();
 
-            finalTotal += service.getFinalPrice() * cartItem.getQuantity() * period.getPercent();
+            //total original price of service
+            int totalOriginalServicePrice = (int) (service.getOriginalPriceService() * cartItem.getQuantity() * period.getPercent());
+            cartItem.setTotalOriginalPriceCartItem(totalOriginalServicePrice);
+            subTotal += totalOriginalServicePrice;//total original price of cart
+
+            //total final price of service
+            int totalFinalServicePrice = (int) (service.getFinalPriceService() * cartItem.getQuantity() * period.getPercent());
+            cartItem.setTotalFinalPriceCartItem(totalFinalServicePrice);
+            finalTotal += totalFinalServicePrice; //total final price of cart
+
+            //total discount price of service
+            cartItem.setTotalDiscountPriceCartItem(totalOriginalServicePrice - totalFinalServicePrice);
 
             List<Period> listPeriod = periodRepository.findAll();
             for (Period periodItem : listPeriod) {
 
-                int finalPrice = (int) (periodItem.getPercent() * service.getFinalPrice());
+                int finalPrice = (int) (periodItem.getPercent() * service.getFinalPriceService());
                 periodItem.setFinalPrice(finalPrice);
 
-                int originalPrice = (int) (periodItem.getPercent() * service.getOriginalPrice());
+                int originalPrice = (int) (periodItem.getPercent() * service.getOriginalPriceService());
                 periodItem.setOriginalPrice(originalPrice);
             }
             service.setListPeriodPrice(listPeriod);
@@ -72,9 +82,9 @@ public class CartService {
 
         cartDTO.setUserId(userId);
         cartDTO.setListCartItem(listCartItem);
-        cartDTO.setDiscountPrice(subTotal - finalTotal);
-        cartDTO.setFinalTotalPrice(finalTotal);
-        cartDTO.setSubTotal(subTotal);
+        cartDTO.setDiscountPriceCart(subTotal - finalTotal);
+        cartDTO.setFinalTotalPriceCart(finalTotal);
+        cartDTO.setSubTotalCart(subTotal);
 
         return ResponseEntity.status(HttpStatus.OK).body(cartDTO);
     }
@@ -88,8 +98,6 @@ public class CartService {
         if (service == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Service not found");
         }
-        //if have sale price => servicePrice = sale price
-        int servicePrice = serviceRepository.getFinalPriceByServiceId(serviceId);
 
         //if have item in cart -> update quantity and price only
         if (cartItemRepository.getCartByUserIdAndServiceId(userId, serviceId) != null) {
@@ -103,31 +111,21 @@ public class CartService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Maxium quanity one item in cart is 9999");
             }
 
-            int periodIdCartDTO = cartItemDTO.getPeriodId();
-            int periodId = cartItem.getPeriodId();
-            if (periodId != periodIdCartDTO) {
-                periodId = periodIdCartDTO;
-            }
-            Float percent = periodRepository.getPeriodByid(periodId).getPercent();
-            int pricePerQuantity = (int) (servicePrice * percent);
-            int price = pricePerQuantity * quantity;
+            int periodId = cartItemDTO.getPeriodId();
 
-            cartItemRepository.updateCart(userId, serviceId, quantity, price, periodId);
+            cartItemRepository.updateCart(userId, serviceId, quantity, periodId);
             return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
         }
 
         //if dont have item in cart -> create new item in cart
         int quantity = cartItemDTO.getQuantity();
         int periodId = cartItemDTO.getPeriodId();
-        Float percent = periodRepository.getPeriodByid(periodId).getPercent();
-        int price = (int) (servicePrice * percent * quantity);
 
         CartItem cartItem = new CartItem();
         cartItem.setUserId(userId);
         cartItem.setServiceId(serviceId);
         cartItem.setPeriodId(periodId);
         cartItem.setQuantity(quantity);
-        cartItem.setPrice(price);
         cartItemRepository.save(cartItem);
 
         return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
@@ -162,12 +160,7 @@ public class CartService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Maxium quanity one item in cart is 9999");
         }
 
-        //if have sale price => servicePrice = sale price
-        int servicePrice = serviceRepository.getFinalPriceByServiceId(serviceId);
-        Float percent = period.getPercent();
-        int price = (int) (servicePrice * quantity * percent);
-
-        cartItemRepository.updateCart(userId, serviceId, quantity, price, periodId);
+        cartItemRepository.updateCart(userId, serviceId, quantity, periodId);
         return ResponseEntity.status(HttpStatus.OK).body("Updated to cart");
     }
 
@@ -187,24 +180,24 @@ public class CartService {
         return ResponseEntity.status(HttpStatus.OK).body("Removed All Cart");
     }
 
-    public void updateAllCartPriceWhenPeriodIdChange(int periodId, Float percent) {
-        List<Integer> listCartId = cartItemRepository.getAllCartIdByPeriodId(periodId);
-
-        //update all cart item price when period id change
-        for (int cartId : listCartId) {
-            CartItem cartItem = cartItemRepository.getCartById(cartId);
-            int serviceId = cartItem.getServiceId();
-
-            //if have sale price => servicePrice = sale price
-            int servicePrice = serviceRepository.getOriginalPriceByServiceId(serviceId);
-            int finalPrice = serviceRepository.getFinalPriceByServiceId(serviceId);
-            if (finalPrice != 0) {
-                servicePrice = finalPrice;
-            }
-
-            int serviceQuantity = cartItem.getQuantity();
-            int price = (int) (servicePrice * serviceQuantity * percent);
-            cartItemRepository.updateCartPriceByCartId(cartItem.getCartId(), price);
-        }
-    }
+//    public void updateAllCartPriceWhenPeriodIdChange(int periodId, Float percent) {
+//        List<Integer> listCartId = cartItemRepository.getAllCartIdByPeriodId(periodId);
+//
+//        //update all cart item price when period id change
+//        for (int cartId : listCartId) {
+//            CartItem cartItem = cartItemRepository.getCartById(cartId);
+//            int serviceId = cartItem.getServiceId();
+//
+//            //if have sale price => servicePrice = sale price
+//            int servicePrice = serviceRepository.getOriginalPriceByServiceId(serviceId);
+//            int finalPrice = serviceRepository.getFinalPriceByServiceId(serviceId);
+//            if (finalPrice != 0) {
+//                servicePrice = finalPrice;
+//            }
+//
+//            int serviceQuantity = cartItem.getQuantity();
+//            int price = (int) (servicePrice * serviceQuantity * percent);
+//            cartItemRepository.updateCartPriceByCartId(cartItem.getCartId(), price);
+//        }
+//    }
 }
