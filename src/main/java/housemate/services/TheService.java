@@ -341,6 +341,11 @@ public class TheService {
 			else
 				oldService.setSaleStatus(SaleStatus.AVAILABLE);
 
+			//check not allow to update the unit of measure
+			if (!serviceDTO.getUnitOfMeasure().equals(oldService.getUnitOfMeasure()))
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+						.body("Not allow to update the unit of measure. Please correct the unit of measure to " + oldService.getUnitOfMeasure());
+			
 			// check is package
 			if (oldService.isPackage() && serviceDTO.getIsPackage().equals(false))
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -356,9 +361,6 @@ public class TheService {
 				if (serviceDTO.getServiceChildList() != null)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("This sevice id is the single service. Not allow to set service child list !");
-				if (serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
-						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-								.body("The unit of measure of single service should not be COMBO !");
 				if (serviceDTO.getTypeNameList() == null)
 					serviceTypeRepo.deleteAllByServiceId(serviceId);
 				// check type name of each single service is unique ignore case after request
@@ -389,9 +391,6 @@ public class TheService {
 				if (serviceDTO.getServiceChildList() == null || serviceDTO.getServiceChildList().size() < 2)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("The package contains at least 2 single services !");
-				if (!serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
-					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-							.body("The unit of measure of package must be COMBO !");
 				Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
 				for (Integer singleServiceId : childServiceSet.keySet()) {
 					if (packageServiceItemRepo.findByPackageServiceIdAndSingleServiceId(serviceId, singleServiceId)
