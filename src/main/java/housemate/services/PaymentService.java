@@ -26,6 +26,7 @@ import java.util.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -163,7 +164,7 @@ public class PaymentService {
         return ResponseEntity.status(HttpStatus.OK).body(paymentUrl);
     }
 
-    public ResponseEntity<String> checkVNPayPayment(HttpServletRequest request, String vnp_TxnRef, String vnp_TransactionNo, String vnp_TransactionDate) throws IOException {
+    public ResponseEntity<?> checkVNPayPayment(HttpServletRequest request, String vnp_TxnRef, String vnp_TransactionNo, String vnp_TransactionDate) throws IOException {
 
         String vnp_RequestId = RandomUtil.getRandomNumber(8);
         String vnp_Command = "querydr";
@@ -233,9 +234,14 @@ public class PaymentService {
             serviceRepository.updateNumberOfSoldByServiceId(orderItem.getServiceId(), orderItem.getQuantity());
             cartRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
         }
+
         order.setComplete(true);
+        order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
         orderRepository.save(order);
 
-        return ResponseEntity.status(HttpStatus.OK).body("Payment sucess");
+        order.setListOrderItem(listOrderItem);
+        order.setEmail(authorizationUtil.getEMailFromAuthorizationHeader(request));
+
+        return ResponseEntity.status(HttpStatus.OK).body(order);
     }
 }

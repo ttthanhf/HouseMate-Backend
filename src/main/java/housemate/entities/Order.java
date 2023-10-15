@@ -44,9 +44,6 @@ public class Order {
     @Column(name = "phone")
     private String phone;
 
-    @Column(name = "address")
-    private String address;
-
     @Column(name = "payment_method")
     private String paymentMethod;
 
@@ -58,6 +55,9 @@ public class Order {
 
     @Column(name = "sub_total")
     private int subTotal;
+
+    @Transient
+    private String address;
 
     @Transient
     private int discountPrice;
