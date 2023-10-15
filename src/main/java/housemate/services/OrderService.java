@@ -124,8 +124,8 @@ public class OrderService {
             orderItem.setPeriodName(period.getPeriodName());
             orderItem.setQuantity(cartItem.getQuantity());
             orderItem.setOrderId(order.getOrderId());
-            orderItem.setPrice(cartItem.getPrice());
-            totalPrice += cartItem.getPrice();
+//            orderItem.setPrice(cartItem.getPrice());
+//            totalPrice += cartItem.getPrice();
             listOrderItem.add(orderItem);
         }
 

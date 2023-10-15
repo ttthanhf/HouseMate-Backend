@@ -214,18 +214,15 @@ public class PaymentService {
         //check response
         Pattern patternResponseCode = Pattern.compile("\"vnp_ResponseCode\":\"(\\d{2})\"");
         Matcher matcherResponseCode = patternResponseCode.matcher(response.toString());
-        Pattern patternResponseMessage = Pattern.compile("\"vnp_Message\":\"(\\d{2})\"");
+        Pattern patternResponseMessage = Pattern.compile("\"vnp_Message\":\"(\\w+)\"");
         Matcher matcherResponseMessage = patternResponseMessage.matcher(response.toString());
 
         if (!matcherResponseCode.find()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find RsCode");
         }
         String responseCode = matcherResponseCode.group(1);
-        if ("94".equals(responseCode)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Dulication request");
-        }
         if (!"00".equals(responseCode)) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Payment fail");
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(matcherResponseMessage.toString());
         }
 
         //remove all cart exist in order and set complete order to true

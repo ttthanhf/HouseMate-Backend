@@ -23,10 +23,10 @@ public class Service {
     private int serviceId;
 
     @Column(name = "original_price")
-    private int originalPrice;
+    private int originalPriceService;
 
     @Column(name = "final_price")
-    private int finalPrice;
+    private int finalPriceService;
 
     @Column(name = "title_name")
     private String titleName;
@@ -38,9 +38,9 @@ public class Service {
     private boolean isPackage;
 
     @Transient
-    private List<Period> listPeriodPrice;
+    private String image;
 
     @Transient
-    private String image;
+    private List<Period> listPeriodPrice;
 
 }

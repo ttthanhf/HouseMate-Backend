@@ -33,8 +33,8 @@ public interface CartItemRepository extends JpaRepository<CartItem, Integer> {
 
     @Modifying
     @Transactional
-    @Query("UPDATE CartItem c SET c.quantity = :quantity, c.price = :price, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
-    void updateCart(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quantity") int quantity, @Param("price") int price, @Param("periodId") int periodId);
+    @Query("UPDATE CartItem c SET c.quantity = :quantity, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
+    void updateCart(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quantity") int quantity, @Param("periodId") int periodId);
 
     @Modifying
     @Transactional
@@ -51,17 +51,16 @@ public interface CartItemRepository extends JpaRepository<CartItem, Integer> {
 
     @Modifying
     @Transactional
-    @Query("UPDATE CartItem c SET c.quantity = :quanlity, c.price = :price, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
-    void updateCartQuantity(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quanlity") int quanlity, @Param("price") int price, @Param("periodId") int periodId);
+    @Query("UPDATE CartItem c SET c.quantity = :quanlity, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
+    void updateCartQuantity(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quanlity") int quanlity, @Param("periodId") int periodId);
 
     @Query("SELECT c.cartId FROM CartItem c WHERE c.periodId = :periodId")
     List<Integer> getAllCartIdByPeriodId(@Param("periodId") int periodId);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE CartItem c SET c.price = :price WHERE c.cartId = :cartId")
-    void updateCartPriceByCartId(@Param("cartId") int cartId, @Param("price") int price);
-
+//    @Modifying
+//    @Transactional
+//    @Query("UPDATE CartItem c SET c.price = :price WHERE c.cartId = :cartId")
+//    void updateCartPriceByCartId(@Param("cartId") int cartId, @Param("price") int price);
     @Query("SELECT sum(c.quantity) FROM CartItem c WHERE c.userId = :userId")
     int getTotalQuantityCart(@Param("userId") int userId);
 }
