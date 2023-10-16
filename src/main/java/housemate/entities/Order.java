@@ -47,6 +47,12 @@ public class Order {
     @Column(name = "sub_total")
     private int subTotal;
 
+    @Column(name = "transaction_id")
+    private String transactionId;
+
+    @Column(name = "transaction_date")
+    private String transactionDate;
+
     @Transient
     private int discountPrice;
 
