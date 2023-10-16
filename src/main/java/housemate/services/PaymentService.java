@@ -5,6 +5,7 @@
 package housemate.services;
 
 import com.nimbusds.jose.shaded.gson.JsonObject;
+import housemate.constants.RegexConstants;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
 import housemate.entities.UserAccount;
@@ -226,17 +227,23 @@ public class PaymentService {
         in.close();
 
         //check response
-        Pattern patternResponseCode = Pattern.compile("\"vnp_ResponseCode\":\"(\\d{2})\"");
+        Pattern patternResponseCode = Pattern.compile(RegexConstants.PATTERN_RESPONSE_CODE_PAYMENT);
         Matcher matcherResponseCode = patternResponseCode.matcher(response.toString());
-        Pattern patternResponseMessage = Pattern.compile("\"vnp_Message\":\"(\\w+)\"");
+        Pattern patternResponseMessage = Pattern.compile(RegexConstants.PATTERN_RESPONSE_MASSAGE_PAYMENT);
         Matcher matcherResponseMessage = patternResponseMessage.matcher(response.toString());
 
         if (!matcherResponseCode.find()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find RsCode");
         }
         String responseCode = matcherResponseCode.group(1);
+
+        if (!matcherResponseMessage.find()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find RsMsg");
+        }
+        String responseMessage = matcherResponseMessage.group(1);
+
         if (!"00".equals(responseCode)) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(matcherResponseMessage.toString());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseMessage.toString());
         }
 
         //remove all cart exist in order and set complete order to true
