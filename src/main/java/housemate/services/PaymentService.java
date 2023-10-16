@@ -93,6 +93,7 @@ public class PaymentService {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
 
+        //id address null => set new address
         if (user.getAddress() == null) {
             user.setAddress(userInfoOrderDTO.getAddress());
         }
@@ -106,6 +107,7 @@ public class PaymentService {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("This person does not have ordered before !");
         }
 
+        //check only support vnpay
         String paymentMethod = userInfoOrderDTO.getPaymentMethod().toLowerCase();
         if (!"vnpay".equals(paymentMethod)) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Only supports vnpay at the present time !");
@@ -114,6 +116,7 @@ public class PaymentService {
         order.setPaymentMethod(paymentMethod);
         orderRepository.save(order);
 
+        //much to plus 100 => vnpay api faq
         long amount = order.getFinalPrice() * 100;
 
         String vnp_TxnRef = RandomUtil.getRandomNumber(8);
@@ -228,7 +231,7 @@ public class PaymentService {
         }
         in.close();
 
-        //check response
+        //check response correct or not
         Pattern patternResponseCode = Pattern.compile(RegexConstants.PATTERN_RESPONSE_CODE_PAYMENT);
         Matcher matcherResponseCode = patternResponseCode.matcher(response.toString());
         Pattern patternResponseMessage = Pattern.compile(RegexConstants.PATTERN_RESPONSE_MASSAGE_PAYMENT);
@@ -248,21 +251,22 @@ public class PaymentService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseMessage);
         }
 
+        //check if payment order is already done or not exist
         Pattern patternTransactionStatus = Pattern.compile(RegexConstants.PATTERN_TRANSACTION_STATUS_PAYMENT);
         Matcher matcherTransactionStatus = patternTransactionStatus.matcher(response.toString());
-
         if (!matcherTransactionStatus.find()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find TransactionStatus");
         }
         String transactionStatus = matcherTransactionStatus.group(1);
         if (!"00".equals(transactionStatus)) {
-            return ResponseEntity.status(HttpStatus.OK).body("Payment fail");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment fail");
         }
 
         //remove all cart exist in order and set complete order to true
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
 
+        //set each order Item
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         for (OrderItem orderItem : listOrderItem) {
@@ -272,12 +276,14 @@ public class PaymentService {
             cartRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
         }
 
+        //add all missing field in db
         order.setComplete(true);
         order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
         order.setTransactionId(vnp_TxnRef);
         order.setTransactionDate(vnp_TransactionDate);
         orderRepository.save(order);
 
+        //add all missing field in response view
         order.setDiscountPrice(order.getSubTotal() - order.getFinalPrice());
         order.setListOrderItem(listOrderItem);
         order.setUser(user);
