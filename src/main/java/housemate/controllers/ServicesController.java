@@ -3,6 +3,8 @@ package housemate.controllers;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,18 +22,18 @@ import housemate.services.TheService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/services")
 @Tag(name = "Service")
 public class ServicesController {
 	
 	@Autowired
 	TheService servDao;
 	
-	@GetMapping 
+	@GetMapping(path = "/services")
 	@Operation(summary = "Search service by filter and sort")
 	public ResponseEntity<?> filterAndSortAllKind(
 			@RequestParam(required = false) Optional<ServiceCategory> category,
@@ -42,7 +44,7 @@ public class ServicesController {
 		return servDao.searchFilterAllKind("", category, saleStatus, rating, sortBy, orderBy);
 	}
 
-	@GetMapping("/search")
+	@GetMapping(path = "/services/search")
 	@Operation(summary = "Search service by keyword, filter, sort")
 	public ResponseEntity<?> searchAll(
 			@RequestParam(required = true) String keyword,
@@ -54,32 +56,32 @@ public class ServicesController {
 		return servDao.searchFilterAllKind(keyword, category, saleStatus, rating, sortBy, orderBy);
 	}
 	
-	@GetMapping("/topsale")
+	@GetMapping(path = "/services/topsale")
 	@Operation(summary = "Search service by filter and sort")
 	public ResponseEntity<?> getTopsale(){
 		return servDao.getTopsale();
 	}
 	
-	@GetMapping("/single")
+	@GetMapping(path = "/services/single")
 	@Operation(summary = "This will help you to get single service list only")
 	public ResponseEntity<?> getAllSingleService(){
 		return servDao.getAllSingleService();
 	}
 	
-	@GetMapping("/{id}")
+	@GetMapping(path = "/services/{id}")
 	@Operation(summary = "Get one service and view in details")
 	public ResponseEntity<?> getOne(@PathVariable int id) {
 		return servDao.getOne(id);
 	}
 	
-	@PostMapping("/new")
+	@PostMapping(path = "service/new")
 	@Operation(summary = "Create new service")
 	@SecurityRequirement(name = "bearerAuth")
 	public ResponseEntity<?> createNewService(HttpServletRequest request, @Valid @RequestBody ServiceNewDTO newServiceDTO) {	
 		return servDao.createNew(request, newServiceDTO);
 	}
 	
-	@PutMapping("/{id}")
+	@PutMapping(path = "/service/{id}")
 	@Operation(summary = "Update existing services")
 	@SecurityRequirement(name = "bearerAuth")
 	public ResponseEntity<?> updateService(
@@ -89,7 +91,7 @@ public class ServicesController {
 		return servDao.updateInfo(request, serviceId, newServiceDTO);
 	}
 	
-	@GetMapping("/all-kind")
+	@GetMapping(path = "/service/all-kind")
 	@Operation(summary = "get the list of all kind of service")
 	@SecurityRequirement(name = "bearerAuth")
 	public ResponseEntity<?> getAllKind(HttpServletRequest request) {
