@@ -16,20 +16,17 @@ import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.SortRequired;
 import housemate.models.ServiceNewDTO;
-import housemate.repositories.ServiceRepository;
 import housemate.services.TheService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/services")
 @Tag(name = "Service")
 public class ServicesController {
-
-	@Autowired
-	ServiceRepository servRepo;
 	
 	@Autowired
 	TheService servDao;
@@ -38,15 +35,14 @@ public class ServicesController {
 	@Operation(summary = "Search service by filter and sort")
 	public ResponseEntity<?> filterAndSortAllKind(
 			@RequestParam(required = false) Optional<ServiceCategory> category,
-			@RequestParam(required = false) Optional<SaleStatus>  saleStatus,
+			@RequestParam(required = false) Optional<SaleStatus> saleStatus,
 			@RequestParam(required = false) Optional<Integer> rating,
 			@RequestParam(required = false) Optional<ServiceField> sortBy,
-			@RequestParam(required = false) Optional<SortRequired> orderBy
-			){
+			@RequestParam(required = false) Optional<SortRequired> orderBy) {
 		return servDao.searchFilterAllKind("", category, saleStatus, rating, sortBy, orderBy);
 	}
-	
-	@GetMapping("/search") 
+
+	@GetMapping("/search")
 	@Operation(summary = "Search service by keyword, filter, sort")
 	public ResponseEntity<?> searchAll(
 			@RequestParam(required = true) String keyword,
@@ -54,9 +50,8 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<SaleStatus> saleStatus,
 			@RequestParam(required = false) Optional<Integer> rating,
 			@RequestParam(required = false) Optional<ServiceField> sortBy,
-			@RequestParam(required = false) Optional<SortRequired> orderBy
-			){
-		 return servDao.searchFilterAllKind(keyword, category, saleStatus, rating, sortBy, orderBy);
+			@RequestParam(required = false) Optional<SortRequired> orderBy) {
+		return servDao.searchFilterAllKind(keyword, category, saleStatus, rating, sortBy, orderBy);
 	}
 	
 	@GetMapping("/topsale")
@@ -77,32 +72,28 @@ public class ServicesController {
 		return servDao.getOne(id);
 	}
 	
-	
-	//role admin - update later
 	@PostMapping("/new")
 	@Operation(summary = "Create new service")
 	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<?> createNewService(@Valid @RequestBody ServiceNewDTO newServiceDTO) {	
-		return servDao.createNew(newServiceDTO);
+	public ResponseEntity<?> createNewService(HttpServletRequest request, @Valid @RequestBody ServiceNewDTO newServiceDTO) {	
+		return servDao.createNew(request, newServiceDTO);
 	}
 	
-	//role admin - update later
 	@PutMapping("/{id}")
 	@Operation(summary = "Update existing services")
 	@SecurityRequirement(name = "bearerAuth")
 	public ResponseEntity<?> updateService(
-			@PathVariable("id") int serviceId,
-			@Valid @RequestBody ServiceNewDTO newServiceDTO) {	
-		return servDao.updateInfo(serviceId, newServiceDTO);
-
+			HttpServletRequest request, 
+		    @PathVariable("id") int serviceId,
+			@Valid @RequestBody ServiceNewDTO newServiceDTO) {
+		return servDao.updateInfo(request, serviceId, newServiceDTO);
 	}
 	
-	// role admin - update later
 	@GetMapping("/all-kind")
 	@Operation(summary = "get the list of all kind of service")
 	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<?> getAllKind() {
-		return servDao.getAllKind();
+	public ResponseEntity<?> getAllKind(HttpServletRequest request) {
+		return servDao.getAllKind(request);
 	}
 
 }
