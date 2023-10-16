@@ -8,8 +8,6 @@ import housemate.constants.Role;
 import housemate.entities.UserAccount;
 import housemate.models.RegisterAccountDTO;
 import housemate.models.UpdateAccountDTO;
-import housemate.utils.BcryptUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
