@@ -49,8 +49,10 @@ public class Schedule {
     private String note;
 
     @Column(name = "cycle_name")
+    @Enumerated(EnumType.STRING)
     private Cycle cycle;
 
     @Column(name = "status")
+    @Enumerated(EnumType.STRING)
     private Status status;
 }
