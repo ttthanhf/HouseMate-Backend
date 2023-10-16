@@ -40,6 +40,9 @@ public class Service {
 
 	@Column(name = "original_price", nullable = false)
 	private int originalPrice;
+	
+    @Column(name = "final_price")
+    private int finalPrice;
 
 	@Column(name = "sale_price")
 	private int salePrice;
@@ -55,9 +58,6 @@ public class Service {
 	@Column(name = "sale_status", nullable = false)
 	private SaleStatus saleStatus;
 	
-	@Column(name = "final_price")
-	private int finalPrice;
-
 	@Enumerated(EnumType.STRING)
 	@Column(name = "group_type", nullable = false)
 	private GroupType groupType;

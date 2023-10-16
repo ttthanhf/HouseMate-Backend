@@ -21,7 +21,7 @@ import org.springframework.stereotype.Repository;
 public interface CartRepository extends JpaRepository<Cart, Integer> {
 
     @Query("SELECT c FROM Cart c WHERE c.userId = :userId")
-    List<Cart> getCartByUserId(@Param("userId") int userId);
+    List<Cart> getAllCartByUserId(@Param("userId") int userId);
 
     @Query("SELECT c FROM Cart c WHERE c.cartId = :cartId")
     Cart getCartById(@Param("cartId") int cartId);
@@ -30,6 +30,11 @@ public interface CartRepository extends JpaRepository<Cart, Integer> {
     @Transactional
     @Query("DELETE FROM Cart c WHERE c.userId = :userId AND c.id = :cartId")
     int deleteCart(@Param("userId") int userId, @Param("cartId") int cartId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Cart c SET c.quantity = :quantity, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
+    void updateCart(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quantity") int quantity, @Param("periodId") int periodId);
 
     @Modifying
     @Transactional
@@ -46,17 +51,12 @@ public interface CartRepository extends JpaRepository<Cart, Integer> {
 
     @Modifying
     @Transactional
-    @Query("UPDATE Cart c SET c.quantity = :quanlity, c.price = :price, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
-    void updateCartQuantity(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quanlity") int quanlity, @Param("price") int price, @Param("periodId") int periodId);
+    @Query("UPDATE Cart c SET c.quantity = :quanlity, c.periodId = :periodId WHERE c.userId = :userId AND c.serviceId = :serviceId")
+    void updateCartQuantity(@Param("userId") int userId, @Param("serviceId") int serviceId, @Param("quanlity") int quanlity, @Param("periodId") int periodId);
 
     @Query("SELECT c.cartId FROM Cart c WHERE c.periodId = :periodId")
     List<Integer> getAllCartIdByPeriodId(@Param("periodId") int periodId);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Cart c SET c.price = :price WHERE c.cartId = :cartId")
-    void updateCartPriceByCartId(@Param("cartId") int cartId, @Param("price") int price);
-
     @Query("SELECT sum(c.quantity) FROM Cart c WHERE c.userId = :userId")
-    int getTotalCart(@Param("userId") int userId);
+    int getTotalQuantityCart(@Param("userId") int userId);
 }
