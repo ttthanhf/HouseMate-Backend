@@ -7,12 +7,14 @@ package housemate.services;
 import com.nimbusds.jose.shaded.gson.JsonObject;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
+import housemate.entities.UserAccount;
 import housemate.models.UserInfoOrderDTO;
 import housemate.repositories.CartRepository;
 import housemate.repositories.OrderItemRepository;
 import housemate.utils.EncryptUtil;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.ServiceRepository;
+import housemate.repositories.UserRepository;
 import housemate.utils.AuthorizationUtil;
 import housemate.utils.RandomUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,6 +62,9 @@ public class PaymentService {
     @Autowired
     private CartRepository cartRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private final String language = "en";
     private final String vnp_IpAddr = "127.0.0.1";
 
@@ -84,19 +89,27 @@ public class PaymentService {
     public ResponseEntity<String> createVNPayPayment(HttpServletRequest request, UserInfoOrderDTO userInfoOrderDTO) throws UnsupportedEncodingException {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        UserAccount user = userRepository.findByUserId(userId);
+
+        if (user.getAddress() == null) {
+            user.setAddress(userInfoOrderDTO.getAddress());
+        }
+
+        user = userRepository.save(user);
 
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
 
         //if user dont have order => can not pay
         if (order == null || order.getFinalPrice() == 0) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("This person does not have ordered before");
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("This person does not have ordered before !");
         }
 
-        order.setAddress(userInfoOrderDTO.getAddress());
-        order.setEmail(authorizationUtil.getEMailFromAuthorizationHeader(request));
-        order.setPhone(userInfoOrderDTO.getPhone());
-        order.setFullName(userInfoOrderDTO.getFullName());
-        order.setPaymentMethod("vnpay"); // set cứng
+        String paymentMethod = userInfoOrderDTO.getPaymentMethod().toLowerCase();
+        if (!"vnpay".equals(paymentMethod)) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Only supports vnpay at the present time !");
+        }
+
+        order.setPaymentMethod(paymentMethod);
         orderRepository.save(order);
 
         long amount = order.getFinalPrice() * 100;
@@ -228,6 +241,8 @@ public class PaymentService {
 
         //remove all cart exist in order and set complete order to true
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        UserAccount user = userRepository.findByUserId(userId);
+
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         for (OrderItem orderItem : listOrderItem) {
@@ -240,7 +255,7 @@ public class PaymentService {
         orderRepository.save(order);
 
         order.setListOrderItem(listOrderItem);
-        order.setEmail(authorizationUtil.getEMailFromAuthorizationHeader(request));
+        order.setUser(user);
 
         return ResponseEntity.status(HttpStatus.OK).body(order);
     }

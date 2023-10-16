@@ -35,15 +35,6 @@ public class Order {
     @Column(name = "date")
     private LocalDateTime date;
 
-    @Column(name = "full_name")
-    private String fullName;
-
-    @Column(name = "address")
-    private String address;
-
-    @Column(name = "phone")
-    private String phone;
-
     @Column(name = "payment_method")
     private String paymentMethod;
 
@@ -57,10 +48,10 @@ public class Order {
     private int subTotal;
 
     @Transient
-    private String email;
+    private int discountPrice;
 
     @Transient
-    private int discountPrice;
+    private UserAccount user;
 
     @Transient
     private List<OrderItem> listOrderItem;
