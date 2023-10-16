@@ -7,14 +7,14 @@ package housemate.repositories;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Sort;
+import housemate.entities.Service;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import housemate.constants.Enum.SaleStatus;
-import housemate.entities.Service;
-import jakarta.transaction.Transactional;
 
 /**
  *
@@ -30,6 +30,9 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	@Query(value = "SELECT s FROM Service s WHERE s.saleStatus <> 'DISCONTINUED'")
 	List<Service> findAllAvailable();
 
+    @Query("SELECT s.finalPrice FROM Service s WHERE s.serviceId = :serviceId")
+    int getFinalPriceByServiceId(@Param("serviceId") int serviceId);
+	
 	List<Service> findAllByIsPackageFalse();
 
 	@Query("SELECT s FROM Service s WHERE "
@@ -68,8 +71,9 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	@Query("SELECT s FROM Service s WHERE s.serviceId = :serviceId")
 	Service getServiceByServiceId(@Param("serviceId") int serviceId);
 
-	@Modifying
-	@Query("UPDATE Service s SET s.numberOfSold = s.numberOfSold + :quantity WHERE s.serviceId = :serviceId")
-	void updateNumberOfSoldByServiceId(@Param("serviceId") int serviceId, int quantity);
+    @Modifying
+    @Transactional
+    @Query("UPDATE Service s SET s.numberOfSold = s.numberOfSold + :quantity WHERE s.serviceId = :serviceId")
+    void updateNumberOfSoldByServiceId(@Param("serviceId") int serviceId, int quantity);
 
 }
