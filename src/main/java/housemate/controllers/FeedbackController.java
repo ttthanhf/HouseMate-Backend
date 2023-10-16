@@ -1,6 +1,5 @@
 package housemate.controllers;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,7 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/feedbacks")
+@RequestMapping("/feedback")
 @Tag(name = "Feedback")
 public class FeedbackController {
 
@@ -38,7 +37,8 @@ public class FeedbackController {
 	}
 
 	@GetMapping("filter/service/{serviceId}")
-	public ResponseEntity<?> filterServiceFeedbackByRating(@PathVariable("serviceId") int serviceId, @RequestParam("rating") int rating) {
+	public ResponseEntity<?> filterServiceFeedbackByRating(@PathVariable("serviceId") int serviceId,
+			@RequestParam("rating") int rating) {
 		return feedbackDao.filterServiceFeedbackByRating(serviceId, rating);
 	}
 
@@ -48,8 +48,8 @@ public class FeedbackController {
 	}
 
 	@GetMapping("{feedback-id}")
-	public ResponseEntity<?> getOne(@PathVariable("feedback-id") int serviceFeedbackId) {
-		return feedbackDao.getOne(serviceFeedbackId);
+	public ResponseEntity<?> getOne(@PathVariable("feedback-id") int feedbackId) {
+		return feedbackDao.getOne(feedbackId);
 	}
 
 	@PostMapping("/new")
@@ -60,14 +60,14 @@ public class FeedbackController {
 
 	@PutMapping("{feedback-id}")
 	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<?> updateFeedback(HttpServletRequest request, @Valid @RequestBody FeedbackNewDTO newFeedback, @PathVariable("feedback-id") int serviceFeedbackId) {
-		return feedbackDao.updateFeedback(request, newFeedback, serviceFeedbackId);
+	public ResponseEntity<?> updateFeedback(HttpServletRequest request, @Valid @RequestBody FeedbackNewDTO newFeedback, @PathVariable("feedback-id") int feedbackId) {
+		return feedbackDao.updateFeedback(request, newFeedback, feedbackId);
 	}
-	
+
 	@DeleteMapping("{feedback-id}")
 	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<?> deleteFeedback(@PathVariable("feedback-id") int serviceFeedbackId) {
-		return feedbackDao.removeFeedback(serviceFeedbackId);
+	public ResponseEntity<?> deleteFeedback(@PathVariable("feedback-id") int feedbackId) {
+		return feedbackDao.removeFeedback(feedbackId);
 	}
 
 }
