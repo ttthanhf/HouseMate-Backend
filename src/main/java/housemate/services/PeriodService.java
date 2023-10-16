@@ -26,9 +26,6 @@ public class PeriodService {
     PeriodRepository periodRepository;
 
     @Autowired
-    CartService cartService;
-
-    @Autowired
     AuthorizationUtil authorizationUtil;
 
     public ResponseEntity<List<Period>> getAllPeriod() {
@@ -45,7 +42,6 @@ public class PeriodService {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
         }
         periodRepository.updatePeriodPercentByPeriodId(periodId, percent);
-        cartService.updateAllCartPriceWhenPeriodIdChange(periodId, percent);
         return ResponseEntity.status(HttpStatus.OK).body("Updated success");
     }
 }

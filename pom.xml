@@ -145,22 +145,6 @@
 					</excludes>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>aspectj-maven-plugin</artifactId>
-				<version>1.11</version>
-				<configuration>
-					<complianceLevel>1.8</complianceLevel>
-					<Xlint>ignore</Xlint>
-					<aspectLibraries>
-						<aspectLibrary>
-							<groupId>org.springframework</groupId>
-							<artifactId>spring-aspects</artifactId>
-						</aspectLibrary>
-					</aspectLibraries>
-				</configuration>
-				<!-- configuration and executions -->
-			</plugin>
 		</plugins>
 		<finalName>housemate</finalName>
 	</build>
