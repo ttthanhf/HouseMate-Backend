@@ -31,10 +31,6 @@ public class ServiceFeedback {
     @Column(name = "task_id")
     private int taskId;
     
-    @ManyToOne
-    @JoinColumn(name = "service_id", insertable = false, updatable = false)
-    private Service service;
-    
     @Column(name = "service_id")
     private int serviceId;
     
