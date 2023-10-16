@@ -57,17 +57,29 @@ public class OrderService {
 
     public ResponseEntity<List<Order>> getAllOrderComplete(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        UserAccount user = userRepository.findByUserId(userId);
+
+        //setting for each order
         List<Order> listOrder = orderRepository.getAllOrderCompleteByUserId(userId);
         for (Order order : listOrder) {
+
+            //setting for each OderItem
             List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
+            for (OrderItem orderItem : listOrderItem) {
+                Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+                orderItem.setService(service);
+                orderItem.setDiscountPrice(orderItem.getOriginalPrice() - orderItem.getFinalPrice());
+            }
             order.setListOrderItem(listOrderItem);
             order.setDiscountPrice(order.getSubTotal() - order.getFinalPrice());
+            order.setUser(user);
         }
         return ResponseEntity.status(HttpStatus.OK).body(listOrder);
     }
 
     public ResponseEntity<?> getOrderNotComplete(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        UserAccount user = userRepository.findByUserId(userId);
 
         List<Cart> listCart = cartRepository.getAllCartByUserId(userId);
         if (listCart.isEmpty()) {
@@ -78,14 +90,24 @@ public class OrderService {
         if (order == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No any order have been created or in not complete");
         }
+
+        //setting for each orderItem
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         for (OrderItem orderItem : listOrderItem) {
             Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
             orderItem.setService(service);
             orderItem.setDiscountPrice(orderItem.getOriginalPrice() - orderItem.getFinalPrice());
         }
+
+        //if addr = null => addr = ""
+        if (user.getAddress() == null) {
+            user.setAddress("");
+        }
+
+        order.setUser(user);
         order.setDiscountPrice(order.getSubTotal() - order.getFinalPrice());
         order.setListOrderItem(listOrderItem);
+
         return ResponseEntity.status(HttpStatus.OK).body(order);
     }
 
@@ -100,17 +122,17 @@ public class OrderService {
         //if order not exist or all order complete => create new order
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
         if (order == null) {
+
             order = new Order();
             order.setUserId(userId);
             order.setComplete(false);
             order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
-            order.setFullName(user.getFullName() != null ? user.getFullName() : "");
-            order.setEmail(user.getEmailAddress() != null ? user.getEmailAddress() : "");
-            order.setPhone(user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
-            order.setAddress(user.getAddress() != null ? user.getAddress() : "");
-            order.setPaymentMethod("");
+
             order = orderRepository.save(order);
         }
+
+        order.setUser(user);
+        order.setPaymentMethod("");
 
         //update newset time
         order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
@@ -155,10 +177,13 @@ public class OrderService {
         }
 
         listOrderItem = orderItemRepository.saveAll(listOrderItem);
-        order.setListOrderItem(listOrderItem);
+
         order.setFinalPrice(finalPrice);
         order.setSubTotal(subTotal);
         order = orderRepository.save(order);
+
+        order.setListOrderItem(listOrderItem);
+
         return ResponseEntity.status(HttpStatus.OK).body("Order created");
     }
 
