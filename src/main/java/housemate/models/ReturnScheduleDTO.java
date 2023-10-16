@@ -36,21 +36,20 @@ public class ReturnScheduleDTO {
     @FutureOrPresent(message = "Received date must be in the present or future")
     private LocalDate receivedDate;
 
-    @FutureOrPresent(message = "Received time must be in the present or future")
-    @DateTimeFormat(pattern = "HH:mm")
-    @Schema(example = "11:30")
-    private LocalTime receivedTime;
-
     @FutureOrPresent(message = "Pickup time must be in the present or future")
     @DateTimeFormat(pattern = "HH:mm")
-    @Schema(example = "13:25")
+    @Schema(example = "11:25")
     private LocalTime pickupTime;
+
+    @FutureOrPresent(message = "Received time must be in the present or future")
+    @DateTimeFormat(pattern = "HH:mm")
+    @Schema(example = "13:25")
+    private LocalTime receivedTime;
 
     @Positive(message = "Service ID must be a positive number")
     private int serviceId;
 
-    @NotNull(message = "Type must not be null")
-    @NotEmpty(message = "Type must not be empty")
+    @Positive(message = "Type ID must be a positive number")
     private int typeId;
 
 }

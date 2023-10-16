@@ -1,9 +1,7 @@
 package housemate.controllers;
 
-import housemate.models.DeliveryScheduleDTO;
-import housemate.models.HourlyScheduleDTO;
-import housemate.models.PurchasedServiceDTO;
-import housemate.models.ReturnScheduleDTO;
+import housemate.entities.Schedule;
+import housemate.models.*;
 import housemate.services.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -15,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author hdang09
@@ -29,10 +28,23 @@ public class ScheduleController {
     @Autowired
     ScheduleService service;
 
+    @Operation(summary = "Get all schedule for the current user")
+    @GetMapping
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<List<ScheduleEventDTO>> getScheduleForUser(HttpServletRequest request) {
+        return service.getScheduleForUser(request);
+    }
+
+    @Operation(summary = "Get schedule by ID")
+    @GetMapping("/{scheduleId}")
+    public ResponseEntity<Schedule> getScheduleById(@PathVariable int scheduleId) {
+        return service.getScheduleById(scheduleId);
+    }
+
     @Operation(summary = "Get all purchased")
     @GetMapping("/all-purchased")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<List<PurchasedServiceDTO>> getAllPurchased(HttpServletRequest request) {
+    public ResponseEntity<Set<PurchasedServiceDTO>> getAllPurchased(HttpServletRequest request) {
         return service.getAllPurchased(request);
     }
 

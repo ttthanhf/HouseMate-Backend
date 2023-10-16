@@ -7,14 +7,13 @@ package housemate.models;
 import housemate.constants.Cycle;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author hdang09
@@ -34,9 +33,8 @@ public class HourlyScheduleDTO {
 
     @NotNull(message = "Time ranges must not be null")
     @Schema(example = "[\"13:25\", \"15:25\"]")
-    private Set<LocalTime> timeRanges;
+    private ArrayList<LocalTime> timeRanges;
 
-    @NotNull(message = "Type must not be null")
-    @NotEmpty(message = "Type must not be empty")
+    @NotNull(message = "Type ID must not be null")
     private int typeId;
 }
