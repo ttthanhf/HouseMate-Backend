@@ -25,8 +25,6 @@ public class PeriodService {
     @Autowired
     PeriodRepository periodRepository;
 
-//    @Autowired
-//    CartService cartService;
     @Autowired
     AuthorizationUtil authorizationUtil;
 
