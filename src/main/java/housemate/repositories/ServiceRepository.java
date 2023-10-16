@@ -58,7 +58,7 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	        + "(SELECT COALESCE(AVG(f.rating), 0) FROM ServiceFeedback f WHERE f.serviceId = :serviceId) "
 	        + "WHERE s.serviceId = :serviceId")
 	void updateAvgRating(@Param("serviceId") int serviceId);
-
+	
 	@Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
 	int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
 
