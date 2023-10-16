@@ -17,27 +17,29 @@ import lombok.Setter;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ServiceFeedbackViewDTO {
+public class FeedbackViewDTO {
 	
 	private int serviceID;
 	
 	//private int serviceName; //this will update later
-	@JsonInclude(value = Include.NON_EMPTY)
-	private int avgRating;
+	@JsonInclude(value = Include.NON_NULL)
+	private Float avgRating;
 	
-	@JsonInclude(value = Include.NON_EMPTY)
-	private int numOfReview; 
+	@JsonInclude(value = Include.NON_NULL)
+	private Integer numOfReview; 
 	
 	@JsonInclude(value = Include.NON_EMPTY)
 	private Map<Integer, Integer> numOfReviewPerRatingLevel;
 	
-	private List<ServiceFeedbackViewDetailDTO> feedbackList;
+	@JsonInclude(value = Include.NON_NULL)
+	private List<FeedbackViewDetailDTO> feedbackList;
 	
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class ServiceFeedbackViewDetailDTO{
+	public static class FeedbackViewDetailDTO{
 		private int serviceFeedbackId;
+		private int customerId;
 		private String customerName;
 		private String content;
 		private LocalDateTime createdAt;

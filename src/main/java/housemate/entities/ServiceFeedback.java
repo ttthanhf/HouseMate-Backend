@@ -25,16 +25,13 @@ import lombok.NoArgsConstructor;
 public class ServiceFeedback {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "service_feedback_id")
     private int serviceFeedbackId;
 
     @Column(name = "task_id")
     private int taskId;
     
-    @ManyToOne
-    @JoinColumn(name = "service_id", insertable = false, updatable = false)
-    private Service service;
-
     @Column(name = "service_id")
     private int serviceId;
     
@@ -48,6 +45,6 @@ public class ServiceFeedback {
     private LocalDateTime createdAt;
 
     @Column(name = "rating", columnDefinition = "float default 0")
-    private Float rating;
+    private int rating;
 
 }

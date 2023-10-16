@@ -28,8 +28,8 @@ public class ServiceViewDTO {
 
 	List<ServicePrice> priceList;
 
-	//TODO: Update imgList later 
-	List<String> images; 
+	// TODO: Update imgList later
+	List<String> images;
 
 	@Data
 	@NoArgsConstructor
@@ -41,8 +41,8 @@ public class ServiceViewDTO {
 		private float final_price;
 
 		public ServicePrice setPriceForComboMonth(Service service, int duration_value, UsageDurationUnit duration_unit, float percentAddedValue) {
-			float originalPrice = service.getOriginalPrice() * percentAddedValue ;
-			float final_price = service.getFinalPrice() * percentAddedValue ;
+			float originalPrice = service.getOriginalPrice() * percentAddedValue;
+			float final_price = service.getFinalPrice() * percentAddedValue;
 			if (final_price < 0 || service.getSalePrice() == 0)
 				final_price = 0; // No sale for this service
 

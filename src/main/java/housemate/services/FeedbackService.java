@@ -1,188 +1,193 @@
 package housemate.services;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import housemate.entities.ServiceFeedback;
 import housemate.entities.UserAccount;
-import housemate.exceptions.UserException;
 import housemate.models.FeedbackNewDTO;
-import housemate.models.ServiceFeedbackViewDTO;
-import housemate.models.ServiceFeedbackViewDTO.ServiceFeedbackViewDetailDTO;
+import housemate.models.FeedbackViewDTO;
+import housemate.models.FeedbackViewDTO.FeedbackViewDetailDTO;
 import housemate.repositories.FeedbackRepository;
+import housemate.repositories.ServiceRepository;
 import housemate.repositories.UserRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
-
 
 @Service
 public class FeedbackService {
 	@Autowired
 	FeedbackRepository feedBackRepo;
-	
+
 	@Autowired
 	UserRepository userRepo;
 	
 	@Autowired
-    AuthorizationUtil authorizationUtil;
+	ServiceRepository servRepo;
 
-	
+	@Autowired
+	AuthorizationUtil authorizationUtil;
+
 	ModelMapper mapper = new ModelMapper();
-	
-	public ServiceFeedbackViewDTO getServiceFeedbackOverview(int serviceId) {
-		
-		 List<ServiceFeedback> serviceFeedbList = 
-				 feedBackRepo.findAllByServiceId(serviceId);
-		 
-		 if(serviceFeedbList.isEmpty() || serviceFeedbList == null)
-			 throw new UserException(HttpStatus.NOT_FOUND, "No feedback for this service !");
-		
-		 ServiceFeedbackViewDTO serviceFeedback = new ServiceFeedbackViewDTO();
-		 
-		 List<ServiceFeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
-		 for (ServiceFeedback feeback : serviceFeedbList) {
-			 ServiceFeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, ServiceFeedbackViewDetailDTO.class);
 
-			 UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
-			 feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
-			 
-			 feebackDetailList.add(feedbackViewDetail);
-		}
-		
-		Map<Integer, Integer> numOfReviewPerRatingLevel = new HashMap<>();
-		numOfReviewPerRatingLevel.put(1, feedBackRepo.getNumOfReviewPerRatingLevel(1, serviceId));
-		numOfReviewPerRatingLevel.put(2, feedBackRepo.getNumOfReviewPerRatingLevel(2, serviceId));
-		numOfReviewPerRatingLevel.put(3, feedBackRepo.getNumOfReviewPerRatingLevel(3, serviceId));
-		numOfReviewPerRatingLevel.put(4, feedBackRepo.getNumOfReviewPerRatingLevel(4, serviceId));
-		numOfReviewPerRatingLevel.put(5, feedBackRepo.getNumOfReviewPerRatingLevel(5, serviceId)); 
-		
-		
-		serviceFeedback.setServiceID(serviceId);
-		serviceFeedback.setAvgRating(feedBackRepo.getFeedbackAvgRating(serviceId));
-		serviceFeedback.setNumOfReview(serviceId);
-		serviceFeedback.setNumOfReviewPerRatingLevel(numOfReviewPerRatingLevel); 
-		serviceFeedback.setFeedbackList(feebackDetailList);
-		
-		
-		return serviceFeedback;
-	}
-	
-	public ServiceFeedbackViewDTO filterServiceFeedbackByRating(int serviceId, int ratingLevel) {
-
-		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByRating(serviceId, ratingLevel);
-
-		if (serviceFeedbList.isEmpty() || serviceFeedbList == null)
-			throw new UserException(HttpStatus.NOT_FOUND, "No feedback for this service !");
-
-		ServiceFeedbackViewDTO serviceFeedback = new ServiceFeedbackViewDTO();
-
-		List<ServiceFeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
-		for (ServiceFeedback feeback : serviceFeedbList) {
-			ServiceFeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, ServiceFeedbackViewDetailDTO.class);
-
-			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
-			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
-
-			feebackDetailList.add(feedbackViewDetail);
-		}
-
-		serviceFeedback.setServiceID(serviceId);
-		serviceFeedback.setFeedbackList(feebackDetailList);
-
-		return serviceFeedback;
-	}
-	
-	public ServiceFeedbackViewDTO findAllFeedbackByService(int serviceId) {
+	public ResponseEntity<?> getRatingOverviewByService(int serviceId) {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 
 		if (serviceFeedbList.isEmpty() || serviceFeedbList == null)
-			throw new UserException(HttpStatus.NOT_FOUND, "No feedback for this service !");
+			return ResponseEntity.badRequest().body("No feedback for this service can be found !");
 
-		ServiceFeedbackViewDTO serviceFeedback = new ServiceFeedbackViewDTO();
+		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
-		List<ServiceFeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
+		Map<Integer, Integer> numOfReviewPerRatingLevel = new HashMap<>();
+		numOfReviewPerRatingLevel.put(1, feedBackRepo.getNumOfReviewPerRatingLevel(serviceId, 1));
+		numOfReviewPerRatingLevel.put(2, feedBackRepo.getNumOfReviewPerRatingLevel(serviceId, 2));
+		numOfReviewPerRatingLevel.put(3, feedBackRepo.getNumOfReviewPerRatingLevel(serviceId, 3));
+		numOfReviewPerRatingLevel.put(4, feedBackRepo.getNumOfReviewPerRatingLevel(serviceId, 4));
+		numOfReviewPerRatingLevel.put(5, feedBackRepo.getNumOfReviewPerRatingLevel(serviceId, 5));
+
+		serviceFeedback.setServiceID(serviceId);
+		serviceFeedback.setAvgRating(feedBackRepo.getFeedbackAvgRating(serviceId));
+		serviceFeedback.setNumOfReview(feedBackRepo.getNumOfReview(serviceId));
+		serviceFeedback.setNumOfReviewPerRatingLevel(numOfReviewPerRatingLevel);
+
+		return ResponseEntity.ok(serviceFeedback);
+	}
+
+	public ResponseEntity<?> findAllFeedbackByService(int serviceId) {
+
+		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
+
+		if (serviceFeedbList.isEmpty() || serviceFeedbList == null)
+			return ResponseEntity.badRequest().body("No feedback for this service can be found !");
+
+		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
+
+		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
 		for (ServiceFeedback feeback : serviceFeedbList) {
-			ServiceFeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, ServiceFeedbackViewDetailDTO.class);
-
+			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
 			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
-
 			feebackDetailList.add(feedbackViewDetail);
 		}
 
 		serviceFeedback.setServiceID(serviceId);
 		serviceFeedback.setFeedbackList(feebackDetailList);
 
-		return serviceFeedback;
+		return ResponseEntity.ok(serviceFeedback);
 	}
-	
-	public List<ServiceFeedback> findAll() {
+
+	public ResponseEntity<?> filterServiceFeedbackByRating(int serviceId, int ratingLevel) {
+
+		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByRating(serviceId, ratingLevel);
+
+		if (serviceFeedbList.isEmpty() || serviceFeedbList == null)
+			return ResponseEntity.badRequest().body("No feedback for this service with rating " + ratingLevel + " can be found !");
+
+		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
+
+		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
+		for (ServiceFeedback feeback : serviceFeedbList) {
+			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
+			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
+			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
+			feebackDetailList.add(feedbackViewDetail);
+		}
+
+		serviceFeedback.setServiceID(serviceId);
+		serviceFeedback.setFeedbackList(feebackDetailList);
+
+		return ResponseEntity.ok(serviceFeedback);
+	}
+
+	public ResponseEntity<?> findAll() {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAll();
 
 		if (serviceFeedbList.isEmpty() || serviceFeedbList == null)
-			throw new UserException(HttpStatus.NOT_FOUND, "Empty list now !");
+			return ResponseEntity.badRequest().body("Empty list now !");
 
-		return serviceFeedbList;
+		return ResponseEntity.ok(serviceFeedbList);
 	}
-	 
-	
-	public ServiceFeedback getOne(int serviceFeedbackId) {
+
+	public ResponseEntity<?> getOne(int serviceFeedbackId) {
 
 		ServiceFeedback feeback = feedBackRepo.findById(serviceFeedbackId).orElse(null);
 
-		if (feeback == null) {
-			throw new UserException(HttpStatus.NOT_FOUND, "This feedback does not exists");
-		}
+		if (feeback == null)
+			return ResponseEntity.badRequest().body("This feedback does not exist");
 
-		return feeback;
+		return ResponseEntity.ok(feeback);
 	}
-	
-	public ServiceFeedback createNewFeedback(HttpServletRequest request, FeedbackNewDTO newFeedback) {
+
+	@Transactional
+	public ResponseEntity<?> createNewFeedback(HttpServletRequest request, FeedbackNewDTO newFeedback) {
 
 		int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+		
+		//TODO: Constraint for comboId taskId, customerId, ServiceId In Here
+		
+		if(feedBackRepo.findByCustomerIdAndTaskIdAndServiceId(userId, newFeedback.getTaskId(), newFeedback.getServiceId()) != null) 
+			return ResponseEntity.badRequest().body("This feedback has existed ! Not allow to create new ! Only allow to update !");
 
 		ServiceFeedback feedback = mapper.map(newFeedback, ServiceFeedback.class);
-
-		feedback.setCreatedAt(LocalDateTime.now());
+		feedback.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 		feedback.setCustomerId(userId);
 		ServiceFeedback addedFeedback = feedBackRepo.save(feedback);
 
-		if (addedFeedback == null) {
-			throw new RuntimeException("Saved Failed !");
-		}
-
-		return addedFeedback;
+		if (addedFeedback == null)
+			return ResponseEntity.badRequest().body("This feedback does not exists");
+		
+		servRepo.updateAvgRating(feedback.getServiceId());
+		
+		return ResponseEntity.ok(addedFeedback);
 	}
-	
-	public ServiceFeedback updateFeedback(HttpServletRequest request, FeedbackNewDTO newFeedback,
-			int serviceFeedbackId) {
+
+	@Transactional
+	public ResponseEntity<?> updateFeedback(HttpServletRequest request, FeedbackNewDTO newFeedback, int serviceFeedbackId) {
 
 		int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+		
+		//TODO: Constraint for comboId taskId, customerId, ServiceId In Here
 
-		ServiceFeedback oldFeedback = feedBackRepo.findByServiceFeedbackIdAndServiceIdAndTaskIdAndServiceId(
-				serviceFeedbackId, userId, newFeedback.getTaskId(), newFeedback.getServiceId());
+		ServiceFeedback oldFeedback = feedBackRepo.findFeedback(serviceFeedbackId, userId, newFeedback.getTaskId(), newFeedback.getServiceId());
 
 		if (oldFeedback == null)
-			throw new UserException(HttpStatus.NOT_FOUND, "This feedback does not exist for updating !");
+			return ResponseEntity.badRequest().body("This feedback does not exist for updating !");
 
 		oldFeedback.setContent(newFeedback.getContent());
 		oldFeedback.setRating(newFeedback.getRating());
-		oldFeedback.setCreatedAt(LocalDateTime.now());
+		oldFeedback.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 		ServiceFeedback addedFeedback = feedBackRepo.save(oldFeedback);
 
-		if (addedFeedback == null) {
-			throw new RuntimeException("Saved Failed !");
-		}
+		if (addedFeedback == null) 
+			return ResponseEntity.badRequest().body("Update Failed !");
+		
+		servRepo.updateAvgRating(oldFeedback.getServiceId());
+		
+		return ResponseEntity.ok(addedFeedback);
+	}
+	
+	@Transactional
+	public ResponseEntity<?> removeFeedback(int serviceFeedbackId) {
 
-		return addedFeedback;
+		ServiceFeedback feedback = feedBackRepo.findById(serviceFeedbackId).orElse(null);
+
+		if (feedback == null)
+			return ResponseEntity.badRequest().body("This feedback does not exist for removing !");
+
+		feedBackRepo.deleteById(serviceFeedbackId);
+		servRepo.updateAvgRating(serviceFeedbackId);
+		
+		return ResponseEntity.ok("Remove Successfully");
 	}
 
 }
