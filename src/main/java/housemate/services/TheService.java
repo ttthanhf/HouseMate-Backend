@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import housemate.constants.Role;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
@@ -34,6 +35,8 @@ import housemate.repositories.PackageServiceItemRepository;
 import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
+import housemate.utils.AuthorizationUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import housemate.models.ServiceViewDTO.ServicePrice;
 
 /**
@@ -61,6 +64,9 @@ public class TheService {
 
 	@Autowired
 	PeriodRepository periodRepo;
+	
+	@Autowired
+    AuthorizationUtil authorizationUtil;
 
 	ModelMapper mapper = new ModelMapper();
 
@@ -71,7 +77,9 @@ public class TheService {
 		return ResponseEntity.ok(serviceList);
 	}
 
-	public ResponseEntity<?> getAllKind() {
+	public ResponseEntity<?> getAllKind(HttpServletRequest request) {
+		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
 		List<Service> serviceList = serviceRepo.findAll();
 		if (serviceList == null)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
@@ -202,9 +210,14 @@ public class TheService {
 	}
 
 	@Transactional
-	public ResponseEntity<?> createNew(ServiceNewDTO serviceDTO) {
+	public ResponseEntity<?> createNew(HttpServletRequest request, ServiceNewDTO serviceDTO) {
+		
+		// check the role admin is allowed
+		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
 
 		Service savedService = null;
+		
 		try {
 			// Check all before saving object service
 			// Check duplicate title name
@@ -319,7 +332,11 @@ public class TheService {
 	}
 
 	@Transactional
-	public ResponseEntity<?> updateInfo(int serviceId, ServiceNewDTO serviceDTO) {
+	public ResponseEntity<?> updateInfo(HttpServletRequest request, int serviceId, ServiceNewDTO serviceDTO) {
+
+		// check the role admin is allowed
+		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
 
 		Service savedService = null;
 
