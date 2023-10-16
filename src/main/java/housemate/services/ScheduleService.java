@@ -1,45 +1,75 @@
-
 package housemate.services;
 
+import housemate.entities.Schedule;
 import housemate.entities.Service;
-import housemate.models.ReturnScheduleDTO;
+import housemate.mappers.ScheduleMapper;
 import housemate.models.DeliveryScheduleDTO;
 import housemate.models.HourlyScheduleDTO;
-import housemate.repositories.*;
+import housemate.models.PurchasedServiceDTO;
+import housemate.models.ReturnScheduleDTO;
+import housemate.repositories.ScheduleRepository;
+import housemate.repositories.ServiceRepository;
+import housemate.utils.AuthorizationUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- *
  * @author ThanhF
  */
 @org.springframework.stereotype.Service
 public class ScheduleService {
 
-    @Autowired
     ServiceRepository serviceRepository;
+    ScheduleRepository scheduleRepository;
+    ScheduleMapper scheduleMapper;
+    AuthorizationUtil authorizationUtil;
 
-    public ResponseEntity<String> createHourlySchedule(HourlyScheduleDTO scheduleDTO) {
+    @Autowired
+    public ScheduleService(ServiceRepository serviceRepository, ScheduleRepository scheduleRepository, ScheduleMapper scheduleMapper, AuthorizationUtil authorizationUtil) {
+        this.serviceRepository = serviceRepository;
+        this.scheduleRepository = scheduleRepository;
+        this.scheduleMapper = scheduleMapper;
+        this.authorizationUtil = authorizationUtil;
+    }
+
+    public ResponseEntity<List<PurchasedServiceDTO>> getAllPurchased(HttpServletRequest request) {
+        List<PurchasedServiceDTO> services = new ArrayList<>();
+
+        // TODO: Get all serviceID based on order item
+
+        // TODO: Get all type list
+
+        return ResponseEntity.status(HttpStatus.OK).body(services);
+    }
+
+    public ResponseEntity<String> createHourlySchedule(HttpServletRequest request, HourlyScheduleDTO scheduleDTO) {
         return ResponseEntity.status(HttpStatus.OK).body("Doing...");
     }
 
-    public ResponseEntity<String> createReturnSchedule(ReturnScheduleDTO scheduleDTO) {
+    public ResponseEntity<String> createReturnSchedule(HttpServletRequest request, ReturnScheduleDTO scheduleDTO) {
         return ResponseEntity.status(HttpStatus.OK).body("Doing...");
     }
 
-    public ResponseEntity<String> createDeliverySchedule(DeliveryScheduleDTO scheduleDTO) {
+    public ResponseEntity<String> createDeliverySchedule(HttpServletRequest request, DeliveryScheduleDTO scheduleDTO) {
         // Validate service ID and date
         LocalDateTime scheduleDateTime = scheduleDTO.getDate().atTime(scheduleDTO.getTime());
         ResponseEntity<String> validation = validateServiceIdAndDate(scheduleDTO.getServiceId(), scheduleDateTime);
         if (validation != null) return validation;
 
+        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
+        int customerId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        schedule.setCustomerId(customerId);
+        // TODO: Store orderItemId
+        scheduleRepository.save(schedule);
 
-
-        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
+        return ResponseEntity.status(HttpStatus.OK).body("Create successfully!");
     }
 
     private ResponseEntity<String> validateServiceIdAndDate(int serviceId, LocalDateTime dateTime) {

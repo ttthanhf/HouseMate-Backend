@@ -1,5 +1,7 @@
 package housemate.entities;
 
+import housemate.constants.Cycle;
+import housemate.constants.Status;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -10,14 +12,32 @@ import java.time.LocalDateTime;
  * @author hdang09
  */
 @Entity
-@Table(name = "schedule")
+@Table(name = "service_schedule")
 @Data
 public class Schedule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "schedule_id")
+    @Column(name = "service_schedule_id")
     private int scheduleId;
+
+    @Column(name = "service_id")
+    private int serviceId;
+
+    @Column(name = "service_type_id")
+    private int serviceTypeId;
+
+    @Column(name = "customer_id")
+    private int customerId;
+
+    @Column(name = "staff_id")
+    private int staffId;
+
+    @Column(name = "order_item_id")
+    private int orderItemId;
+
+    @Column(name = "quantity_retrieve")
+    private int quantityRetrieve;
 
     @Column(name = "start_date")
     private LocalDateTime startDate;
@@ -28,21 +48,9 @@ public class Schedule {
     @Column(name = "note")
     private String note;
 
-    @Column(name = "quantity")
-    private int quantity;
-
-    @Column(name = "service_id")
-    private int serviceId;
-
-    @Column(name = "type_id")
-    private int typeId;
-
-    @Column(name = "customer_id")
-    private int customerId;
-
-    @Column(name = "staff_id")
-    private int staffId;
+    @Column(name = "cycle_name")
+    private Cycle cycle;
 
     @Column(name = "status")
-    private String status;
+    private Status status;
 }

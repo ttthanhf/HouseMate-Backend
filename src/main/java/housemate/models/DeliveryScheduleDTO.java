@@ -25,7 +25,7 @@ public class DeliveryScheduleDTO {
     private String note;
 
     @Min(value = 1, message = "Quantity must be larger than 0")
-    @Min(value = 10, message = "Quantity must be less than 10")
+    @Max(value = 10, message = "Quantity must be less than 10")
     private int quantity = 1;  // Default: 1
 
     @Positive(message = "Service ID must be a positive number")
@@ -34,7 +34,6 @@ public class DeliveryScheduleDTO {
     @FutureOrPresent(message = "Time must be in the present or future")
     private LocalTime time;
 
-    @NotNull(message = "Type must not be null")
-    @NotEmpty(message = "Type must not be empty")
-    private String type; // TODO: Fix type of this
+    @NotNull(message = "Type ID must not be null")
+    private int typeId;
 }

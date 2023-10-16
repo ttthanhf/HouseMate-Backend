@@ -51,6 +51,6 @@ public class ReturnScheduleDTO {
 
     @NotNull(message = "Type must not be null")
     @NotEmpty(message = "Type must not be empty")
-    private String type; // TODO: Fix String type
+    private int typeId;
 
 }
