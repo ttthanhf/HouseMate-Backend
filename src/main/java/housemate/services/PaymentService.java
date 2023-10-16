@@ -8,6 +8,7 @@ import com.nimbusds.jose.shaded.gson.JsonObject;
 import housemate.constants.RegexConstants;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
+import housemate.entities.Service;
 import housemate.entities.UserAccount;
 import housemate.models.UserInfoOrderDTO;
 import housemate.repositories.CartRepository;
@@ -39,13 +40,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
 /**
  *
  * @author ThanhF
  */
-@Service
+@org.springframework.stereotype.Service
 public class PaymentService {
 
     @Autowired
@@ -68,6 +68,7 @@ public class PaymentService {
 
     private final String language = "en";
     private final String vnp_IpAddr = "127.0.0.1";
+    private final String bankCode = "";
 
     @Value("${vnp.version}")
     private String vnp_Version;
@@ -124,7 +125,9 @@ public class PaymentService {
         vnp_Params.put("vnp_Command", vnp_Command);
         vnp_Params.put("vnp_TmnCode", vnp_TmnCode);
         vnp_Params.put("vnp_Amount", String.valueOf(amount));
-        vnp_Params.put("vnp_BankCode", "NCB");
+        if (!bankCode.isBlank() || !bankCode.isEmpty()) {
+            vnp_Params.put("vnp_BankCode", bankCode);
+        }
         vnp_Params.put("vnp_CurrCode", "VND");
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
         vnp_Params.put("vnp_Locale", language);
@@ -178,7 +181,7 @@ public class PaymentService {
         return ResponseEntity.status(HttpStatus.OK).body(paymentUrl);
     }
 
-    public ResponseEntity<?> checkVNPayPayment(HttpServletRequest request, String vnp_TxnRef, String vnp_TransactionNo, String vnp_TransactionDate) throws IOException {
+    public ResponseEntity<?> checkVNPayPayment(HttpServletRequest request, String vnp_TxnRef, String vnp_TransactionDate) throws IOException {
 
         String vnp_RequestId = RandomUtil.getRandomNumber(8);
         String vnp_Command = "querydr";
@@ -197,7 +200,6 @@ public class PaymentService {
         vnp_Params.addProperty("vnp_TmnCode", vnp_TmnCode);
         vnp_Params.addProperty("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.addProperty("vnp_OrderInfo", vnp_OrderInfo);
-        vnp_Params.addProperty("vnp_TransactionNo", vnp_TransactionNo);
         vnp_Params.addProperty("vnp_TransactionDate", vnp_TransactionDate);
         vnp_Params.addProperty("vnp_CreateDate", vnp_CreateDate);
         vnp_Params.addProperty("vnp_IpAddr", vnp_IpAddr);
@@ -243,7 +245,18 @@ public class PaymentService {
         String responseMessage = matcherResponseMessage.group(1);
 
         if (!"00".equals(responseCode)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseMessage.toString());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseMessage);
+        }
+
+        Pattern patternTransactionStatus = Pattern.compile(RegexConstants.PATTERN_TRANSACTION_STATUS_PAYMENT);
+        Matcher matcherTransactionStatus = patternTransactionStatus.matcher(response.toString());
+
+        if (!matcherTransactionStatus.find()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find TransactionStatus");
+        }
+        String transactionStatus = matcherTransactionStatus.group(1);
+        if (!"00".equals(transactionStatus)) {
+            return ResponseEntity.status(HttpStatus.OK).body("Payment fail");
         }
 
         //remove all cart exist in order and set complete order to true
@@ -253,14 +266,19 @@ public class PaymentService {
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         for (OrderItem orderItem : listOrderItem) {
+            Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+            orderItem.setService(service);
             serviceRepository.updateNumberOfSoldByServiceId(orderItem.getServiceId(), orderItem.getQuantity());
             cartRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
         }
 
         order.setComplete(true);
         order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
+        order.setTransactionId(vnp_TxnRef);
+        order.setTransactionDate(vnp_TransactionDate);
         orderRepository.save(order);
 
+        order.setDiscountPrice(order.getSubTotal() - order.getFinalPrice());
         order.setListOrderItem(listOrderItem);
         order.setUser(user);
 

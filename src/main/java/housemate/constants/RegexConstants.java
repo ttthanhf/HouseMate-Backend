@@ -17,5 +17,6 @@ public interface RegexConstants {
 
     String PATTERN_RESPONSE_CODE_PAYMENT = "\"vnp_ResponseCode\":\"(\\d{2})\"";
     String PATTERN_RESPONSE_MASSAGE_PAYMENT = "\"vnp_Message\":\"([^\"]*)\"";
+    String PATTERN_TRANSACTION_STATUS_PAYMENT = "\"vnp_TransactionStatus\":\"(\\d{2})\"";
 
 }
