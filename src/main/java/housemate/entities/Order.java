@@ -35,26 +35,29 @@ public class Order {
     @Column(name = "date")
     private LocalDateTime date;
 
-    @Column(name = "full_name")
-    private String fullName;
-
-    @Column(name = "email")
-    private String email;
-
-    @Column(name = "phone")
-    private String phone;
-
-    @Column(name = "address")
-    private String address;
-
     @Column(name = "payment_method")
     private String paymentMethod;
 
     @Column(name = "is_complete")
     private boolean isComplete;
 
-    @Column(name = "total_price")
-    private int totalPrice;
+    @Column(name = "final_price")
+    private int finalPrice;
+
+    @Column(name = "sub_total")
+    private int subTotal;
+
+    @Column(name = "transaction_id")
+    private String transactionId;
+
+    @Column(name = "transaction_date")
+    private String transactionDate;
+
+    @Transient
+    private int discountPrice;
+
+    @Transient
+    private UserAccount user;
 
     @Transient
     private List<OrderItem> listOrderItem;
