@@ -21,44 +21,45 @@ import jakarta.validation.Valid;
 
 @RestController
 @Tag(name = "Feedback")
+@RequestMapping("/feedback")
 public class FeedbackController {
 
 	@Autowired
 	FeedbackService feedbackDao;
 
-	@GetMapping("/feedback/feedb-oview/service/{serviceId}")
+	@GetMapping("/service/{serviceId}/feedb-oview")
 	@Operation(summary = "View feedback rating overview in specific service")
 	public ResponseEntity<?> getServiceRatingOverview(@PathVariable("serviceId") int serviceId) {
 		return feedbackDao.getRatingOverviewByService(serviceId);
 	}
 
-	@GetMapping("/feedback/filter/service/{serviceId}")
+	@GetMapping("/service/{serviceId}/filter")
 	@Operation(summary = "Filter feedback base on rating level in specific service")
 	public ResponseEntity<?> filterServiceFeedbackByRating(@PathVariable("serviceId") int serviceId,
 			@RequestParam("rating") int rating) {
 		return feedbackDao.filterServiceFeedbackByRating(serviceId, rating);
 	}
 
-	@GetMapping("/feedback/feedb-list/service/{serviceId}")
+	@GetMapping("/service/{serviceId}/feedb-list")
 	@Operation(summary = "Get the list of feedback of specific service")
 	public ResponseEntity<?> findAllFeedbackByService(@PathVariable("serviceId") int serviceId) {
 		return feedbackDao.findAllFeedbackByService(serviceId);
 	}
 
-	@GetMapping("/feedback/{feedback-id}")
-	@Operation(summary = "View details of specific service feedback id")
+	@GetMapping("/service/{feedback-id}")
+	@Operation(summary = "View details of specific feedback id of any service")
 	public ResponseEntity<?> getOne(@PathVariable("feedback-id") int feedbackId) {
 		return feedbackDao.getOne(feedbackId);
 	}
 
-	@PostMapping("create/feedback/new")
+	@PostMapping("/new")
 	@Operation(summary = "Create new feedback")
 	@SecurityRequirement(name = "bearerAuth")
 	public ResponseEntity<?> createNew(HttpServletRequest request, @Valid @RequestBody FeedbackNewDTO newFeedback) {
 		return feedbackDao.createNewFeedback(request, newFeedback);
 	}
 
-	@PutMapping("update/feedback/{feedback-id}")
+	@PutMapping("/{feedback-id}")
 	@Operation(summary = "Update existing feedback")
 	@SecurityRequirement(name = "bearerAuth")
 	public ResponseEntity<?> updateFeedback(
@@ -68,7 +69,7 @@ public class FeedbackController {
 		return feedbackDao.updateFeedback(request, newFeedback, feedbackId);
 	}
 
-	@DeleteMapping("delete/feedback/{feedback-id}")
+	@DeleteMapping("/{feedback-id}")
 	@Operation(summary = "Remove existing feedback")
 	@SecurityRequirement(name = "bearerAuth")
 	public ResponseEntity<?> deleteFeedback(@PathVariable("feedback-id") int feedbackId) {
