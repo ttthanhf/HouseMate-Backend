@@ -7,8 +7,6 @@ package housemate.models;
 import housemate.constants.Cycle;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -36,12 +34,12 @@ public class ReturnScheduleDTO {
     @FutureOrPresent(message = "Received date must be in the present or future")
     private LocalDate receivedDate;
 
-    @FutureOrPresent(message = "Pickup time must be in the present or future")
+//    @FutureOrPresent(message = "Pickup time must be in the present or future")
     @DateTimeFormat(pattern = "HH:mm")
     @Schema(example = "11:25")
     private LocalTime pickupTime;
 
-    @FutureOrPresent(message = "Received time must be in the present or future")
+//    @FutureOrPresent(message = "Received time must be in the present or future")
     @DateTimeFormat(pattern = "HH:mm")
     @Schema(example = "13:25")
     private LocalTime receivedTime;

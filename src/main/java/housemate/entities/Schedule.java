@@ -33,9 +33,6 @@ public class Schedule {
     @Column(name = "staff_id")
     private int staffId;
 
-    @Column(name = "order_item_id")
-    private int orderItemId;
-
     @Column(name = "quantity_retrieve")
     private int quantityRetrieve;
 

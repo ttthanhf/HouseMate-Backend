@@ -31,7 +31,7 @@ public class DeliveryScheduleDTO {
     @Positive(message = "Service ID must be a positive number")
     private int serviceId;
 
-    @FutureOrPresent(message = "Time must be in the present or future")
+//    @FutureOrPresent(message = "Time must be in the present or future")
     private LocalTime time;
 
     @NotNull(message = "Type ID must not be null")
