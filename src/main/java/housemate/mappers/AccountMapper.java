@@ -30,15 +30,16 @@ public class AccountMapper {
         userAccount.setPasswordHash(registerAccountDTO.getPassword());
         userAccount.setAvatar(DEFAULT_AVATAR);
 
-        return userAccount;
-    }
+	        return userAccount;
+	    }
 
-    public UserAccount updateAccount(UserAccount currentAccount, UpdateAccountDTO updatedAccount) {
-        currentAccount.setFullName(updatedAccount.getFullName());
-        currentAccount.setPhoneNumber(updatedAccount.getPhoneNumber());
-        currentAccount.setEmailAddress(updatedAccount.getEmailAddress());
-        currentAccount.setEmailAddress(updatedAccount.getEmailAddress());
+	    public UserAccount updateAccount(UserAccount currentAccount, UpdateAccountDTO updatedAccount) {
+	        currentAccount.setFullName(updatedAccount.getFullName());
+	        currentAccount.setPhoneNumber(updatedAccount.getPhoneNumber());
+	        currentAccount.setEmailAddress(updatedAccount.getEmailAddress());
+	        currentAccount.setEmailAddress(updatedAccount.getEmailAddress());
 
-        return currentAccount;
-    }
+	        return currentAccount;
+	    }
 }
+
