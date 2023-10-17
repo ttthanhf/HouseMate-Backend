@@ -28,18 +28,18 @@ public class ReturnScheduleDTO {
 
     private String note;
 
+    @DateTimeFormat(pattern = "dd/MM/yyyy")
     @FutureOrPresent(message = "Pickup date must be in the present or future")
     private LocalDate pickupDate;
 
+    @DateTimeFormat(pattern = "dd/MM/yyyy")
     @FutureOrPresent(message = "Received date must be in the present or future")
     private LocalDate receivedDate;
 
-//    @FutureOrPresent(message = "Pickup time must be in the present or future")
     @DateTimeFormat(pattern = "HH:mm")
     @Schema(example = "11:25")
-    private LocalTime pickupTime;
+    private LocalTime time; // Pickup time
 
-//    @FutureOrPresent(message = "Received time must be in the present or future")
     @DateTimeFormat(pattern = "HH:mm")
     @Schema(example = "13:25")
     private LocalTime receivedTime;

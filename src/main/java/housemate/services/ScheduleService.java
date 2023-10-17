@@ -1,16 +1,10 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
-import housemate.entities.Order;
-import housemate.entities.OrderItem;
-import housemate.entities.Schedule;
-import housemate.entities.Service;
+import housemate.entities.*;
 import housemate.mappers.ScheduleMapper;
 import housemate.models.*;
-import housemate.repositories.OrderItemRepository;
-import housemate.repositories.OrderRepository;
-import housemate.repositories.ScheduleRepository;
-import housemate.repositories.ServiceRepository;
+import housemate.repositories.*;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +31,7 @@ public class ScheduleService {
     AuthorizationUtil authorizationUtil;
     OrderRepository orderRepository;
     OrderItemRepository orderItemRepository;
+    ServiceTypeRepository serviceTypeRepository;
 
     @Autowired
     public ScheduleService(
@@ -45,7 +40,8 @@ public class ScheduleService {
             ScheduleMapper scheduleMapper,
             AuthorizationUtil authorizationUtil,
             OrderRepository orderRepository,
-            OrderItemRepository orderItemRepository
+            OrderItemRepository orderItemRepository,
+            ServiceTypeRepository serviceTypeRepository
     ) {
         this.serviceRepository = serviceRepository;
         this.scheduleRepository = scheduleRepository;
@@ -53,6 +49,7 @@ public class ScheduleService {
         this.authorizationUtil = authorizationUtil;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.serviceTypeRepository = serviceTypeRepository;
     }
 
     public ResponseEntity<List<ScheduleEventDTO>> getScheduleForUser(HttpServletRequest request) {
@@ -125,15 +122,15 @@ public class ScheduleService {
             for (OrderItem orderItem : orderItems) {
                 // TODO: Check expiration?
                 Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+                List<ServiceType> typeList = serviceTypeRepository.findAllByServiceId(service.getServiceId()).orElse(null);
 
                 PurchasedServiceDTO purchase = new PurchasedServiceDTO();
                 purchase.setServiceId(service.getServiceId());
                 purchase.setTitleName(service.getTitleName());
-
-                // TODO: Set groupType and typeList (Waiting feature/services ...)
+                purchase.setTypeList(typeList);
+                purchase.setGroupType(service.getGroupType());
 
                 purchases.add(new PurchasedServiceDTO(orderItem.getServiceId()));
-
             }
         }
 
@@ -171,7 +168,7 @@ public class ScheduleService {
         if (serviceIdValidation != null) return serviceIdValidation;
 
         // Validate pickupDate > current + 3hr
-        LocalDateTime pickupDate = scheduleDTO.getPickupDate().atTime(scheduleDTO.getPickupTime());
+        LocalDateTime pickupDate = scheduleDTO.getPickupDate().atTime(scheduleDTO.getTime());
         ResponseEntity<String> pickupDateValidation = validateDate(LocalDateTime.now(), pickupDate, FIND_STAFF_HOURS, "pickup date");
         if (pickupDateValidation != null) return pickupDateValidation;
 
@@ -212,10 +209,10 @@ public class ScheduleService {
                 quantityFromOrder += orderItem.getQuantity();
             }
         }
+
         if (sumOfQuantityRetrieve + scheduleDTO.getQuantity() > quantityFromOrder) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please purchase with quantity lower than " + (quantityFromOrder - sumOfQuantityRetrieve));
         }
-
 
         // Store to database
         storeToDatabase(scheduleDTO, request);
@@ -237,7 +234,7 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("You haven't buy this service");
         }
 
-        // TODO: Check serviceID is correct type  (Waiting feature/services ...)
+        // TODO: Check serviceID is correct type (Waiting feature/services ...)
 
         return null;
     }

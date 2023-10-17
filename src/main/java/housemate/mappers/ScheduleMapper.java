@@ -35,7 +35,7 @@ public class ScheduleMapper {
         List<Schedule> schedules = new ArrayList<>();
 
         // Pickup schedule
-        Schedule pickupSchedule = getSchedule(returnScheduleDTO, returnScheduleDTO.getPickupDate(), returnScheduleDTO.getPickupTime());
+        Schedule pickupSchedule = getSchedule(returnScheduleDTO, returnScheduleDTO.getPickupDate(), returnScheduleDTO.getTime());
         schedules.add(pickupSchedule);
 
         // Received schedule
