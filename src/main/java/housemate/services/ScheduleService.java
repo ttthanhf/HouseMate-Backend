@@ -68,6 +68,7 @@ public class ScheduleService {
                 eventDTO.setStatus(schedule.getStatus());
 
                 events.add(eventDTO);
+                // TODO: Check expire date
             } else if (schedule.getCycle() == Cycle.EVERY_WEEK) {
                 for (int i = 0; i < DEFAULT_CYCLE; i++) {
                     ScheduleEventDTO eventDTO = new ScheduleEventDTO();
