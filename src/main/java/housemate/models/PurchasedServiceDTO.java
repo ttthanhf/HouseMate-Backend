@@ -1,5 +1,7 @@
 package housemate.models;
 
+import housemate.constants.Enum.GroupType;
+import housemate.entities.ServiceType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,8 +13,8 @@ import java.util.Objects;
 public class PurchasedServiceDTO {
     private int serviceId;
     private String titleName;
-    private String groupType;
-    private List<String> typeList;
+    private GroupType groupType;
+    private List<ServiceType> typeList;
 
     public PurchasedServiceDTO(int serviceId) {
         this.serviceId = serviceId;
