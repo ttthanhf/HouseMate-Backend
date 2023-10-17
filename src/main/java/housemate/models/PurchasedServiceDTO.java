@@ -1,11 +1,13 @@
 package housemate.models;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Objects;
 
 @Data
+@NoArgsConstructor
 public class PurchasedServiceDTO {
     private int serviceId;
     private String titleName;
