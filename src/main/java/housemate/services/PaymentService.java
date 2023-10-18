@@ -9,6 +9,7 @@ import housemate.constants.RegexConstants;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
 import housemate.entities.PackageServiceItem;
+import housemate.entities.Period;
 import housemate.entities.Service;
 import housemate.entities.UserAccount;
 import housemate.entities.UserUsage;
@@ -18,6 +19,7 @@ import housemate.repositories.OrderItemRepository;
 import housemate.utils.EncryptUtil;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.PackageServiceItemRepository;
+import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.UserRepository;
 import housemate.repositories.UserUsageRepository;
@@ -75,6 +77,9 @@ public class PaymentService {
 
     @Autowired
     private UserUsageRepository userUsageRepository;
+
+    @Autowired
+    private PeriodRepository periodRepository;
 
     private final String language = "en";
     private final String vnp_IpAddr = "127.0.0.1";
@@ -290,11 +295,17 @@ public class PaymentService {
                 List<PackageServiceItem> listPackageServiceItem = packageServiceItemRepository.findAllSingleServiceIdByPackageServiceId(service.getServiceId());
                 for (PackageServiceItem packageServiceItem : listPackageServiceItem) {
                     UserUsage userUsage = new UserUsage();
+
                     userUsage.setUserId(userId);
                     userUsage.setServiceId(packageServiceItem.getSingleServiceId());
                     userUsage.setRemaining(packageServiceItem.getQuantity() * orderItem.getQuantity());
                     userUsage.setTotal(packageServiceItem.getQuantity() * orderItem.getQuantity());
-                    userUsage.setExpireDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
+                    userUsage.setStartDate(LocalDateTime.now());
+
+                    Period period = periodRepository.getPeriodByid(orderItem.getPeriodId());
+                    userUsage.setEndDate(LocalDateTime.now().plusMonths(period.getPeriodValue()));
+
+                    userUsage.setOrderItemId(orderItem.getOrderItemId());
                     userUsageRepository.save(userUsage);
                 }
 
@@ -304,7 +315,12 @@ public class PaymentService {
                 userUsage.setServiceId(service.getServiceId());
                 userUsage.setRemaining(orderItem.getQuantity());
                 userUsage.setTotal(orderItem.getQuantity());
-                userUsage.setExpireDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
+                userUsage.setStartDate(LocalDateTime.now());
+
+                Period period = periodRepository.getPeriodByid(orderItem.getPeriodId());
+                userUsage.setEndDate(LocalDateTime.now().plusMonths(period.getPeriodValue()));
+
+                userUsage.setOrderItemId(orderItem.getOrderItemId());
                 userUsageRepository.save(userUsage);
             }
         }
