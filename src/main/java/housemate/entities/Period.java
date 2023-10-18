@@ -26,6 +26,9 @@ public class Period {
 
     @Column(name = "percent")
     private float percent;
+    
+    @Column(name = "period_value")
+    private int value;
 
     @Transient
     private int finalPrice;
