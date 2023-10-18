@@ -4,7 +4,6 @@
  */
 package housemate.configs;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,6 +28,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .oauth2Login(oauth2Login -> oauth2Login
                 .defaultSuccessUrl("/auth/callback/google/redirect", true));
+                
         return http.build();
     }
 }
