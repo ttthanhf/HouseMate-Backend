@@ -294,7 +294,7 @@ public class PaymentService {
                     userUsage.setServiceId(packageServiceItem.getSingleServiceId());
                     userUsage.setRemaining(packageServiceItem.getQuantity() * orderItem.getQuantity());
                     userUsage.setTotal(packageServiceItem.getQuantity() * orderItem.getQuantity());
-                    userUsage.setExpireDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
+                    userUsage.setEndDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
                     userUsageRepository.save(userUsage);
                 }
 
@@ -304,7 +304,7 @@ public class PaymentService {
                 userUsage.setServiceId(service.getServiceId());
                 userUsage.setRemaining(orderItem.getQuantity());
                 userUsage.setTotal(orderItem.getQuantity());
-                userUsage.setExpireDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
+                userUsage.setEndDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
                 userUsageRepository.save(userUsage);
             }
         }
