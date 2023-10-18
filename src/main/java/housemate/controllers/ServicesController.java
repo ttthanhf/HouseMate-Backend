@@ -2,6 +2,7 @@ package housemate.controllers;
 
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,8 +40,9 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<Integer> rating,
 			@RequestParam(required = false) Optional<ServiceField> sortBy,
 			@RequestParam(required = false) Optional<SortRequired> orderBy,
-			@RequestParam(required = false) Optional<Integer> page) {
-		return servDao.searchFilterAllKind("", category, saleStatus, rating, sortBy, orderBy, page);
+			@RequestParam(required = false) Optional<Integer> page,
+			@RequestParam(required = false) Optional<Integer> size) {
+		return servDao.searchFilterAllKindAvailable(null, category, saleStatus, rating, sortBy, orderBy, page, size);
 	}
 
 	@GetMapping(path = "/services/search")
@@ -52,8 +54,9 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<Integer> rating,
 			@RequestParam(required = false) Optional<ServiceField> sortBy,
 			@RequestParam(required = false) Optional<SortRequired> orderBy,
-			@RequestParam(required = false) Optional<Integer> page) {
-		return servDao.searchFilterAllKind(keyword, category, saleStatus, rating, sortBy, orderBy, page);
+			@RequestParam(required = false) Optional<Integer> page,
+			@RequestParam(required = false) Optional<Integer> size) {
+		return servDao.searchFilterAllKindAvailable(keyword, category, saleStatus, rating, sortBy, orderBy, page, size);
 	}
 	
 	@GetMapping(path = "/services/topsale")
