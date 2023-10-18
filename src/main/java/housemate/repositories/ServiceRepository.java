@@ -37,13 +37,17 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	List<Service> findAllByIsPackageFalse();
 
 	@Query("SELECT s FROM Service s WHERE "
-			+ "s.saleStatus = :saleStatus "
-			+ "AND LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')) "
-			+ "AND s.avgRating >= :ratingFrom ")
-	List<Service> searchFilterAllKind(
+			+ "(:saleStatus IS NULL OR s.saleStatus = :saleStatus) "
+			+ "AND s.saleStatus <> 'DISCONTINUED'"
+			+ "AND (:keyword IS NULL OR LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')))  "
+			+ "AND s.avgRating >= :ratingFrom "
+			+ "AND (:isPackage IS NULL OR s.isPackage = :isPackage) "
+			)
+	List<Service> searchFilterAllAvailable(
 			@Param("saleStatus") SaleStatus saleStatus,
 			@Param("keyword") String keyword,
 			@Param("ratingFrom") int ratingFrom,
+			@Param("isPackage") Boolean isPackage,
 			Pageable page);
 
 	@Query("SELECT s FROM Service s WHERE "
