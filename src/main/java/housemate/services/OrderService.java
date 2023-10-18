@@ -158,7 +158,7 @@ public class OrderService {
             orderItem.setOrderId(order.getOrderId());
 
             Period period = periodRepository.getPeriodByid(cart.getPeriodId());
-            orderItem.setPeriodName(period.getPeriodName());
+            orderItem.setPeriodId(period.getPeriodId());
 
             float percent = periodRepository.getPeriodByid(cart.getPeriodId()).getPercent();
             int quantity = cart.getQuantity();

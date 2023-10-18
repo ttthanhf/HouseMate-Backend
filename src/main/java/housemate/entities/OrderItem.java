@@ -33,8 +33,8 @@ public class OrderItem {
     @Column(name = "service_id")
     private int serviceId;
 
-    @Column(name = "period_name")
-    private String periodName;
+    @Column(name = "period_id")
+    private int periodId;
 
     @Column(name = "quantity")
     private int quantity;
