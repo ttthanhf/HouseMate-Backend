@@ -3,11 +3,8 @@ package housemate;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.servers.Server;
-import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import java.util.TimeZone;
 
 /**
  *
@@ -33,4 +30,5 @@ public class HouseMateApplication {
     public static void main(String[] args) {
         SpringApplication.run(HouseMateApplication.class, args);
     }
+
 }
