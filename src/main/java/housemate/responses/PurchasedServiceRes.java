@@ -1,6 +1,6 @@
-package housemate.models;
+package housemate.responses;
 
-import housemate.constants.Enum.GroupType;
+import housemate.constants.Enum;
 import housemate.entities.ServiceType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,16 +10,17 @@ import java.util.Objects;
 
 @Data
 @NoArgsConstructor
-public class PurchasedServiceDTO {
+public class PurchasedServiceRes {
     private int serviceId;
     private String titleName;
-    private GroupType groupType;
+    private Enum.GroupType groupType;
     private List<ServiceType> typeList;
 
-    public PurchasedServiceDTO(int serviceId) {
+    public PurchasedServiceRes(int serviceId) {
         this.serviceId = serviceId;
     }
 
+    // Check uniqueness of serviceId for Set<PurchasedServiceRes>
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -28,7 +29,7 @@ public class PurchasedServiceDTO {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        PurchasedServiceDTO otherService = (PurchasedServiceDTO) obj;
+        PurchasedServiceRes otherService = (PurchasedServiceRes) obj;
         return serviceId == otherService.serviceId;
     }
 

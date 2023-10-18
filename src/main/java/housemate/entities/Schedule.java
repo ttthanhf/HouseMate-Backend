@@ -4,17 +4,19 @@ import housemate.constants.Cycle;
 import housemate.constants.Status;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 
 import java.time.LocalDateTime;
 
 /**
- *
  * @author hdang09
  */
 @Entity
 @Table(name = "service_schedule")
 @Data
-public class Schedule {
+@NoArgsConstructor
+public class Schedule implements Cloneable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,4 +54,10 @@ public class Schedule {
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private Status status;
+
+    @SneakyThrows
+    @Override
+    public Schedule clone() {
+        return (Schedule) super.clone();
+    }
 }
