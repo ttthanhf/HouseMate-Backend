@@ -4,6 +4,7 @@
  */
 package housemate.entities;
 
+import housemate.constants.Enum.UnitOfMeasure;
 import jakarta.persistence.*;
 import lombok.Data;
 

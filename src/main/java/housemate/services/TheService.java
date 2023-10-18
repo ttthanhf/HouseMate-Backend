@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import org.apache.tomcat.util.buf.UEncoder.SafeCharsSet;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -193,7 +195,7 @@ public class TheService {
 		ServicePrice servicePrice = new ServicePrice();
 		List<Period> periodService = periodRepo.findAll();
 		periodService.forEach(s -> priceList.add(
-				servicePrice.setPriceForComboMonth(service, s.getPeriodId(), UsageDurationUnit.MONTH, s.getPercent())));
+				servicePrice.setPriceForComboMonth(service, s.getPeriodId(), s.getPeriodName(), s.getPercent())));
 		serviceDtoForDetail.setPriceList(priceList);
 
 		// TODO: Update imgList later
