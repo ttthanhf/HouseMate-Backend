@@ -4,36 +4,90 @@
  */
 package housemate.entities;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import housemate.constants.Enum.GroupType;
+import housemate.constants.Enum.SaleStatus;
+import housemate.constants.Enum.UnitOfMeasure;
 import jakarta.persistence.*;
+import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 
 /**
  *
- * @author ThanhF
+ * @author Anh
  */
+
 @Entity
-@Table(name = "Service")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Table(name = "service")
 public class Service {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "service_id")
-    private int serviceId;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "service_id")
+	private int serviceId;
 
-    @Column(name = "original_price")
-    private int originalPrice;
+	@Column(name = "title_name", unique = true, nullable = false)
+	private String titleName;
 
+	@Column(name = "original_price", nullable = false)
+	private int originalPrice;
+	
     @Column(name = "final_price")
     private int finalPrice;
 
-    @Column(name = "title_name")
-    private String titleName;
+	@Column(name = "sale_price")
+	private int salePrice;
 
-    @Column(name = "number_of_sold")
-    private int numberOfSold;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "unit_of_measure", nullable = false)
+	private UnitOfMeasure unitOfMeasure;
 
-    @Transient
-    private String image;
+	@Column(name = "description", nullable = false)
+	private String description;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "sale_status", nullable = false)
+	private SaleStatus saleStatus;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(name = "group_type", nullable = false)
+	private GroupType groupType;
+	
+	@Column(name = "avg_rating", columnDefinition = "float default 0")
+	private float avgRating;
+
+	@Column(name = "number_of_sold", columnDefinition = "integer default 0")
+	private int numberOfSold;
+	
+	@Column(name = "isPackage", nullable = false)
+	private boolean isPackage;
+	
+	//TODO: Update Img Later
+	@Transient
+	private final String mainImg = "bit.ly/3tsNi4d";
+	
+	@JsonInclude(value = Include.NON_NULL)
+	@Transient
+	private Integer numberOfReview;
+	
+	@JsonInclude(value = Include.NON_NULL)
+	@Transient
+	private Integer numberOfComment;
+	
+	@PrePersist
+	@PreUpdate
+	private void preDoing() {
+		finalPrice = salePrice == 0 ? originalPrice : originalPrice - originalPrice * salePrice / 100;
+		this.setFinalPrice(finalPrice);
+	}
 
 }

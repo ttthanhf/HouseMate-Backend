@@ -4,52 +4,48 @@
  */
 package housemate.entities;
 
+
+import java.time.LocalDateTime;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  *
- * @author ThanhF
+ * @author Anh
  */
 @Entity
-@Table(name = "Service_Feedback")
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "service_feedback")
 public class ServiceFeedback {
 
     @Id
     @Column(name = "service_feedback_id")
-    private int id;
+    private int serviceFeedbackId;
 
     @Column(name = "task_id")
     private int taskId;
-
+    
     @Column(name = "service_id")
     private int serviceId;
-
-    @Column(name = "package_id")
-    private int packageId;
-
+    
     @Column(name = "customer_id")
     private int customerId;
 
     @Column(name = "content")
-    private int content;
+    private String content;
 
     @Column(name = "created_at")
-    private int createdAt;
+    private LocalDateTime createdAt;
 
-    @Column(name = "rating")
-    private int rating;
+    @Column(name = "rating", columnDefinition = "float default 0")
+    private Float rating;
 
-    public ServiceFeedback(int id, int taskId, int serviceId, int packageId, int customerId, int content, int createdAt, int rating) {
-        this.id = id;
-        this.taskId = taskId;
-        this.serviceId = serviceId;
-        this.packageId = packageId;
-        this.customerId = customerId;
-        this.content = content;
-        this.createdAt = createdAt;
-        this.rating = rating;
-    }
 
-    
 }
 

@@ -5,39 +5,48 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
-import java.util.Date;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.io.Serializable;
 /**
  *
- * @author ThanhF
+ * @author Anh
  */
+
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+ class IdComboPackageServiceItem implements Serializable {
+    private int packageServiceId; //same name with the key
+    private int singleServiceId;
+}
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "package_service_item")
 @Entity
-@Table(name = "Package_Service_Item")
+@IdClass(IdComboPackageServiceItem.class)
 public class PackageServiceItem {
 
-    @Id
-    @Column(name = "package_service_id")
+	@Id
+	@Column(name = "package_service_id")
     private int packageServiceId;
-
-    @Id
-    @Column(name = "service_id")
-    private int serviceId;
-
+	
+	@Id
+	@Column(name = "service_id")
+    private int singleServiceId;
+	
     @Column(name = "quantity")
     private int quantity;
+    
+    @Transient
+    private String description;
 
-    @Column(name = "date_start")
-    private Date dateStart;
-
-    @Column(name = "date_end")
-    private Date dateEnd;
-
-    public PackageServiceItem(int packageServiceId, int serviceId, int quantity, Date dateStart, Date dateEnd) {
-        this.packageServiceId = packageServiceId;
-        this.serviceId = serviceId;
-        this.quantity = quantity;
-        this.dateStart = dateStart;
-        this.dateEnd = dateEnd;
-    }
 
 }
+
