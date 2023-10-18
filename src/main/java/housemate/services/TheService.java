@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -106,7 +108,8 @@ public class TheService {
 			Optional<SaleStatus> saleStatus,
 			Optional<Integer> rating,
 			Optional<ServiceField> sortBy,
-			Optional<SortRequired> orderBy) {
+			Optional<SortRequired> orderBy,
+			Optional<Integer> page) {
 
 		List<Service> serviceList;
 
@@ -115,6 +118,7 @@ public class TheService {
 		Integer ratingValue = rating.orElse(0);
 		ServiceField fieldname = sortBy.orElse(ServiceField.PRICE);
 		SortRequired requireOrder = orderBy.orElse(SortRequired.ASC);
+		Integer pageNum = page.orElse(0);
 
 		// sort by field
 		Sort sort;
@@ -123,7 +127,12 @@ public class TheService {
 		else
 			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
 
-		serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, sort);
+		if (pageNum < 1)
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The page start with 1");
+
+		Pageable sortedPage = PageRequest.of(pageNum, 9, sort);
+
+		serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, sortedPage);
 
 		// For sort by price field only
 		if (fieldname.equals(fieldname.PRICE)) {

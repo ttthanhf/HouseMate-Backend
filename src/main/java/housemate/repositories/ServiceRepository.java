@@ -6,7 +6,8 @@ package housemate.repositories;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Sort;
+
+import org.springframework.data.domain.Pageable;
 import housemate.entities.Service;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -43,7 +44,7 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 			@Param("saleStatus") SaleStatus saleStatus,
 			@Param("keyword") String keyword,
 			@Param("ratingFrom") int ratingFrom,
-			Sort sort);
+			Pageable page);
 
 	@Query("SELECT s FROM Service s WHERE "
 			+ "s.saleStatus = 'ONSALE' "
