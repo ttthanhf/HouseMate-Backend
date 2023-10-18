@@ -33,7 +33,7 @@ import java.util.Set;
 @org.springframework.stereotype.Service
 public class ScheduleService {
 
-    private final int FIND_STAFF_HOURS = 3;
+    private final int TIME_LOOKING_FOR_STAFF = 3;
 
     private final ServiceRepository serviceRepository;
     private final ScheduleRepository scheduleRepository;
@@ -98,7 +98,7 @@ public class ScheduleService {
 
         // Validate start date
         LocalDateTime startDate = scheduleDTO.getDate().atTime(scheduleDTO.getTimeRanges().get(0));
-        ResponseEntity<String> startDateValidation = validateDate(LocalDateTime.now(), startDate, FIND_STAFF_HOURS, "start time");
+        ResponseEntity<String> startDateValidation = validateDate(LocalDateTime.now(), startDate, TIME_LOOKING_FOR_STAFF, "start time");
         if (startDateValidation != null) return startDateValidation;
 
         // Validate end date
@@ -126,7 +126,7 @@ public class ScheduleService {
 
         // Validate pickupDate > current + 3hr
         LocalDateTime pickupDate = scheduleDTO.getPickupDate().atTime(scheduleDTO.getTime());
-        ResponseEntity<String> pickupDateValidation = validateDate(LocalDateTime.now(), pickupDate, FIND_STAFF_HOURS, "pickup date");
+        ResponseEntity<String> pickupDateValidation = validateDate(LocalDateTime.now(), pickupDate, TIME_LOOKING_FOR_STAFF, "pickup date");
         if (pickupDateValidation != null) return pickupDateValidation;
 
         // Validate receivedDate > pickupDate + 4
@@ -162,7 +162,7 @@ public class ScheduleService {
 
         // Validate date > current + 3
         LocalDateTime date = scheduleDTO.getDate().atTime(scheduleDTO.getTime());
-        ResponseEntity<String> receivedDateValidation = validateDate(LocalDateTime.now(), date, FIND_STAFF_HOURS, "date");
+        ResponseEntity<String> receivedDateValidation = validateDate(LocalDateTime.now(), date, TIME_LOOKING_FOR_STAFF, "date");
         if (receivedDateValidation != null) return receivedDateValidation;
 
         // Store to database
@@ -243,7 +243,7 @@ public class ScheduleService {
         userUsage.setRemaining(Math.max(remaining, 0));
         userUsageRepository.save(userUsage);
 
-        // Store to database (EVERY_WEEK)
+        // Store to database (ONLY_ONE_TIME)
         if (cycle == Cycle.ONLY_ONE_TIME) {
             for (Schedule schedule : schedules) {
                 schedule.setCustomerId(customerId);
@@ -252,7 +252,7 @@ public class ScheduleService {
             return;
         }
 
-        // Store to database (ONLY_ONE_TIME)
+        // Store to database (EVERY_WEEK)
         if (cycle == Cycle.EVERY_WEEK) {
             for (int i = 0; i < maxQuantity; i++) {
                 for (Schedule schedule : schedules) {
@@ -292,7 +292,6 @@ public class ScheduleService {
 
         // Get max quantity
         int maxQuantity = getMaxQuantity(userUsage.getEndDate(), schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve());
-
 
         // Minus quantity to user usage
         int remaining = userUsage.getRemaining() - maxQuantity * schedule.getQuantityRetrieve();
