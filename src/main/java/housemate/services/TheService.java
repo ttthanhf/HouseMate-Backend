@@ -202,7 +202,7 @@ public class TheService {
 		ServicePrice servicePrice = new ServicePrice();
 		List<Period> periodService = periodRepo.findAll();
 		periodService.forEach(s -> priceList.add(
-				servicePrice.setPriceForComboMonth(service, s.getPeriodId(), UsageDurationUnit.MONTH, s.getPercent())));
+				servicePrice.setPriceForComboMonth(service, s.getValue(), UsageDurationUnit.MONTH, s.getPercent())));
 		serviceDtoForDetail.setPriceList(priceList);
 
 		// TODO: Update imgList later
