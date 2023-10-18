@@ -1,5 +1,6 @@
 package housemate.controllers;
 
+import housemate.entities.Schedule;
 import housemate.models.*;
 import housemate.responses.PurchasedServiceRes;
 import housemate.services.ScheduleService;
@@ -31,7 +32,7 @@ public class ScheduleController {
     @Operation(summary = "Get all schedule for the current user")
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<List<ScheduleEventDTO>> getScheduleForUser(HttpServletRequest request) {
+    public ResponseEntity<List<Schedule>> getScheduleForUser(HttpServletRequest request) {
         return service.getScheduleForUser(request);
     }
 

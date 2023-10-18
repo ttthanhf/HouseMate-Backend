@@ -9,7 +9,6 @@ import housemate.mappers.ScheduleMapper;
 import housemate.models.DeliveryScheduleDTO;
 import housemate.models.HourlyScheduleDTO;
 import housemate.models.ReturnScheduleDTO;
-import housemate.models.ScheduleEventDTO;
 import housemate.repositories.ScheduleRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
@@ -21,11 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -62,32 +59,17 @@ public class ScheduleService {
         this.userUsageRepository = userUsageRepository;
     }
 
-    public ResponseEntity<List<ScheduleEventDTO>> getScheduleForUser(HttpServletRequest request) {
-        List<ScheduleEventDTO> events = new ArrayList<>();
+    public ResponseEntity<List<Schedule>> getScheduleForUser(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-
-        for (Schedule schedule : scheduleRepository.getByCustomerId(userId)) {
-            // TODO: Check expire date?
-            ScheduleEventDTO eventDTO = new ScheduleEventDTO();
-
-            Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
-            eventDTO.setTitle(service.getTitleName());
-            eventDTO.setStart(schedule.getStartDate());
-            eventDTO.setEnd(schedule.getEndDate());
-            eventDTO.setStatus(schedule.getStatus());
-
-            events.add(eventDTO);
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(events);
+        return ResponseEntity.status(HttpStatus.OK).body(scheduleRepository.getByCustomerId(userId));
     }
 
     public ResponseEntity<Set<PurchasedServiceRes>> getAllPurchased(HttpServletRequest request) {
         Set<PurchasedServiceRes> purchases = new HashSet<>();
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        List<UserUsage> usageList = userUsageRepository.getByUserId(userId);
 
         // Get all serviceID based on order ID
-        List<UserUsage> usageList = userUsageRepository.getByUserId(userId);
         for (UserUsage userUsage : usageList) {
             // Check expiration and run out of remaining
             if (userUsage.getRemaining() == 0 && userUsage.getEndDate().isAfter(LocalDateTime.now())) continue;
@@ -108,6 +90,8 @@ public class ScheduleService {
     }
 
     public ResponseEntity<String> createHourlySchedule(HttpServletRequest request, HourlyScheduleDTO scheduleDTO) {
+        // TODO: Validate quantity in DTO is smaller than quantity in order
+
         // Validate service ID
         ResponseEntity<String> serviceIdValidation = validateServiceId(scheduleDTO.getServiceId(), request);
         if (serviceIdValidation != null) return serviceIdValidation;
@@ -123,7 +107,10 @@ public class ScheduleService {
         if (endDateValidation != null) return endDateValidation;
 
         // Store to database
-        storeToDatabase(scheduleDTO, request);
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
+        schedule.setCustomerId(userId);
+        storeToDatabase(schedule);
 
         // TODO: Send notification to staff
 
@@ -131,7 +118,7 @@ public class ScheduleService {
     }
 
     public ResponseEntity<String> createReturnSchedule(HttpServletRequest request, ReturnScheduleDTO scheduleDTO) {
-        final int MINIMUM_RETURN_HOURS = 4;
+        //  TODO: Validate quantity in DTO is smaller than quantity in order
 
         // Validate service ID
         ResponseEntity<String> serviceIdValidation = validateServiceId(scheduleDTO.getServiceId(), request);
@@ -144,6 +131,7 @@ public class ScheduleService {
 
         // Validate receivedDate > pickupDate + 4
         LocalDateTime receivedDate = scheduleDTO.getReceivedDate().atTime(scheduleDTO.getReceivedTime());
+        int MINIMUM_RETURN_HOURS = 4;
         ResponseEntity<String> receivedDateValidation = validateDate(pickupDate, receivedDate, MINIMUM_RETURN_HOURS, "received date");
         if (receivedDateValidation != null) return receivedDateValidation;
 
@@ -156,15 +144,6 @@ public class ScheduleService {
     }
 
     public ResponseEntity<String> createDeliverySchedule(HttpServletRequest request, DeliveryScheduleDTO scheduleDTO) {
-        // Validate service ID
-        ResponseEntity<String> serviceIdValidation = validateServiceId(scheduleDTO.getServiceId(), request);
-        if (serviceIdValidation != null) return serviceIdValidation;
-
-        // Validate date > current + 3
-        LocalDateTime date = scheduleDTO.getDate().atTime(scheduleDTO.getTime());
-        ResponseEntity<String> receivedDateValidation = validateDate(LocalDateTime.now(), date, FIND_STAFF_HOURS, "date");
-        if (receivedDateValidation != null) return receivedDateValidation;
-
 //        TODO: Validate quantity in DTO is smaller than quantity in order
 //        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 //        UserUsage userUsage = userUsageRepository.getByServiceIdAndOrderIdAndUserId(scheduleDTO.getServiceId(), orderId, userId);
@@ -177,8 +156,20 @@ public class ScheduleService {
 //            );
 //        }
 
+        // Validate service ID
+        ResponseEntity<String> serviceIdValidation = validateServiceId(scheduleDTO.getServiceId(), request);
+        if (serviceIdValidation != null) return serviceIdValidation;
+
+        // Validate date > current + 3
+        LocalDateTime date = scheduleDTO.getDate().atTime(scheduleDTO.getTime());
+        ResponseEntity<String> receivedDateValidation = validateDate(LocalDateTime.now(), date, FIND_STAFF_HOURS, "date");
+        if (receivedDateValidation != null) return receivedDateValidation;
+
         // Store to database
-        storeToDatabase(scheduleDTO, request);
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
+        schedule.setCustomerId(userId);
+        storeToDatabase(schedule);
 
         // TODO: Send notification to staff
 
@@ -213,7 +204,6 @@ public class ScheduleService {
         return false; // ServiceId not found in the array
     }
 
-
     private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, int hours, String varName) {
         // Check endTime in office hours
         int endHour = endDate.getHour();
@@ -236,108 +226,122 @@ public class ScheduleService {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your " + varName + " after " + formattedDate);
     }
 
-    private void storeToDatabase(Object scheduleDTO, HttpServletRequest request) {
+    private void storeToDatabase(ReturnScheduleDTO returnScheduleDTO, HttpServletRequest request) {
         int customerId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        List<Schedule> schedules = scheduleMapper.mapToEntity(returnScheduleDTO);
+        int serviceId = schedules.get(0).getServiceId();
+        Cycle cycle = schedules.get(0).getCycle();
 
-        // Return Service
-        if (scheduleDTO instanceof ReturnScheduleDTO) {
-            List<Schedule> schedules = scheduleMapper.mapToEntity((ReturnScheduleDTO) scheduleDTO);
-            int serviceId = schedules.get(0).getServiceId();
-            Cycle cycle = schedules.get(0).getCycle();
-            UserUsage userUsage = userUsageRepository.getSoonerSchedule(serviceId, customerId);
+        // Get user usage
+        UserUsage userUsage = userUsageRepository.getSoonerSchedule(serviceId, customerId);
 
-            System.out.println(cycle);
+        // Get max quantity
+        int maxQuantity = getMaxQuantity(userUsage.getEndDate(), cycle, userUsage.getRemaining(), 1);
 
-            // Store to database
-            if (cycle == Cycle.ONLY_ONE_TIME) {
-                for (Schedule schedule : schedules) {
-                    schedule.setCustomerId(customerId);
-                    scheduleRepository.save(schedule);
-                }
-            } else {
-                for (int i = 0; i < getMaxQuantity(userUsage.getEndDate(), cycle); i++) {
-                    for (Schedule schedule : schedules) {
-                        // Create new instance for schedule
-                        Schedule newSchedule = schedule.clone();
+        // Minus quantity to user usage
+        int remaining = userUsage.getRemaining() - maxQuantity;
+        userUsage.setRemaining(Math.max(remaining, 0));
+        userUsageRepository.save(userUsage);
 
-                        schedule.setCustomerId(customerId);
-
-                        if (cycle == Cycle.EVERY_WEEK) {
-                            newSchedule.setStartDate(schedule.getStartDate().plusWeeks(i));
-                            newSchedule.setEndDate(schedule.getEndDate().plusWeeks(i));
-                        } else {
-                            newSchedule.setStartDate(schedule.getStartDate().plusMonths(i));
-                            newSchedule.setEndDate(schedule.getEndDate().plusMonths(i));
-                        }
-
-                        scheduleRepository.save(newSchedule);
-                    }
-                }
+        // Store to database (EVERY_WEEK)
+        if (cycle == Cycle.ONLY_ONE_TIME) {
+            for (Schedule schedule : schedules) {
+                schedule.setCustomerId(customerId);
+                scheduleRepository.save(schedule);
             }
-
-            // Minus quantity to user usage
-            int remaining = userUsage.getRemaining() - getMaxQuantity(userUsage.getEndDate(), cycle);
-            userUsage.setRemaining(Math.max(remaining, 0));
-            userUsageRepository.save(userUsage);
             return;
         }
 
-        // Hourly and Delivery Service
-        Schedule schedule = null;
-        if (scheduleDTO instanceof HourlyScheduleDTO) {
-            schedule = scheduleMapper.mapToEntity((HourlyScheduleDTO) scheduleDTO);
-        } else if (scheduleDTO instanceof DeliveryScheduleDTO) {
-            schedule = scheduleMapper.mapToEntity((DeliveryScheduleDTO) scheduleDTO);
+        // Store to database (ONLY_ONE_TIME)
+        if (cycle == Cycle.EVERY_WEEK) {
+            for (int i = 0; i < maxQuantity; i++) {
+                for (Schedule schedule : schedules) {
+                    // Create new instance for schedule
+                    Schedule newSchedule = schedule.clone();
+
+                    newSchedule.setCustomerId(customerId);
+                    newSchedule.setStartDate(schedule.getStartDate().plusWeeks(i));
+                    newSchedule.setEndDate(schedule.getEndDate().plusWeeks(i));
+
+                    scheduleRepository.save(newSchedule);
+                }
+            }
+            return;
         }
 
-        // Handle NullPointerException
-        if (schedule == null) return;
+        // Store to database (EVERY_MONTH)
+        for (int i = 0; i < maxQuantity; i++) {
+            for (Schedule schedule : schedules) {
+                // Create new instance for schedule
+                Schedule newSchedule = schedule.clone();
+
+                newSchedule.setCustomerId(customerId);
+                newSchedule.setStartDate(schedule.getStartDate().plusMonths(i));
+                newSchedule.setEndDate(schedule.getEndDate().plusMonths(i));
+
+                scheduleRepository.save(newSchedule);
+            }
+        }
+    }
+
+    private void storeToDatabase(Schedule schedule) {
+        int customerId = schedule.getCustomerId();
 
         // Usage of user
         UserUsage userUsage = userUsageRepository.getSoonerSchedule(schedule.getServiceId(), customerId);
 
-        // Store to database
-        if (schedule.getCycle() == Cycle.ONLY_ONE_TIME) {
-            schedule.setCustomerId(customerId);
-            scheduleRepository.save(schedule);
-        } else {
-            for (int i = 0; i < getMaxQuantity(userUsage.getEndDate(), schedule.getCycle()); i++) {
-                schedule.setCustomerId(customerId);
+        // Get max quantity
+        int maxQuantity = getMaxQuantity(userUsage.getEndDate(), schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve());
 
-                if (schedule.getCycle() == Cycle.EVERY_WEEK) {
-                    schedule.setStartDate(schedule.getStartDate().plusWeeks(i));
-                    schedule.setEndDate(schedule.getEndDate().plusWeeks(i));
-                } else {
-                    schedule.setStartDate(schedule.getStartDate().plusMonths(i));
-                    schedule.setEndDate(schedule.getEndDate().plusMonths(i));
-                }
-
-                scheduleRepository.save(schedule);
-            }
-        }
 
         // Minus quantity to user usage
-        int multiply = scheduleDTO instanceof DeliveryScheduleDTO ? ((DeliveryScheduleDTO) scheduleDTO).getQuantity() : 1;
-        int remaining = userUsage.getRemaining() - getMaxQuantity(userUsage.getEndDate(), schedule.getCycle()) * multiply;
+        int remaining = userUsage.getRemaining() - maxQuantity * schedule.getQuantityRetrieve();
         userUsage.setRemaining(Math.max(remaining, 0));
         userUsageRepository.save(userUsage);
 
+        // Store to database (ONLY_ONE_TIME)
+        if (schedule.getCycle() == Cycle.ONLY_ONE_TIME) {
+            schedule.setCustomerId(customerId);
+            scheduleRepository.save(schedule);
+            return;
+        }
+
+        // Store to database (EVERY_WEEK)
+        if (schedule.getCycle() == Cycle.EVERY_WEEK) {
+            for (int i = 0; i < maxQuantity; i++) {
+                schedule.setCustomerId(customerId);
+
+                schedule.setStartDate(schedule.getStartDate().plusWeeks(i));
+                schedule.setEndDate(schedule.getEndDate().plusWeeks(i));
+
+                scheduleRepository.save(schedule);
+            }
+            return;
+        }
+
+        // Store to database (EVERY_MONTH)
+        for (int i = 0; i < maxQuantity; i++) {
+            schedule.setCustomerId(customerId);
+
+            schedule.setStartDate(schedule.getStartDate().plusMonths(i));
+            schedule.setEndDate(schedule.getEndDate().plusMonths(i));
+
+            scheduleRepository.save(schedule);
+        }
     }
 
-    private int getMaxQuantity(LocalDateTime date, Cycle cycle) {
+    private int getMaxQuantity(LocalDateTime date, Cycle cycle, int remaining, int quantity) {
+        int maxForCycle = 1; // Default for ONLY_ONE_TIME
         LocalDateTime now = LocalDateTime.now();
 
-        if (cycle == Cycle.ONLY_ONE_TIME) return 1;
-
         if (cycle == Cycle.EVERY_WEEK) {
-            return (int) ChronoUnit.WEEKS.between(now, date);
+            maxForCycle = (int) ChronoUnit.WEEKS.between(now, date);
         }
 
         if (cycle == Cycle.EVERY_MONTH) {
-            return (int) ChronoUnit.MONTHS.between(now, date);
+            maxForCycle = (int) ChronoUnit.MONTHS.between(now, date);
         }
 
-        return 0;
+        return Math.min(maxForCycle, Math.floorDiv(remaining, quantity));
     }
-
 }

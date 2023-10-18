@@ -62,18 +62,19 @@ public class ScheduleMapper {
     }
 
     // Reusable function
-    private static Schedule getSchedule(ReturnScheduleDTO returnScheduleDTO, LocalDate returnScheduleDTO1, LocalTime returnScheduleDTO2) {
-        Schedule pickupSchedule = new Schedule();
-        pickupSchedule.setCycle(returnScheduleDTO.getCycle());
-        pickupSchedule.setNote(returnScheduleDTO.getNote());
-        pickupSchedule.setServiceId(returnScheduleDTO.getServiceId());
-        pickupSchedule.setServiceTypeId(returnScheduleDTO.getTypeId());
-        pickupSchedule.setStatus(Status.PROCESSING);
+    private static Schedule getSchedule(ReturnScheduleDTO returnScheduleDTO, LocalDate returnDate, LocalTime returnTime) {
+        Schedule schedule = new Schedule();
+        schedule.setCycle(returnScheduleDTO.getCycle());
+        schedule.setNote(returnScheduleDTO.getNote());
+        schedule.setServiceId(returnScheduleDTO.getServiceId());
+        schedule.setServiceTypeId(returnScheduleDTO.getTypeId());
+        schedule.setStatus(Status.PROCESSING);
+        schedule.setQuantityRetrieve(1);
 
-        LocalDateTime pickupDateTime = returnScheduleDTO1.atTime(returnScheduleDTO2);
-        pickupSchedule.setStartDate(pickupDateTime);
-        pickupSchedule.setEndDate(pickupDateTime.plusHours(1));
-        return pickupSchedule;
+        LocalDateTime pickupDateTime = returnDate.atTime(returnTime);
+        schedule.setStartDate(pickupDateTime);
+        schedule.setEndDate(pickupDateTime.plusHours(1));
+        return schedule;
     }
 
 }

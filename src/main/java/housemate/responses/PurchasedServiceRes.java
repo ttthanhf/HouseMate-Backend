@@ -1,6 +1,6 @@
 package housemate.responses;
 
-import housemate.constants.Enum;
+import housemate.constants.Enum.GroupType;
 import housemate.entities.ServiceType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,12 +13,8 @@ import java.util.Objects;
 public class PurchasedServiceRes {
     private int serviceId;
     private String titleName;
-    private Enum.GroupType groupType;
+    private GroupType groupType;
     private List<ServiceType> typeList;
-
-    public PurchasedServiceRes(int serviceId) {
-        this.serviceId = serviceId;
-    }
 
     // Check uniqueness of serviceId for Set<PurchasedServiceRes>
     @Override
