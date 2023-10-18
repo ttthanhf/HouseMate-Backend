@@ -38,8 +38,9 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<SaleStatus> saleStatus,
 			@RequestParam(required = false) Optional<Integer> rating,
 			@RequestParam(required = false) Optional<ServiceField> sortBy,
-			@RequestParam(required = false) Optional<SortRequired> orderBy) {
-		return servDao.searchFilterAllKind("", category, saleStatus, rating, sortBy, orderBy);
+			@RequestParam(required = false) Optional<SortRequired> orderBy,
+			@RequestParam(required = false) Optional<Integer> page) {
+		return servDao.searchFilterAllKind("", category, saleStatus, rating, sortBy, orderBy, page);
 	}
 
 	@GetMapping(path = "/services/search")
@@ -50,8 +51,9 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<SaleStatus> saleStatus,
 			@RequestParam(required = false) Optional<Integer> rating,
 			@RequestParam(required = false) Optional<ServiceField> sortBy,
-			@RequestParam(required = false) Optional<SortRequired> orderBy) {
-		return servDao.searchFilterAllKind(keyword, category, saleStatus, rating, sortBy, orderBy);
+			@RequestParam(required = false) Optional<SortRequired> orderBy,
+			@RequestParam(required = false) Optional<Integer> page) {
+		return servDao.searchFilterAllKind(keyword, category, saleStatus, rating, sortBy, orderBy, page);
 	}
 	
 	@GetMapping(path = "/services/topsale")
