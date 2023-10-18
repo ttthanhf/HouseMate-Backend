@@ -1,7 +1,7 @@
 package housemate.controllers;
 
-import housemate.entities.Schedule;
 import housemate.models.*;
+import housemate.responses.PurchasedServiceRes;
 import housemate.services.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -35,16 +35,10 @@ public class ScheduleController {
         return service.getScheduleForUser(request);
     }
 
-    @Operation(summary = "Get schedule by ID")
-    @GetMapping("/{scheduleId}")
-    public ResponseEntity<Schedule> getScheduleById(@PathVariable int scheduleId) {
-        return service.getScheduleById(scheduleId);
-    }
-
-    @Operation(summary = "Get all purchased")
+    @Operation(summary = "Get all purchased service")
     @GetMapping("/all-purchased")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Set<PurchasedServiceDTO>> getAllPurchased(HttpServletRequest request) {
+    public ResponseEntity<Set<PurchasedServiceRes>> getAllPurchased(HttpServletRequest request) {
         return service.getAllPurchased(request);
     }
 
