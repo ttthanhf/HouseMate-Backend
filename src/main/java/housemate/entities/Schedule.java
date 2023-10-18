@@ -60,4 +60,10 @@ public class Schedule implements Cloneable {
     public Schedule clone() {
         return (Schedule) super.clone();
     }
+
+    @Transient
+    private String staff;
+
+    @Transient
+    private String phone;
 }
