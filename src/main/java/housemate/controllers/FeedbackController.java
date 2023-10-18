@@ -2,6 +2,7 @@ package housemate.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +22,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @Tag(name = "Feedback")
+@CrossOrigin
 @RequestMapping("/feedback")
 public class FeedbackController {
 
@@ -72,8 +74,8 @@ public class FeedbackController {
 	@DeleteMapping("/{feedback-id}")
 	@Operation(summary = "Remove existing feedback")
 	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<?> deleteFeedback(@PathVariable("feedback-id") int feedbackId) {
-		return feedbackDao.removeFeedback(feedbackId);
+	public ResponseEntity<?> deleteFeedback(HttpServletRequest request, @PathVariable("feedback-id") int feedbackId) {
+		return feedbackDao.removeFeedback(request, feedbackId);
 	}
 
 }

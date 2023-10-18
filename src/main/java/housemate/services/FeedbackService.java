@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import housemate.constants.Role;
 import housemate.entities.ServiceFeedback;
 import housemate.entities.UserAccount;
 import housemate.models.FeedbackNewDTO;
@@ -177,16 +179,22 @@ public class FeedbackService {
 	}
 	
 	@Transactional
-	public ResponseEntity<?> removeFeedback(int serviceFeedbackId) {
+	public ResponseEntity<?> removeFeedback(HttpServletRequest request, int serviceFeedbackId) {
+
+		int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 
 		ServiceFeedback feedback = feedBackRepo.findById(serviceFeedbackId).orElse(null);
+
+		if (!(currentUserId == feedback.getCustomerId())
+				|| !authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
+			return ResponseEntity.badRequest().body("You are not allowed to delete feedback !");
 
 		if (feedback == null)
 			return ResponseEntity.badRequest().body("This feedback does not exist for removing !");
 
 		feedBackRepo.deleteById(serviceFeedbackId);
 		servRepo.updateAvgRating(serviceFeedbackId);
-		
+
 		return ResponseEntity.ok("Remove Successfully");
 	}
 
