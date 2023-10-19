@@ -13,6 +13,7 @@ import housemate.repositories.ScheduleRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
 import housemate.repositories.UserUsageRepository;
+import housemate.responses.EventRes;
 import housemate.responses.PurchasedServiceRes;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +35,7 @@ import java.util.Set;
 @org.springframework.stereotype.Service
 public class ScheduleService {
 
-    private final int TIME_LOOKING_FOR_STAFF = 3;
+    private final int FIND_STAFF_HOURS = 3;
 
     private final ServiceRepository serviceRepository;
     private final ScheduleRepository scheduleRepository;
@@ -59,9 +61,17 @@ public class ScheduleService {
         this.userUsageRepository = userUsageRepository;
     }
 
-    public ResponseEntity<List<Schedule>> getScheduleForUser(HttpServletRequest request) {
+    public ResponseEntity<List<EventRes>> getScheduleForUser(HttpServletRequest request) {
+        List<EventRes> events = new ArrayList<>();
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        return ResponseEntity.status(HttpStatus.OK).body(scheduleRepository.getByCustomerId(userId));
+
+        for (Schedule schedule : scheduleRepository.getByCustomerId(userId)) {
+            // TODO: Check expire date?
+            Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
+            EventRes event = scheduleMapper.mapToEventRes(schedule, service);
+            events.add(event);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(events);
     }
 
     public ResponseEntity<Set<PurchasedServiceRes>> getAllPurchased(HttpServletRequest request) {
@@ -98,7 +108,7 @@ public class ScheduleService {
 
         // Validate start date
         LocalDateTime startDate = scheduleDTO.getDate().atTime(scheduleDTO.getTimeRanges().get(0));
-        ResponseEntity<String> startDateValidation = validateDate(LocalDateTime.now(), startDate, TIME_LOOKING_FOR_STAFF, "start time");
+        ResponseEntity<String> startDateValidation = validateDate(LocalDateTime.now(), startDate, FIND_STAFF_HOURS, "start time");
         if (startDateValidation != null) return startDateValidation;
 
         // Validate end date
@@ -126,7 +136,7 @@ public class ScheduleService {
 
         // Validate pickupDate > current + 3hr
         LocalDateTime pickupDate = scheduleDTO.getPickupDate().atTime(scheduleDTO.getTime());
-        ResponseEntity<String> pickupDateValidation = validateDate(LocalDateTime.now(), pickupDate, TIME_LOOKING_FOR_STAFF, "pickup date");
+        ResponseEntity<String> pickupDateValidation = validateDate(LocalDateTime.now(), pickupDate, FIND_STAFF_HOURS, "pickup date");
         if (pickupDateValidation != null) return pickupDateValidation;
 
         // Validate receivedDate > pickupDate + 4
@@ -162,7 +172,7 @@ public class ScheduleService {
 
         // Validate date > current + 3
         LocalDateTime date = scheduleDTO.getDate().atTime(scheduleDTO.getTime());
-        ResponseEntity<String> receivedDateValidation = validateDate(LocalDateTime.now(), date, TIME_LOOKING_FOR_STAFF, "date");
+        ResponseEntity<String> receivedDateValidation = validateDate(LocalDateTime.now(), date, FIND_STAFF_HOURS, "date");
         if (receivedDateValidation != null) return receivedDateValidation;
 
         // Store to database
@@ -207,8 +217,8 @@ public class ScheduleService {
     private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, int hours, String varName) {
         // Check endTime in office hours
         int endHour = endDate.getHour();
-        if (endHour <= 6 || endHour >= 19) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your " + varName + " in range from 7:00 to 20:00");
+        if (endHour <= 6 || endHour >= 17) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your " + varName + " in range from 7:00 to 18:00");
         }
 
         // Check is valid working date
@@ -216,7 +226,7 @@ public class ScheduleService {
         if (endDate.isAfter(startWorkingDate)) return null;
 
         // Check workingDate in office hours
-        if (startWorkingDate.getHour() <= 6 || startWorkingDate.getHour() >= 19) {
+        if (startWorkingDate.getHour() <= 6 || startWorkingDate.getHour() >= 17) {
             String formattedDate = startWorkingDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your " + varName + " after 7:00:00 " + formattedDate);
         }

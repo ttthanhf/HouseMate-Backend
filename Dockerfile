@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre-alpine
+FROM openjdk:17-alpine
 EXPOSE 8080
-COPY target/housemate.jar housemate.jar
+ADD target/housemate.jar housemate.jar
 ENTRYPOINT ["java", "-jar", "/housemate.jar"]

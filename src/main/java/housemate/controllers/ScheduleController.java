@@ -1,7 +1,7 @@
 package housemate.controllers;
 
-import housemate.entities.Schedule;
 import housemate.models.*;
+import housemate.responses.EventRes;
 import housemate.responses.PurchasedServiceRes;
 import housemate.services.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,11 +32,11 @@ public class ScheduleController {
     @Operation(summary = "Get all schedule for the current user")
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<List<Schedule>> getScheduleForUser(HttpServletRequest request) {
+    public ResponseEntity<List<EventRes>> getScheduleForUser(HttpServletRequest request) {
         return service.getScheduleForUser(request);
     }
 
-    @Operation(summary = "Get all purchased service")
+    @Operation(summary = "Get all purchased service for the current user")
     @GetMapping("/all-purchased")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Set<PurchasedServiceRes>> getAllPurchased(HttpServletRequest request) {

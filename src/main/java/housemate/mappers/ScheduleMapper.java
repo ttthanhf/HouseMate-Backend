@@ -1,10 +1,12 @@
 package housemate.mappers;
 
-import housemate.constants.Status;
+import housemate.constants.ScheduleStatus;
 import housemate.entities.Schedule;
+import housemate.entities.Service;
 import housemate.models.DeliveryScheduleDTO;
 import housemate.models.HourlyScheduleDTO;
 import housemate.models.ReturnScheduleDTO;
+import housemate.responses.EventRes;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -26,7 +28,7 @@ public class ScheduleMapper {
         schedule.setNote(hourlyScheduleDTO.getNote());
         schedule.setServiceId(hourlyScheduleDTO.getServiceId());
         schedule.setServiceTypeId(hourlyScheduleDTO.getTypeId());
-        schedule.setStatus(Status.PROCESSING);
+        schedule.setStatus(ScheduleStatus.PROCESSING);
 
         return schedule;
     }
@@ -56,9 +58,20 @@ public class ScheduleMapper {
         schedule.setQuantityRetrieve(deliveryScheduleDTO.getQuantity());
         schedule.setServiceId(deliveryScheduleDTO.getServiceId());
         schedule.setServiceTypeId(deliveryScheduleDTO.getTypeId());
-        schedule.setStatus(Status.PROCESSING);
+        schedule.setStatus(ScheduleStatus.PROCESSING);
 
         return schedule;
+    }
+
+    public EventRes mapToEventRes(Schedule schedule, Service service) {
+        EventRes event = new EventRes();
+
+        event.setTitle(service.getTitleName());
+        event.setStart(schedule.getStartDate());
+        event.setEnd(schedule.getEndDate());
+        event.setStatus(schedule.getStatus());
+
+        return event;
     }
 
     // Reusable function
@@ -68,7 +81,7 @@ public class ScheduleMapper {
         schedule.setNote(returnScheduleDTO.getNote());
         schedule.setServiceId(returnScheduleDTO.getServiceId());
         schedule.setServiceTypeId(returnScheduleDTO.getTypeId());
-        schedule.setStatus(Status.PROCESSING);
+        schedule.setStatus(ScheduleStatus.PROCESSING);
         schedule.setQuantityRetrieve(1);
 
         LocalDateTime pickupDateTime = returnDate.atTime(returnTime);

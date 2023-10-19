@@ -1,7 +1,7 @@
 package housemate.entities;
 
 import housemate.constants.Cycle;
-import housemate.constants.Status;
+import housemate.constants.ScheduleStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -53,7 +53,7 @@ public class Schedule implements Cloneable {
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private ScheduleStatus status;
 
     @SneakyThrows
     @Override

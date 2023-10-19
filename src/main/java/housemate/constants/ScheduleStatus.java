@@ -1,6 +1,6 @@
 package housemate.constants;
 
-public enum Status {
+public enum ScheduleStatus {
     DONE,
     PROCESSING,
     INCOMING,
