@@ -7,6 +7,7 @@ package housemate.repositories;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import housemate.entities.Service;
 import jakarta.transaction.Transactional;
@@ -41,15 +42,14 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 			+ "AND s.saleStatus <> 'DISCONTINUED'"
 			+ "AND (:keyword IS NULL OR LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')))  "
 			+ "AND s.avgRating >= :ratingFrom "
-			+ "AND (:isPackage IS NULL OR s.isPackage = :isPackage) "
-			)
-	List<Service> searchFilterAllAvailable(
+			+ "AND (:isPackage IS NULL OR s.isPackage = :isPackage) ")
+	Page<Service> searchFilterAllAvailable(
 			@Param("saleStatus") SaleStatus saleStatus,
 			@Param("keyword") String keyword,
 			@Param("ratingFrom") int ratingFrom,
 			@Param("isPackage") Boolean isPackage,
 			Pageable page);
-
+	
 	@Query("SELECT s FROM Service s WHERE "
 			+ "s.saleStatus = 'ONSALE' "
 			+ "ORDER BY s.numberOfSold DESC "

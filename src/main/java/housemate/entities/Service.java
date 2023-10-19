@@ -40,12 +40,12 @@ public class Service {
 
 	@Column(name = "original_price", nullable = false)
 	private int originalPrice;
-	
-    @Column(name = "final_price")
-    private int finalPrice;
 
 	@Column(name = "sale_price")
 	private int salePrice;
+	
+    @Column(name = "final_price")
+    private int finalPrice;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "unit_of_measure", nullable = false)

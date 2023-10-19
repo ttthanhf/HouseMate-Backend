@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -111,8 +112,6 @@ public class TheService {
 			Optional<Integer> page,
 			Optional<Integer> size) {
 
-		List<Service> serviceList;
-
 		String keywordValue = keyword == null ? null : removeDiacriticalMarks(keyword.trim().replaceAll("\\s+", " "));
 		Boolean categoryValue = category.isEmpty() ? null : (category.equals(ServiceCategory.PACKAGES) == true ? true : false);
 		SaleStatus statusValue = saleStatus.orElse(null);
@@ -122,7 +121,6 @@ public class TheService {
 		int pageNo = page.orElse(0);
 		int pageSize = size.orElse(9);
 
-		System.out.println("KEYWORD :" + keywordValue + "Keww " + keyword);
 		if (pageNo < 0 || pageSize < 1)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 					.body("Page number starts with 1. Page size must not be less than 1");
@@ -136,12 +134,13 @@ public class TheService {
 		Pageable sortedPage = pageNo == 0 ? PageRequest.of(0, pageSize, sort)
 				                          : PageRequest.of(pageNo - 1, pageSize, sort);
 
-		serviceList = serviceRepo.searchFilterAllAvailable(statusValue, keywordValue, ratingValue, categoryValue, sortedPage);
-
+		Page<Service> serviceList = serviceRepo.searchFilterAllAvailable(statusValue, keywordValue, ratingValue, categoryValue, sortedPage);
+		int maxPages = (int) Math.ceil((double) serviceList.getTotalPages());
+		
 		if (serviceList.isEmpty() || serviceList == null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
 
-		return ResponseEntity.ok(serviceList);
+		return  ResponseEntity.ok(serviceList);
 	}
 
 	public ResponseEntity<?> getOne(int serviceId) {
@@ -158,8 +157,7 @@ public class TheService {
 		serviceDtoForDetail.setService(service);
 
 		if (!service.isPackage()) { // this is a service
-			List<ServiceType> typeList = serviceTypeRepo
-					.findAllByServiceId(service.getServiceId()).orElse(null);
+			List<ServiceType> typeList = serviceTypeRepo.findAllByServiceId(service.getServiceId()).orElse(null);
 			if (typeList != null)
 				serviceDtoForDetail.setTypeList(typeList);
 		} else if (service.isPackage()) { // this is a package
@@ -167,10 +165,8 @@ public class TheService {
 					.findAllByPackageServiceId(service.getServiceId()).orElse(null);
 			if (packageServiceChildList != null) {
 				for (PackageServiceItem packageServiceItem : packageServiceChildList) {
-					Service serviceChild = serviceRepo
-							.findByServiceId(packageServiceItem.getSingleServiceId()).orElse(null);
-					packageServiceItem
-							.setDescription(serviceChild.getTitleName() + " : " + serviceChild.getDescription());
+					Service serviceChild = serviceRepo.findByServiceId(packageServiceItem.getSingleServiceId()).orElse(null);
+					packageServiceItem.setDescription(serviceChild.getTitleName() + " : " + serviceChild.getDescription());
 				}
 				serviceDtoForDetail.setPackageServiceItemList(packageServiceChildList);
 			}
@@ -180,8 +176,8 @@ public class TheService {
 		List<ServicePrice> priceList = new ArrayList<>();
 		ServicePrice servicePrice = new ServicePrice();
 		List<Period> periodService = periodRepo.findAll();
-		periodService.forEach(s -> priceList.add(
-				servicePrice.setPriceForComboMonth(service, s.getValue(), s.getPeriodName(), s.getPercent())));
+		periodService.forEach(s -> priceList
+				.add(servicePrice.setPriceForComboMonth(service, s.getPeriodId(), s.getValue(), s.getPeriodName(), s.getPercent())));
 		serviceDtoForDetail.setPriceList(priceList);
 
 		// TODO: Update imgList later
