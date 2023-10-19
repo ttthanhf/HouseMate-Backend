@@ -7,8 +7,8 @@ import lombok.Getter;
 public class Enum {
 
 	public static enum ServiceCategory {
-		SINGLES,
-		PACKAGES
+		SINGLE,
+		PACKAGE
 	}
 
 	public static enum UsageDurationUnit {

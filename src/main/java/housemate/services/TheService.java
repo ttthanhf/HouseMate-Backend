@@ -113,7 +113,7 @@ public class TheService {
 			Optional<Integer> size) {
 
 		String keywordValue = keyword == null ? null : removeDiacriticalMarks(keyword.trim().replaceAll("\\s+", " "));
-		Boolean categoryValue = category.isEmpty() ? null : (category.equals(ServiceCategory.PACKAGES) == true ? true : false);
+		Boolean categoryValue = category.isEmpty() ? null : (category.get().equals(ServiceCategory.PACKAGE) == true ? true : false);
 		SaleStatus statusValue = saleStatus.orElse(null);
 		int ratingValue = rating.orElse(0);
 		ServiceField fieldname = sortBy.orElse(ServiceField.PRICE);
