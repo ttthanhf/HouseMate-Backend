@@ -90,7 +90,7 @@ public class ScheduleService {
             PurchasedServiceRes purchase = new PurchasedServiceRes();
             purchase.setServiceId(service.getServiceId());
             purchase.setTitleName(service.getTitleName());
-            purchase.setTypeList(typeList);
+            purchase.setType(typeList);
             purchase.setGroupType(service.getGroupType());
 
             purchases.add(purchase);
@@ -264,14 +264,14 @@ public class ScheduleService {
 
         // Store to database (EVERY_WEEK)
         if (cycle == Cycle.EVERY_WEEK) {
-            for (int i = 0; i < maxQuantity; i++) {
+            for (int week = 0; week < maxQuantity; week++) {
                 for (Schedule schedule : schedules) {
                     // Create new instance for schedule
                     Schedule newSchedule = schedule.clone();
 
                     newSchedule.setCustomerId(customerId);
-                    newSchedule.setStartDate(schedule.getStartDate().plusWeeks(i));
-                    newSchedule.setEndDate(schedule.getEndDate().plusWeeks(i));
+                    newSchedule.setStartDate(schedule.getStartDate().plusWeeks(week));
+                    newSchedule.setEndDate(schedule.getEndDate().plusWeeks(week));
 
                     scheduleRepository.save(newSchedule);
                 }
@@ -280,14 +280,14 @@ public class ScheduleService {
         }
 
         // Store to database (EVERY_MONTH)
-        for (int i = 0; i < maxQuantity; i++) {
+        for (int month = 0; month < maxQuantity; month++) {
             for (Schedule schedule : schedules) {
                 // Create new instance for schedule
                 Schedule newSchedule = schedule.clone();
 
                 newSchedule.setCustomerId(customerId);
-                newSchedule.setStartDate(schedule.getStartDate().plusMonths(i));
-                newSchedule.setEndDate(schedule.getEndDate().plusMonths(i));
+                newSchedule.setStartDate(schedule.getStartDate().plusMonths(month));
+                newSchedule.setEndDate(schedule.getEndDate().plusMonths(month));
 
                 scheduleRepository.save(newSchedule);
             }
@@ -317,25 +317,30 @@ public class ScheduleService {
 
         // Store to database (EVERY_WEEK)
         if (schedule.getCycle() == Cycle.EVERY_WEEK) {
-            for (int i = 0; i < maxQuantity; i++) {
-                schedule.setCustomerId(customerId);
+            for (int week = 0; week < maxQuantity; week++) {
+                // Create new instance for schedule
+                Schedule newSchedule = schedule.clone();
 
-                schedule.setStartDate(schedule.getStartDate().plusWeeks(i));
-                schedule.setEndDate(schedule.getEndDate().plusWeeks(i));
+                newSchedule.setCustomerId(customerId);
+                newSchedule.setStartDate(newSchedule.getStartDate().plusWeeks(week));
+                newSchedule.setEndDate(newSchedule.getEndDate().plusWeeks(week));
 
-                scheduleRepository.save(schedule);
+                scheduleRepository.save(newSchedule);
             }
             return;
         }
 
         // Store to database (EVERY_MONTH)
-        for (int i = 0; i < maxQuantity; i++) {
-            schedule.setCustomerId(customerId);
+        for (int month = 0; month < maxQuantity; month++) {
+            // Create new instance for schedule
+            Schedule newSchedule = schedule.clone();
 
-            schedule.setStartDate(schedule.getStartDate().plusMonths(i));
-            schedule.setEndDate(schedule.getEndDate().plusMonths(i));
+            newSchedule.setCustomerId(customerId);
 
-            scheduleRepository.save(schedule);
+            newSchedule.setStartDate(newSchedule.getStartDate().plusMonths(month));
+            newSchedule.setEndDate(newSchedule.getEndDate().plusMonths(month));
+
+            scheduleRepository.save(newSchedule);
         }
     }
 
@@ -351,6 +356,6 @@ public class ScheduleService {
             maxForCycle = (int) ChronoUnit.MONTHS.between(now, date);
         }
 
-        return Math.min(maxForCycle, Math.floorDiv(remaining, quantity));
+        return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));
     }
 }

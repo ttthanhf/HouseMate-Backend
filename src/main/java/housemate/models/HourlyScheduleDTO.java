@@ -4,6 +4,7 @@
  */
 package housemate.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import housemate.constants.Cycle;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -24,6 +25,7 @@ public class HourlyScheduleDTO {
     private Cycle cycle = Cycle.ONLY_ONE_TIME;  // Default: Only one time
 
     @FutureOrPresent(message = "Date must be in the present or future")
+    @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate date;
 
     private String note;
