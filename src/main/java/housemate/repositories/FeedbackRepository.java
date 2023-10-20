@@ -41,5 +41,7 @@ public interface FeedbackRepository extends JpaRepository<ServiceFeedback, Integ
 			@Param("serviceId") int serviceId);
 	
 	ServiceFeedback findByCustomerIdAndTaskIdAndServiceId(int customerId, int taskId, int ServiceId);
+	
+	ServiceFeedback findByTaskId(int taskId);
 
 }

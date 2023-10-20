@@ -1,8 +1,6 @@
 package housemate.services;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +10,9 @@ import java.util.Set;
 import org.apache.tomcat.util.buf.UEncoder.SafeCharsSet;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,6 @@ import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
 import housemate.constants.Enum.SortRequired;
 import housemate.constants.Enum.UnitOfMeasure;
-import housemate.constants.Enum.UsageDurationUnit;
 import housemate.entities.PackageServiceItem;
 import housemate.entities.Period;
 import housemate.entities.Service;
@@ -40,6 +40,8 @@ import housemate.repositories.ServiceTypeRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import housemate.models.ServiceViewDTO.ServicePrice;
+import java.text.Normalizer;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -102,60 +104,45 @@ public class TheService {
 		return ResponseEntity.ok().body(serviceList);
 	}
 
-	public ResponseEntity<?> searchFilterAllKind(
-			String keywordValue,
+	public ResponseEntity<?> searchFilterAllKindAvailable(
+			String keyword,
 			Optional<ServiceCategory> category,
 			Optional<SaleStatus> saleStatus,
 			Optional<Integer> rating,
 			Optional<ServiceField> sortBy,
-			Optional<SortRequired> orderBy) {
+			Optional<SortRequired> orderBy,
+			Optional<Integer> page,
+			Optional<Integer> size) {
 
-		List<Service> serviceList;
-
-		ServiceCategory cateogryValue = category.orElse(ServiceCategory.GENERAL);
-		SaleStatus statusValue = saleStatus.orElse(SaleStatus.AVAILABLE);
-		Integer ratingValue = rating.orElse(0);
+		String keywordValue = keyword == null ? null : removeDiacriticalMarks(keyword.trim().replaceAll("\\s+", " "));
+		Boolean categoryValue = category.isEmpty() ? null : (category.get().equals(ServiceCategory.PACKAGE) == true ? true : false);
+		SaleStatus statusValue = saleStatus.orElse(null);
+		int ratingValue = rating.orElse(0);
 		ServiceField fieldname = sortBy.orElse(ServiceField.PRICE);
 		SortRequired requireOrder = orderBy.orElse(SortRequired.ASC);
+		int pageNo = page.orElse(0);
+		int pageSize = size.orElse(9);
 
-		// sort by field
+		if (pageNo < 0 || pageSize < 1)
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("Page number starts with 1. Page size must not be less than 1");
+		
+		// setting sort
 		Sort sort;
-		if (requireOrder.equals(SortRequired.ASC))
-			sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
-		else
+		sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
+		if (requireOrder.equals(SortRequired.DESC))
 			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
 
-		serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, sort);
+		Pageable sortedPage = pageNo == 0 ? PageRequest.of(0, pageSize, sort)
+				                          : PageRequest.of(pageNo - 1, pageSize, sort);
 
-		// For sort by price field only
-		if (fieldname.equals(fieldname.PRICE)) {
-			Comparator<Service> theComparator = Comparator
-					.comparingDouble(service -> service.getOriginalPrice() - service.getSalePrice());
-			if (requireOrder.equals(SortRequired.DESC))
-				theComparator = theComparator.reversed();
-
-			Collections.sort(serviceList, theComparator);
-		}
-
-		// Update the list by category
-		List<Service> updateListByCategory = new ArrayList<>();
-		if (cateogryValue.equals(ServiceCategory.PACKAGES)) {
-			for (Service service : serviceList)
-				if (service.isPackage())
-					updateListByCategory.add(service);
-			serviceList = updateListByCategory;
-		}
-		if (cateogryValue.equals(ServiceCategory.SINGLES)) {
-			for (Service service : serviceList)
-				if (!service.isPackage())
-					updateListByCategory.add(service);
-			serviceList = updateListByCategory;
-		}
-
+		Page<Service> serviceList = serviceRepo.searchFilterAllAvailable(statusValue, keywordValue, ratingValue, categoryValue, sortedPage);
+		int maxPages = (int) Math.ceil((double) serviceList.getTotalPages());
+		
 		if (serviceList.isEmpty() || serviceList == null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
 
-		return ResponseEntity.ok(serviceList);
+		return  ResponseEntity.ok(serviceList);
 	}
 
 	public ResponseEntity<?> getOne(int serviceId) {
@@ -168,12 +155,11 @@ public class TheService {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found this service !");
 
 		service.setNumberOfReview(feedbackRepo.findAllByServiceId(serviceId).size());
-		service.setNumberOfComment(commentRepo.getAllCommentByServiceId(serviceId).size());
+		service.setNumberOfComment(commentRepo.getAllCommentAndReplyByServiceId(serviceId));
 		serviceDtoForDetail.setService(service);
 
 		if (!service.isPackage()) { // this is a service
-			List<ServiceType> typeList = serviceTypeRepo
-					.findAllByServiceId(service.getServiceId()).orElse(null);
+			List<ServiceType> typeList = serviceTypeRepo.findAllByServiceId(service.getServiceId()).orElse(null);
 			if (typeList != null)
 				serviceDtoForDetail.setTypeList(typeList);
 		} else if (service.isPackage()) { // this is a package
@@ -181,10 +167,8 @@ public class TheService {
 					.findAllByPackageServiceId(service.getServiceId()).orElse(null);
 			if (packageServiceChildList != null) {
 				for (PackageServiceItem packageServiceItem : packageServiceChildList) {
-					Service serviceChild = serviceRepo
-							.findByServiceId(packageServiceItem.getSingleServiceId()).orElse(null);
-					packageServiceItem
-							.setDescription(serviceChild.getTitleName() + " : " + serviceChild.getDescription());
+					Service serviceChild = serviceRepo.findByServiceId(packageServiceItem.getSingleServiceId()).orElse(null);
+					packageServiceItem.setDescription(serviceChild.getTitleName() + " : " + serviceChild.getDescription());
 				}
 				serviceDtoForDetail.setPackageServiceItemList(packageServiceChildList);
 			}
@@ -194,18 +178,20 @@ public class TheService {
 		List<ServicePrice> priceList = new ArrayList<>();
 		ServicePrice servicePrice = new ServicePrice();
 		List<Period> periodService = periodRepo.findAll();
-		periodService.forEach(s -> priceList.add(
-				servicePrice.setPriceForComboMonth(service, s.getPeriodId(), s.getPeriodName(), s.getPercent())));
+
+		periodService.forEach(s -> priceList
+				.add(servicePrice.setPriceForComboMonth(service, s.getPeriodId(), s.getValue(), s.getPeriodName(), s.getPercent())));
 		serviceDtoForDetail.setPriceList(priceList);
 
 		// TODO: Update imgList later
 		List<String> imgList = new ArrayList<>();
-		imgList.add("https://t.ly/itj2o");
-		imgList.add("https://t.ly/sRTe7");
-		imgList.add("https://t.ly/9xEHO");
-		imgList.add("bit.ly/48Ua85g");
-		imgList.add("bit.ly/45vftNa");
-		imgList.add("bit.ly/3tsNi4d");
+		imgList.add("https://www.mollymaid.com/us/en-us/molly-maid/_assets/images/services/mly-service-kitchen-2.webp");
+		imgList.add("https://i.ebayimg.com/images/g/DBkAAOSwA5limhuC/s-l1600.jpg");
+		imgList.add("https://images6.fanpop.com/image/photos/37000000/Doing-Housework-disney-37043579-1680-1050.jpg");
+		imgList.add("https://i.ytimg.com/vi/gmZstKaBtj8/maxresdefault.jpg");
+		imgList.add("https://images.squarespace-cdn.com/content/v1/5d815167fadd7b051fbda1e8/1587078895641-E42HDAP26ZJL6BO1HEA2/IMG_0801e.jpg");
+		imgList.add("https://www.happywater.my/wp-content/uploads/2020/07/Water-Delivery-malaysia.jpg");
+		imgList.add("https://res.cloudinary.com/jerrick/image/upload/c_scale,f_jpg,q_auto/5e88760f9671a2001cc57c50.jpg");
 		serviceDtoForDetail.setImages(imgList);
 
 		return ResponseEntity.ok().body(serviceDtoForDetail);
@@ -223,7 +209,9 @@ public class TheService {
 		try {
 			// Check all before saving object service
 			// Check duplicate title name
-			if (serviceRepo.findByTitleNameIgnoreCase(serviceDTO.getTitleName().trim()) != null)
+			String formatedTitleName = serviceDTO.getTitleName().trim().replaceAll("\\s+", " ");
+			serviceDTO.setTitleName(formatedTitleName);
+			if (serviceRepo.findByTitleNameIgnoreCase(formatedTitleName) != null)
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 						.body("The title name has existed before !");
 
@@ -249,7 +237,7 @@ public class TheService {
 					Set<String> uniqueNames = new HashSet<>();
 					// check any type name have equal ignore case
 					for (String typeName : typeNameList)
-						if (!uniqueNames.add(typeName.toLowerCase().trim()))
+						if (!uniqueNames.add(typeName.toLowerCase().trim().replaceAll("\\s+", " ")));
 							return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 									.body("Duplicated the type name in this service !");
 				}
@@ -291,7 +279,7 @@ public class TheService {
 				for (String element : serviceDTO.getTypeNameList()) {
 					ServiceType type = new ServiceType();
 					type.setServiceId(savedServiceId);
-					type.setTypeName(element.trim());
+					type.setTypeName(element.trim().replaceAll("\\s+", " "));
 					serviceTypeRepo.save(type);
 				}
 			}
@@ -307,7 +295,7 @@ public class TheService {
 					item.setSingleServiceId(singleServiceId);
 					item.setQuantity(childServiceSet.get(singleServiceId));
 					sumSingleServiceSalePrice += (serviceRepo.findByServiceId(singleServiceId).orElse(null)
-							.getOriginalPrice() * item.getQuantity());
+							                  .getOriginalPrice() * item.getQuantity());
 					packageServiceItemRepo.save(item);
 				}
 
@@ -445,6 +433,12 @@ public class TheService {
 
 		return this.getOne(savedService.getServiceId());
 	}
+	
+	  private static String removeDiacriticalMarks(String str) {
+	        str = Normalizer.normalize(str, Normalizer.Form.NFD);
+	        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+	        return pattern.matcher(str).replaceAll("");
+	    }
 
 	// TODO: DELETE SERVICE LATER
 
