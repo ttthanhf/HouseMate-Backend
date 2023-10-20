@@ -32,4 +32,8 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 
     @Query("SELECT c FROM Comment c WHERE c.id = :commentId")
     Comment getCommentById(@Param("commentId") int commentId);
+    
+    
+	@Query("SELECT COUNT(DISTINCT c.commentId) + COUNT(rc.commentId) FROM Comment c LEFT JOIN ReplyComment rc ON c.commentId = rc.commentId WHERE c.serviceId = :serviceId")
+    int getAllCommentAndReplyByServiceId(@Param("serviceId") int serviceId);
 }

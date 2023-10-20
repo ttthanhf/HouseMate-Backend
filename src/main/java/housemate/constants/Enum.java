@@ -7,9 +7,8 @@ import lombok.Getter;
 public class Enum {
 
 	public static enum ServiceCategory {
-		SINGLES,
-		PACKAGES,
-		GENERAL
+		SINGLE,
+		PACKAGE
 	}
 
 	public static enum UsageDurationUnit {
@@ -48,7 +47,7 @@ public class Enum {
 	@AllArgsConstructor
 	public static enum ServiceField {
 		NAME("titleName"),
-		PRICE("originalPrice"),
+		PRICE("finalPrice"),
 		NUMBER_OF_SOLD("numberOfSold");
 
 		private String fieldName;

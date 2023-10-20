@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import housemate.constants.Role;
 import housemate.entities.ServiceFeedback;
@@ -44,8 +45,7 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 
-		if (serviceFeedbList.isEmpty() || serviceFeedbList == null)
-			return ResponseEntity.badRequest().body("No feedback for this service can be found !");
+		Assert.notNull(serviceFeedbList, "No feedback for this service can be found !");
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
@@ -68,8 +68,8 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 
-		if (serviceFeedbList.isEmpty() || serviceFeedbList == null)
-			return ResponseEntity.badRequest().body("No feedback for this service can be found !");
+		Assert.notNull(serviceFeedbList, "No feedback for this service can be found !");
+		Assert.notEmpty(serviceFeedbList, "No feedback for this service can be found !");
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
@@ -91,8 +91,8 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByRating(serviceId, ratingLevel);
 
-		if (serviceFeedbList.isEmpty() || serviceFeedbList == null)
-			return ResponseEntity.badRequest().body("No feedback for this service with rating " + ratingLevel + " can be found !");
+		Assert.notNull(serviceFeedbList, "No feedback for this service with rating " + ratingLevel + " can be found !");
+		Assert.notEmpty(serviceFeedbList, "No feedback for this service with rating " + ratingLevel + " can be found !");
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
@@ -111,22 +111,15 @@ public class FeedbackService {
 	}
 
 	public ResponseEntity<?> findAll() {
-
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAll();
-
-		if (serviceFeedbList.isEmpty() || serviceFeedbList == null)
-			return ResponseEntity.badRequest().body("Empty list now !");
-
+		Assert.notNull(serviceFeedbList, "Empty list now !");
+		Assert.notEmpty(serviceFeedbList, "Empty list now !");
 		return ResponseEntity.ok(serviceFeedbList);
 	}
 
 	public ResponseEntity<?> getOne(int serviceFeedbackId) {
-
 		ServiceFeedback feeback = feedBackRepo.findById(serviceFeedbackId).orElse(null);
-
-		if (feeback == null)
-			return ResponseEntity.badRequest().body("This feedback does not exist");
-
+		Assert.notNull(feeback, "This feedback does not exist");
 		return ResponseEntity.ok(feeback);
 	}
 
@@ -136,17 +129,15 @@ public class FeedbackService {
 		int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 		
 		//TODO: Constraint for comboId taskId, customerId, ServiceId In Here
-		
-		if(feedBackRepo.findByCustomerIdAndTaskIdAndServiceId(userId, newFeedback.getTaskId(), newFeedback.getServiceId()) != null) 
-			return ResponseEntity.badRequest().body("This feedback has existed ! Not allow to create new ! Only allow to update !");
+		//One task has only one feedback
+		Assert.isNull(feedBackRepo.findByTaskId(newFeedback.getTaskId()), "This feedback has existed ! Only allow to update !");
 
 		ServiceFeedback feedback = mapper.map(newFeedback, ServiceFeedback.class);
 		feedback.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 		feedback.setCustomerId(userId);
 		ServiceFeedback addedFeedback = feedBackRepo.save(feedback);
 
-		if (addedFeedback == null)
-			return ResponseEntity.badRequest().body("This feedback does not exists");
+		Assert.notNull(addedFeedback, "Saved failed !");
 		
 		servRepo.updateAvgRating(feedback.getServiceId());
 		
@@ -156,26 +147,25 @@ public class FeedbackService {
 	@Transactional
 	public ResponseEntity<?> updateFeedback(HttpServletRequest request, FeedbackNewDTO newFeedback, int serviceFeedbackId) {
 
-		int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+		int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 		
 		//TODO: Constraint for comboId taskId, customerId, ServiceId In Here
+		
+		//Only the author of specific feedback is allowed to update include Admin not allow too
+		ServiceFeedback oldFeedback = feedBackRepo.findFeedback(serviceFeedbackId, currentUserId, newFeedback.getTaskId(), newFeedback.getServiceId());
 
-		ServiceFeedback oldFeedback = feedBackRepo.findFeedback(serviceFeedbackId, userId, newFeedback.getTaskId(), newFeedback.getServiceId());
-
-		if (oldFeedback == null)
-			return ResponseEntity.badRequest().body("This feedback does not exist for updating !");
+		Assert.notNull(oldFeedback, "This feedback does not exist for you to update !");
 
 		oldFeedback.setContent(newFeedback.getContent());
 		oldFeedback.setRating(newFeedback.getRating());
 		oldFeedback.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
-		ServiceFeedback addedFeedback = feedBackRepo.save(oldFeedback);
+		ServiceFeedback updatedFeedback = feedBackRepo.save(oldFeedback);
 
-		if (addedFeedback == null) 
-			return ResponseEntity.badRequest().body("Update Failed !");
+		Assert.notNull(updatedFeedback, "Update Failed !");
 		
 		servRepo.updateAvgRating(oldFeedback.getServiceId());
 		
-		return ResponseEntity.ok(addedFeedback);
+		return ResponseEntity.ok(updatedFeedback);
 	}
 	
 	@Transactional
@@ -185,12 +175,11 @@ public class FeedbackService {
 
 		ServiceFeedback feedback = feedBackRepo.findById(serviceFeedbackId).orElse(null);
 
-		if (!(currentUserId == feedback.getCustomerId())
-				|| !authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
-			return ResponseEntity.badRequest().body("You are not allowed to delete feedback !");
+		Assert.notNull(feedback, "This feedback does not exist for removing !");
 
-		if (feedback == null)
-			return ResponseEntity.badRequest().body("This feedback does not exist for removing !");
+		if (!(currentUserId == feedback.getCustomerId())) // isAuthor = false
+			if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString())) // isAdmin = false
+				return ResponseEntity.badRequest().body("You are not allowed to delete this feedback !");
 
 		feedBackRepo.deleteById(serviceFeedbackId);
 		servRepo.updateAvgRating(serviceFeedbackId);

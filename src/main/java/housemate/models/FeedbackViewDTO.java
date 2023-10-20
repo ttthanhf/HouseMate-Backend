@@ -39,6 +39,7 @@ public class FeedbackViewDTO {
 	@AllArgsConstructor
 	public static class FeedbackViewDetailDTO{
 		private int serviceFeedbackId;
+		private int taskId;
 		private int customerId;
 		private String customerName;
 		private String content;
