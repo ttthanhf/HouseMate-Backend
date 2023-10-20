@@ -29,6 +29,7 @@ public class ScheduleMapper {
         schedule.setServiceId(hourlyScheduleDTO.getServiceId());
         schedule.setServiceTypeId(hourlyScheduleDTO.getTypeId());
         schedule.setStatus(ScheduleStatus.PROCESSING);
+        schedule.setQuantityRetrieve(1);
 
         return schedule;
     }

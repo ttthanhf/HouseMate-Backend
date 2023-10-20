@@ -7,6 +7,7 @@ package housemate.models;
 import housemate.constants.Cycle;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -20,6 +21,7 @@ public class DeliveryScheduleDTO {
     private Cycle cycle = Cycle.ONLY_ONE_TIME;  // Default: Only one time
 
     @FutureOrPresent(message = "Date must be in the present or future")
+    @DateTimeFormat(pattern = "dd/MM/yyyy")
     private LocalDate date;
 
     private String note;

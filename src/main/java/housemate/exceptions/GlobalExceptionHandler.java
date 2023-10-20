@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DateTimeParseException.class)
     public ResponseEntity<String> handleDateTimeParseException(DateTimeParseException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                "Invalid time format. Please provide date in yyyy/MM/dd format, and time in HH:mm format."
+                "Invalid time format. Please provide date in dd/MM/yyyy format, and time in HH:mm format."
         );
     }
 
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
         if (mess.contains("not one of the values accepted for Enum class")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Error enum for " +  mess.substring(mess.indexOf("Enum class: [")));
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Convert JSON To Object Failed. Some Error");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Convert JSON To Object Failed. Error: " + mess);
     }
 
     @ExceptionHandler(Exception.class)

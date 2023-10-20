@@ -31,4 +31,21 @@ public class HouseMateApplication {
         SpringApplication.run(HouseMateApplication.class, args);
     }
 
+    // Uncomment this code if datetime bug occur
+//    @Bean
+//    public Formatter<LocalDate> localDateFormatter() {
+//        return new Formatter<>() {
+//            @Override
+//            public LocalDate parse(String text, java.util.Locale locale) {
+//                // In front-end: months from 1 - 12. In back-end months from 0 - 11
+//                return LocalDate.parse(text, DateTimeFormatter.ofPattern("dd/MM/yyyy")).minusMonths(1);
+//            }
+//
+//            @Override
+//            public String print(LocalDate object, java.util.Locale locale) {
+//                return DateTimeFormatter.ofPattern("dd/MM/yyyy").format(object);
+//            }
+//        };
+//    }
+
 }
