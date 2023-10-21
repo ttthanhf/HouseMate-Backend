@@ -176,12 +176,12 @@ public class ScheduleService {
         if (serviceIdValidation != null) return serviceIdValidation;
 
         // Validate pickupDate > current + 3hr
-        LocalDateTime pickupDate = scheduleDTO.getPickupDate().atTime(scheduleDTO.getTime());
+        LocalDateTime pickupDate = scheduleDTO.getPickUpDate().atTime(scheduleDTO.getTime());
         ResponseEntity<String> pickupDateValidation = validateDate(LocalDateTime.now(), pickupDate, FIND_STAFF_HOURS, "pickup date");
         if (pickupDateValidation != null) return pickupDateValidation;
 
         // Validate receivedDate > pickupDate + 4
-        LocalDateTime receivedDate = scheduleDTO.getReceivedDate().atTime(scheduleDTO.getReceivedTime());
+        LocalDateTime receivedDate = scheduleDTO.getReceiveDate().atTime(scheduleDTO.getReceivedTime());
         int MINIMUM_RETURN_HOURS = 4;
         ResponseEntity<String> receivedDateValidation = validateDate(pickupDate, receivedDate, MINIMUM_RETURN_HOURS, "received date");
         if (receivedDateValidation != null) return receivedDateValidation;
