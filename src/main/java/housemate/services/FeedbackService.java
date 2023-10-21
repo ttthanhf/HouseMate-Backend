@@ -45,7 +45,7 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 
-		Assert.notNull(serviceFeedbList, "No feedback for this service can be found !");
+		Assert.notEmpty(serviceFeedbList, "No feedback for this service can be found !");
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
@@ -68,7 +68,6 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 
-		Assert.notNull(serviceFeedbList, "No feedback for this service can be found !");
 		Assert.notEmpty(serviceFeedbList, "No feedback for this service can be found !");
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
@@ -91,7 +90,6 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByRating(serviceId, ratingLevel);
 
-		Assert.notNull(serviceFeedbList, "No feedback for this service with rating " + ratingLevel + " can be found !");
 		Assert.notEmpty(serviceFeedbList, "No feedback for this service with rating " + ratingLevel + " can be found !");
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
@@ -112,7 +110,6 @@ public class FeedbackService {
 
 	public ResponseEntity<?> findAll() {
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAll();
-		Assert.notNull(serviceFeedbList, "Empty list now !");
 		Assert.notEmpty(serviceFeedbList, "Empty list now !");
 		return ResponseEntity.ok(serviceFeedbList);
 	}

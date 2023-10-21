@@ -35,19 +35,10 @@ public class ServiceViewDTO {
 	@AllArgsConstructor
 	public static class ServicePrice { // let this class to access directly
 		private int periodId;
+		private int serviceId;
 		private float periodValue;
 		private String periodName;
-		private float originalPrice;
 		private float finalPrice;
-
-		public ServicePrice setPriceForComboMonth(Service service, int periodId, int periodValue, String periodName, float percentAddedValue) {
-			float originalPrice = service.getOriginalPrice() * percentAddedValue;
-			float finalPrice = service.getFinalPrice() * percentAddedValue;
-			if (finalPrice < 0 || service.getSalePrice() == 100)
-				finalPrice = 0; // No sale for this service
-
-			return new ServicePrice(periodId, periodValue, periodName, originalPrice, (int) Math.ceil((double) finalPrice));
-		}
 	}
 
 }
