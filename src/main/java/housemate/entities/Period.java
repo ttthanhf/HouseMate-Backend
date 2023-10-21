@@ -4,8 +4,14 @@
  */
 package housemate.entities;
 
+import housemate.constants.Enum.GroupType;
+import housemate.constants.Enum.SaleStatus;
+import housemate.constants.Enum.UnitOfMeasure;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  *
@@ -13,26 +19,29 @@ import lombok.Data;
  */
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "period_service")
 public class Period {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "period_id")
     private int periodId;
-
-    @Column(name = "period_name")
-    private String periodName;
-
-    @Column(name = "percent")
-    private float percent;
+    
+    @Column(name = "service_id")
+    private int serviceId;
     
     @Column(name = "period_value")
-    private int value;
-
-    @Transient
+    private int periodValue;
+    
+    @Column(name = "period_name")
+    private String periodName;
+    
+    @Column(name = "final_price")
     private int finalPrice;
-
-    @Transient
-    private int originalPrice;
+    
+    @Column(name = "percent")
+    private float percent;
 }

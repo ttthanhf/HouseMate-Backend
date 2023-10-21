@@ -2,6 +2,9 @@ package housemate.repositories;
 
 import housemate.entities.Period;
 import jakarta.transaction.Transactional;
+
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +19,10 @@ import org.springframework.data.repository.query.Param;
  * @author ThanhF
  */
 public interface PeriodRepository extends JpaRepository<Period, Integer> {
+	
+	List<Period> findAllByServiceId(int serviceId);
+	
+	void deleteAllByServiceId(int serviceId);
 
     @Query("SELECT p FROM Period p WHERE p.periodId = :periodId")
     Period getPeriodByid(@Param("periodId") int periodId);
