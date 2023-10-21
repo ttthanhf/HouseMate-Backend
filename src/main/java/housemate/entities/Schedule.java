@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * @author hdang09
  */
 @Entity
-@Table(name = "service_schedule")
+@Table(name = "schedule")
 @Data
 @NoArgsConstructor
 public class Schedule implements Cloneable {

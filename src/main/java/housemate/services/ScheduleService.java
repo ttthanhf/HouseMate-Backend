@@ -147,6 +147,12 @@ public class ScheduleService {
         ResponseEntity<String> endDateValidation = validateDate(startDate, endDate, 1, "end time");
         if (endDateValidation != null) return endDateValidation;
 
+        // Validate out range of cycle
+        if (endDate.isAfter(userUsage.getEndDate())) {
+            String formattedDate = userUsage.getEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
+        }
+
         // Store to database
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
@@ -186,6 +192,12 @@ public class ScheduleService {
         ResponseEntity<String> receivedDateValidation = validateDate(pickupDate, receivedDate, MINIMUM_RETURN_HOURS, "received date");
         if (receivedDateValidation != null) return receivedDateValidation;
 
+        // Validate out range of cycle
+        if (receivedDate.isAfter(userUsage.getEndDate())) {
+            String formattedDate = userUsage.getEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
+        }
+
         // Store to database
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
@@ -219,6 +231,12 @@ public class ScheduleService {
         ResponseEntity<String> receivedDateValidation = validateDate(LocalDateTime.now(), date, FIND_STAFF_HOURS, "date");
         if (receivedDateValidation != null) return receivedDateValidation;
 
+        // Validate out range of cycle
+        if (date.isAfter(userUsage.getEndDate())) {
+            String formattedDate = userUsage.getEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
+        }
+
         // Store to database
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
@@ -237,7 +255,9 @@ public class ScheduleService {
         }
 
         // Validate serviceId is in order
-        if (!isContainsServiceId(getAllPurchased(request).getBody(), serviceId)) {
+        Set<PurchasedServiceRes> allPurchased = getAllPurchased(request).getBody();
+        if (allPurchased == null) return null; // Handle NullPointerException
+        if (!isContainsServiceId(allPurchased, serviceId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("You haven't buy this service");
         }
 

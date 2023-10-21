@@ -22,7 +22,6 @@ public class DeliveryScheduleDTO {
     private Cycle cycle = Cycle.ONLY_ONE_TIME;  // Default: Only one time
 
     @FutureOrPresent(message = "Date must be in the present or future")
-//    @DateTimeFormat(pattern = "dd/MM/yyyy")
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate date;
 
