@@ -55,6 +55,9 @@ public class Schedule implements Cloneable {
     @Enumerated(EnumType.STRING)
     private ScheduleStatus status;
 
+    @Column(name = "parent_schedule_id")
+    private int parentScheduleId;
+
     @SneakyThrows
     @Override
     public Schedule clone() {
