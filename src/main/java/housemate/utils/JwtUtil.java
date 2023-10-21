@@ -11,6 +11,7 @@ import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.*;
 import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,11 +21,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtUtil {
 
-//    @Value("${application.security.jwt.secret-key}") //đang ko dùng được nên comment lại và set cứng giá trị
-    private final String secretKey = "asdhhashdsjkhdashkadsheffeajnagkrjnagnjrgknjagrknjrgkjngragrjngrkjngrkjnefajneef";
+    private final String secretKey;
+    private final long jwtExpiration;
 
-//    @Value("${application.security.jwt.expiration}") //đang ko dùng được nên comment lại và set cứng giá trị
-    private final long jwtExpiration = 36000000;
+    public JwtUtil(
+            @Value("${application.security.jwt.secret-key}") String secretKey,
+            @Value("${application.security.jwt.expiration}") long jwtExpiration
+    ) {
+        this.secretKey = secretKey;
+        this.jwtExpiration = jwtExpiration;
+    }
 
     public Map<String, Object> extractPayload(String token) {
         Map<String, Object> payloadMap = extractClaim(token, claims -> claims.get("payload", Map.class));
