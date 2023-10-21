@@ -5,6 +5,11 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.servers.Server;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.format.Formatter;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 /**
  *
@@ -37,8 +42,7 @@ public class HouseMateApplication {
 //        return new Formatter<>() {
 //            @Override
 //            public LocalDate parse(String text, java.util.Locale locale) {
-//                // In front-end: months from 1 - 12. In back-end months from 0 - 11
-//                return LocalDate.parse(text, DateTimeFormatter.ofPattern("dd/MM/yyyy")).minusMonths(1);
+//                return LocalDate.parse(text, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 //            }
 //
 //            @Override

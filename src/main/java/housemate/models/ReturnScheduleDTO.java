@@ -4,6 +4,7 @@
  */
 package housemate.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import housemate.constants.Cycle;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -28,11 +29,13 @@ public class ReturnScheduleDTO {
 
     private String note;
 
-    @DateTimeFormat(pattern = "dd/MM/yyyy")
+//    @DateTimeFormat(pattern = "dd/MM/yyyy")
+    @JsonFormat(pattern = "dd/MM/yyyy")
     @FutureOrPresent(message = "Pickup date must be in the present or future")
     private LocalDate pickupDate;
 
-    @DateTimeFormat(pattern = "dd/MM/yyyy")
+//    @DateTimeFormat(pattern = "dd/MM/yyyy")
+    @JsonFormat(pattern = "dd/MM/yyyy")
     @FutureOrPresent(message = "Received date must be in the present or future")
     private LocalDate receivedDate;
 
