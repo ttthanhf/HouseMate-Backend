@@ -318,6 +318,7 @@ public class TheService {
 								+ "\nThe original price of package should be " + sumSingleServiceSalePrice);
 				}
 				savedService.setOriginalPrice(sumSingleServiceSalePrice);
+				savedService.setSalePrice(savedService.getOriginalPrice() - savedService.getFinalPrice());
 				serviceRepo.save(savedService);
 			}
 			
@@ -466,6 +467,7 @@ public class TheService {
 			oldService.setDescription(serviceDTO.getDescription());
 			oldService.setOriginalPrice(serviceDTO.getOriginalPrice());
 			oldService.setFinalPrice(serviceDTO.getFinalPrice());
+			oldService.setSalePrice(oldService.getOriginalPrice() - oldService.getFinalPrice());
 			oldService.setGroupType(serviceDTO.getGroupType());
 
 			// TODO: UPDATE IMAGES
