@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,8 +45,9 @@ public class FeedbackService {
 	public ResponseEntity<?> getRatingOverviewByService(int serviceId) {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
-
-		Assert.notEmpty(serviceFeedbList, "No feedback for this service can be found !");
+		
+		if (serviceFeedbList.isEmpty())
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No feedback for this service");
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
@@ -68,7 +70,8 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 
-		Assert.notEmpty(serviceFeedbList, "No feedback for this service can be found !");
+		if (serviceFeedbList.isEmpty())
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No feedback for this service");
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
@@ -89,8 +92,10 @@ public class FeedbackService {
 	public ResponseEntity<?> filterServiceFeedbackByRating(int serviceId, int ratingLevel) {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByRating(serviceId, ratingLevel);
-
-		Assert.notEmpty(serviceFeedbList, "No feedback for this service with rating " + ratingLevel + " can be found !");
+		
+		if (serviceFeedbList.isEmpty())
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body("No feedback for this service with rating " + ratingLevel + " can be found !");
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
@@ -110,14 +115,20 @@ public class FeedbackService {
 
 	public ResponseEntity<?> findAll() {
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAll();
-		Assert.notEmpty(serviceFeedbList, "Empty list now !");
+		
+		if(serviceFeedbList.isEmpty())
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Empty list now");
+		
 		return ResponseEntity.ok(serviceFeedbList);
 	}
 
 	public ResponseEntity<?> getOne(int serviceFeedbackId) {
-		ServiceFeedback feeback = feedBackRepo.findById(serviceFeedbackId).orElse(null);
-		Assert.notNull(feeback, "This feedback does not exist");
-		return ResponseEntity.ok(feeback);
+		ServiceFeedback feedback = feedBackRepo.findById(serviceFeedbackId).orElse(null);
+		
+		if(feedback == null)
+			return ResponseEntity.badRequest().body("This feedback does not exist");
+		
+		return ResponseEntity.ok(feedback);
 	}
 
 	@Transactional
@@ -127,8 +138,9 @@ public class FeedbackService {
 		
 		//TODO: Constraint for comboId taskId, customerId, ServiceId In Here
 		//One task has only one feedback
-		Assert.isNull(feedBackRepo.findByTaskId(newFeedback.getTaskId()), "This feedback has existed ! Only allow to update !");
-
+		if(feedBackRepo.findByTaskId(newFeedback.getTaskId()) != null)
+			return ResponseEntity.badRequest().body("This feedback has existed ! Only allow to update !");
+		
 		ServiceFeedback feedback = mapper.map(newFeedback, ServiceFeedback.class);
 		feedback.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 		feedback.setCustomerId(userId);
@@ -151,7 +163,8 @@ public class FeedbackService {
 		//Only the author of specific feedback is allowed to update include Admin not allow too
 		ServiceFeedback oldFeedback = feedBackRepo.findFeedback(serviceFeedbackId, currentUserId, newFeedback.getTaskId(), newFeedback.getServiceId());
 
-		Assert.notNull(oldFeedback, "This feedback does not exist for you to update !");
+		if(oldFeedback == null)
+			return ResponseEntity.badRequest().body("This feedback does not exist for you to update !");
 
 		oldFeedback.setContent(newFeedback.getContent());
 		oldFeedback.setRating(newFeedback.getRating());
@@ -172,7 +185,8 @@ public class FeedbackService {
 
 		ServiceFeedback feedback = feedBackRepo.findById(serviceFeedbackId).orElse(null);
 
-		Assert.notNull(feedback, "This feedback does not exist for removing !");
+		if(feedback == null) 
+			return ResponseEntity.badRequest().body("This feedback does not exist for removing !");
 
 		if (!(currentUserId == feedback.getCustomerId())) // isAuthor = false
 			if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString())) // isAdmin = false
