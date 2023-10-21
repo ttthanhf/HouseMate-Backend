@@ -10,7 +10,6 @@ import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
-import com.amazonaws.services.s3.model.CompleteMultipartUploadResult;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
 import com.amazonaws.services.s3.model.PartETag;
@@ -72,10 +71,10 @@ public class S3Service {
     }
 
     @Async
-    public ResponseEntity<String> uploadImage(HttpServletRequest request, MultipartFile[] files, int entityId, boolean isTask) throws IOException {
+    public ResponseEntity<String> uploadImage(HttpServletRequest request, MultipartFile[] files, int entityId, boolean isTask) {
 
         String userRole = authorizationUtil.getRoleFromAuthorizationHeader(request);
-        if (!userRole.equals(Role.ADMIN)) {
+        if (!userRole.equals(Role.ADMIN.toString())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admin role");
         }
 
@@ -98,21 +97,24 @@ public class S3Service {
             long partSize = 2 * 1024 * 1024; // 2MB
             long fileSize = file.getSize();
             long totalParts = (long) Math.ceil((double) fileSize / partSize);
+            try {
+                for (int partNumber = 1; partNumber <= totalParts; partNumber++) {
+                    long start = (partNumber - 1) * partSize;
+                    long end = Math.min(start + partSize, fileSize);
 
-            for (int partNumber = 1; partNumber <= totalParts; partNumber++) {
-                long start = (partNumber - 1) * partSize;
-                long end = Math.min(start + partSize, fileSize);
+                    UploadPartRequest uploadPartRequest = new UploadPartRequest()
+                            .withBucketName(bucket)
+                            .withKey(imageName)
+                            .withUploadId(uploadId)
+                            .withPartNumber(partNumber)
+                            .withPartSize(end - start)
+                            .withInputStream(file.getInputStream());
 
-                UploadPartRequest uploadPartRequest = new UploadPartRequest()
-                        .withBucketName(bucket)
-                        .withKey(imageName)
-                        .withUploadId(uploadId)
-                        .withPartNumber(partNumber)
-                        .withPartSize(end - start)
-                        .withInputStream(file.getInputStream());
-
-                UploadPartResult uploadPartResult = s3client.uploadPart(uploadPartRequest);
-                partETags.add(uploadPartResult.getPartETag());
+                    UploadPartResult uploadPartResult = s3client.uploadPart(uploadPartRequest);
+                    partETags.add(uploadPartResult.getPartETag());
+                }
+            } catch (IOException e) {
+                return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Can not read file !");
             }
 
             CompleteMultipartUploadRequest completeRequest = new CompleteMultipartUploadRequest()
@@ -140,6 +142,10 @@ public class S3Service {
         String userRole = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!userRole.equals(Role.ADMIN.toString())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admin role");
+        }
+        Image image = imageRepository.findById(entityId);
+        if (image == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Image not found");
         }
 
         imageRepository.deleteById(entityId);
