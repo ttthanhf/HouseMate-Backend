@@ -2,10 +2,13 @@ package housemate.controllers;
 
 import housemate.services.S3Service;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.io.File;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,9 +32,18 @@ public class UploadController {
     @Autowired
     S3Service s3Service;
 
-    @PostMapping()
-    public String upload(@RequestParam("file") MultipartFile file) throws IOException {
-        s3Service.uploadFile(file);
-        return "Uploaded";
+    @PostMapping("/service/{serviceId}")
+    public ResponseEntity<String> uploadServiceImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @PathVariable int serviceId) throws IOException {
+        return s3Service.uploadImage(request, files, serviceId, false);
+    }
+
+    @PostMapping("/task/{taskId}")
+    public ResponseEntity<String> uploadTaskImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @PathVariable int taskId) throws IOException {
+        return s3Service.uploadImage(request, files, taskId, true);
+    }
+
+    @DeleteMapping("/detele/{imageId}")
+    public ResponseEntity<String> removeImage(HttpServletRequest request, @PathVariable int imageId) throws IOException {
+        return s3Service.removeImage(request, imageId);
     }
 }
