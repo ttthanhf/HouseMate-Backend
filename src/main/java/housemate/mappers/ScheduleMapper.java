@@ -34,8 +34,8 @@ public class ScheduleMapper {
 
     public Schedule mapToEntity(ReturnScheduleDTO returnScheduleDTO) {
         Schedule schedule = new Schedule();
-        LocalDateTime pickupDateTime = returnScheduleDTO.getPickupDate().atTime(returnScheduleDTO.getTime());
-        LocalDateTime receivedDateTime = returnScheduleDTO.getReceivedDate().atTime(returnScheduleDTO.getReceivedTime());
+        LocalDateTime pickupDateTime = returnScheduleDTO.getPickUpDate().atTime(returnScheduleDTO.getTime());
+        LocalDateTime receivedDateTime = returnScheduleDTO.getReceiveDate().atTime(returnScheduleDTO.getReceivedTime());
 
         schedule.setServiceId(returnScheduleDTO.getServiceId());
         schedule.setServiceTypeId(returnScheduleDTO.getTypeId());
