@@ -17,8 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-
-import housemate.constants.Enum;
 import housemate.constants.Role;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
@@ -41,8 +39,6 @@ import housemate.repositories.ServiceTypeRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import housemate.models.ServiceViewDTO.ServicePrice;
-
-import java.net.BindException;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
 
@@ -332,8 +328,9 @@ public class TheService {
 						.periodValue(cycleVaule)
 						.periodName(UsageDurationUnit.MONTH.name())
 						.finalPrice(cylcePriceListOfNewServ.get(cycleVaule))
+						.originalPrice(savedService.getOriginalPrice()*cycleVaule)
 						.build();
-				Period savedPeriod = periodRepo.save(newServicePeriod);
+				periodRepo.save(newServicePeriod);
 			}
 			
 			// TODO SAVE IMAGES
