@@ -8,15 +8,19 @@ import com.nimbusds.jose.shaded.gson.JsonObject;
 import housemate.constants.RegexConstants;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
+import housemate.entities.PackageServiceItem;
 import housemate.entities.Service;
 import housemate.entities.UserAccount;
+import housemate.entities.UserUsage;
 import housemate.models.UserInfoOrderDTO;
 import housemate.repositories.CartRepository;
 import housemate.repositories.OrderItemRepository;
 import housemate.utils.EncryptUtil;
 import housemate.repositories.OrderRepository;
+import housemate.repositories.PackageServiceItemRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.UserRepository;
+import housemate.repositories.UserUsageRepository;
 import housemate.utils.AuthorizationUtil;
 import housemate.utils.RandomUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -65,6 +69,12 @@ public class PaymentService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PackageServiceItemRepository packageServiceItemRepository;
+
+    @Autowired
+    private UserUsageRepository userUsageRepository;
 
     private final String language = "en";
     private final String vnp_IpAddr = "127.0.0.1";
@@ -274,6 +284,29 @@ public class PaymentService {
             orderItem.setService(service);
             serviceRepository.updateNumberOfSoldByServiceId(orderItem.getServiceId(), orderItem.getQuantity());
             cartRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
+
+            //user usage
+            if (service.isPackage()) {
+                List<PackageServiceItem> listPackageServiceItem = packageServiceItemRepository.findAllSingleServiceIdByPackageServiceId(service.getServiceId());
+                for (PackageServiceItem packageServiceItem : listPackageServiceItem) {
+                    UserUsage userUsage = new UserUsage();
+                    userUsage.setUserId(userId);
+                    userUsage.setServiceId(packageServiceItem.getSingleServiceId());
+                    userUsage.setRemaining(packageServiceItem.getQuantity() * orderItem.getQuantity());
+                    userUsage.setTotal(packageServiceItem.getQuantity() * orderItem.getQuantity());
+                    userUsage.setEndDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
+                    userUsageRepository.save(userUsage);
+                }
+
+            } else {
+                UserUsage userUsage = new UserUsage();
+                userUsage.setUserId(userId);
+                userUsage.setServiceId(service.getServiceId());
+                userUsage.setRemaining(orderItem.getQuantity());
+                userUsage.setTotal(orderItem.getQuantity());
+                userUsage.setEndDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
+                userUsageRepository.save(userUsage);
+            }
         }
 
         //add all missing field in db
