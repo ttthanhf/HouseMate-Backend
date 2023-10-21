@@ -33,17 +33,17 @@ public class UploadController {
     S3Service s3Service;
 
     @PostMapping("/service/{serviceId}")
-    public ResponseEntity<String> uploadServiceImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @PathVariable int serviceId) throws IOException {
+    public ResponseEntity<String> uploadServiceImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @PathVariable int serviceId) {
         return s3Service.uploadImage(request, files, serviceId, false);
     }
 
     @PostMapping("/task/{taskId}")
-    public ResponseEntity<String> uploadTaskImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @PathVariable int taskId) throws IOException {
+    public ResponseEntity<String> uploadTaskImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @PathVariable int taskId) {
         return s3Service.uploadImage(request, files, taskId, true);
     }
 
     @DeleteMapping("/detele/{imageId}")
-    public ResponseEntity<String> removeImage(HttpServletRequest request, @PathVariable int imageId) throws IOException {
+    public ResponseEntity<String> removeImage(HttpServletRequest request, @PathVariable int imageId) {
         return s3Service.removeImage(request, imageId);
     }
 }
