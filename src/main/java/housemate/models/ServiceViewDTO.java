@@ -36,9 +36,10 @@ public class ServiceViewDTO {
 	public static class ServicePrice { // let this class to access directly
 		private int periodId;
 		private int serviceId;
-		private float periodValue;
+		private int periodValue;
 		private String periodName;
-		private float finalPrice;
+		private int finalPrice;
+		private int originalPrice;
 	}
 
 }
