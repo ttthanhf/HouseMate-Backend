@@ -4,9 +4,7 @@
  */
 package housemate.entities;
 
-import housemate.constants.Enum.GroupType;
-import housemate.constants.Enum.SaleStatus;
-import housemate.constants.Enum.UnitOfMeasure;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
