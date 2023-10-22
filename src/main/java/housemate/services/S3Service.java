@@ -73,19 +73,18 @@ public class S3Service {
     @Async
     public ResponseEntity<String> uploadImage(HttpServletRequest request, MultipartFile[] files, int entityId, boolean isTask) {
 
-        String userRole = authorizationUtil.getRoleFromAuthorizationHeader(request);
-        if (!userRole.equals(Role.ADMIN.toString())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admin role");
-        }
-
         for (MultipartFile file : files) {
             if (!file.getContentType().startsWith("image/")) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Only image support");
             }
 
+            if (file.getSize() > 5 * 1024 * 1024) { // 5MB
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Image size must not exceed 5MB");
+            }
+
             long currentTimeStamp = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
             String extensionImage = ".webp";
-            String imageName = entityId + "-" + currentTimeStamp + extensionImage;
+            String imageName = entityId + "." + currentTimeStamp + extensionImage;
 
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(bucket, imageName);
             InitiateMultipartUploadResult initResult = s3client.initiateMultipartUpload(initRequest);
