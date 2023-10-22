@@ -99,12 +99,12 @@ public class CartService {
         Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
         int periodId = periodFirst.getPeriodId();
         //if dont have item in cart -> create new item in cart
-        Cart newcart = new Cart();
-        newcart.setUserId(userId);
-        newcart.setServiceId(serviceId);
-        newcart.setPeriodId(periodId);
-        newcart.setQuantity(cartDTO.getQuantity());
-        cartRepository.save(newcart);
+        cart = new Cart();
+        cart.setUserId(userId);
+        cart.setServiceId(serviceId);
+        cart.setPeriodId(periodId);
+        cart.setQuantity(cartDTO.getQuantity());
+        cartRepository.save(cart);
 
         return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
     }

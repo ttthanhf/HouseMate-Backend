@@ -1,12 +1,10 @@
 package housemate.repositories;
 
 import housemate.entities.Period;
-import jakarta.transaction.Transactional;
 
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -29,11 +27,6 @@ public interface PeriodRepository extends JpaRepository<Period, Integer> {
 
     @Query("SELECT p FROM Period p WHERE p.periodId = :periodId AND p.serviceId = :serviceId")
     Period getPeriodByPeriodIdAndServiceId(@Param("periodId") int periodId, @Param("serviceId") int serviceId);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE Period p SET p.percent = :percent WHERE p.periodId = :periodId")
-    void updatePeriodPercentByPeriodId(@Param("periodId") int periodId, @Param("percent") Float percent);
 
     @Query("SELECT p FROM Period p WHERE p.serviceId = :serviceId ORDER BY periodValue LIMIT 1")
     Period getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(int serviceId);
