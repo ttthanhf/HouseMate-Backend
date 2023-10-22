@@ -68,21 +68,22 @@ public class CartService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Service not found");
         }
 
-        int periodId = cartDTO.getPeriodId();
-        if (periodId == 0) {
-            Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
-            periodId = periodFirst.getPeriodId();
-        } else {
-            Period period = periodRepository.getPeriodByPeriodIdAndServiceId(periodId, serviceId);
-            if (period == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id for this service not found !");
-            }
-        }
+        Cart cart = cartRepository.getCartByUserIdAndServiceId(userId, serviceId);
 
         //if have item in cart -> update quantity and price only
-        if (cartRepository.getCartByUserIdAndServiceId(userId, serviceId) != null) {
+        if (cart != null) {
 
-            Cart cart = cartRepository.getCartByUserIdAndServiceId(userId, serviceId);
+            int periodId = cartDTO.getPeriodId();
+            if (periodId != 0) {
+                Period period = periodRepository.getPeriodByPeriodIdAndServiceId(periodId, serviceId);
+                if (period == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id for this service not found !");
+                }
+            } else {
+                periodId = cart.getPeriodId();
+            }
+
+            cart = cartRepository.getCartByUserIdAndServiceId(userId, serviceId);
 
             int quantity = cart.getQuantity() + cartDTO.getQuantity();
 
@@ -95,13 +96,15 @@ public class CartService {
             return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
         }
 
+        Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
+        int periodId = periodFirst.getPeriodId();
         //if dont have item in cart -> create new item in cart
-        Cart cart = new Cart();
-        cart.setUserId(userId);
-        cart.setServiceId(serviceId);
-        cart.setPeriodId(periodId);
-        cart.setQuantity(cartDTO.getQuantity());
-        cartRepository.save(cart);
+        Cart newcart = new Cart();
+        newcart.setUserId(userId);
+        newcart.setServiceId(serviceId);
+        newcart.setPeriodId(periodId);
+        newcart.setQuantity(cartDTO.getQuantity());
+        cartRepository.save(newcart);
 
         return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
     }
