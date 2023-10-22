@@ -66,7 +66,7 @@ public class CartService {
         }
 
         int periodId = cartDTO.getPeriodId();
-        if (cartDTO.getPeriodId() == 0) {
+        if (periodId == 0) {
             Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
             periodId = periodFirst.getPeriodId();
         } else {
