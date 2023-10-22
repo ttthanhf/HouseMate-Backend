@@ -27,7 +27,6 @@ public class Enum {
 		HOURLY_SERVICE,
 		RETURN_SERVICE,
 		DELIVERY_SERVICE,
-		OTHER
 	}
 
 	public static enum SaleStatus {

@@ -19,13 +19,14 @@ public class ScheduleMapper {
         LocalDateTime startDate = hourlyScheduleDTO.getDate().atTime(hourlyScheduleDTO.getTimeRanges().get(0));
         LocalDateTime endDate = hourlyScheduleDTO.getDate().atTime(hourlyScheduleDTO.getTimeRanges().get(1));
         int quantityRetrieve = (int) Duration.between(startDate, endDate).toHours();
+        String note = hourlyScheduleDTO.getNote();
 
         schedule.setServiceId(hourlyScheduleDTO.getServiceId());
         schedule.setServiceTypeId(hourlyScheduleDTO.getTypeId());
         schedule.setQuantityRetrieve(quantityRetrieve);
         schedule.setStartDate(startDate);
         schedule.setEndDate(endDate);
-        schedule.setNote(hourlyScheduleDTO.getNote());
+        schedule.setNote(note == null ? "" : note.trim());
         schedule.setCycle(hourlyScheduleDTO.getCycle());
         schedule.setStatus(ScheduleStatus.PROCESSING);
 
@@ -36,13 +37,14 @@ public class ScheduleMapper {
         Schedule schedule = new Schedule();
         LocalDateTime pickupDateTime = returnScheduleDTO.getPickUpDate().atTime(returnScheduleDTO.getTime());
         LocalDateTime receivedDateTime = returnScheduleDTO.getReceiveDate().atTime(returnScheduleDTO.getReceivedTime());
+        String note = returnScheduleDTO.getNote();
 
         schedule.setServiceId(returnScheduleDTO.getServiceId());
         schedule.setServiceTypeId(returnScheduleDTO.getTypeId());
-        schedule.setQuantityRetrieve(0);
+        schedule.setQuantityRetrieve(1);
         schedule.setStartDate(pickupDateTime);
         schedule.setEndDate(receivedDateTime);
-        schedule.setNote(returnScheduleDTO.getNote());
+        schedule.setNote(note == null ? "" : note.trim());
         schedule.setCycle(returnScheduleDTO.getCycle());
         schedule.setStatus(ScheduleStatus.PROCESSING);
 
@@ -52,13 +54,14 @@ public class ScheduleMapper {
     public Schedule mapToEntity(DeliveryScheduleDTO deliveryScheduleDTO) {
         Schedule schedule = new Schedule();
         LocalDateTime startDate = deliveryScheduleDTO.getDate().atTime(deliveryScheduleDTO.getTime());
+        String note = deliveryScheduleDTO.getNote();
 
         schedule.setServiceId(deliveryScheduleDTO.getServiceId());
         schedule.setServiceTypeId(deliveryScheduleDTO.getTypeId());
         schedule.setQuantityRetrieve(deliveryScheduleDTO.getQuantity());
         schedule.setStartDate(startDate);
         schedule.setEndDate(startDate.plusHours(1)); // Default endTime is add 1hr in startDate
-        schedule.setNote(deliveryScheduleDTO.getNote());
+        schedule.setNote(note == null ? "" : note.trim());
         schedule.setCycle(deliveryScheduleDTO.getCycle());
         schedule.setStatus(ScheduleStatus.PROCESSING);
 
