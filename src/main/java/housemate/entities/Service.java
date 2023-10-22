@@ -40,11 +40,8 @@ public class Service {
 
 	@Column(name = "original_price", nullable = false)
 	private int originalPrice;
-
-	@Column(name = "sale_price")
-	private int salePrice;
 	
-    @Column(name = "final_price")
+    @Column(name = "final_price", nullable = false)
     private int finalPrice;
 
 	@Enumerated(EnumType.STRING)
@@ -82,12 +79,5 @@ public class Service {
 	@JsonInclude(value = Include.NON_NULL)
 	@Transient
 	private Integer numberOfComment;
-	
-	@PrePersist
-	@PreUpdate
-	private void preDoing() {
-		finalPrice = salePrice == 0 ? originalPrice : originalPrice - originalPrice * salePrice / 100;
-		this.setFinalPrice(finalPrice);
-	}
 
 }
