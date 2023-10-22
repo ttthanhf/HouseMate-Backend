@@ -65,15 +65,15 @@ public class CartService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Service not found");
         }
 
-        Period period = periodRepository.getPeriodByPeriodIdAndServiceId(cartDTO.getPeriodId(), serviceId);
-        if (period == null && cartDTO.getPeriodId() != 0) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id for this service not found !");
-        }
-
         int periodId = cartDTO.getPeriodId();
         if (cartDTO.getPeriodId() == 0) {
             Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
             periodId = periodFirst.getPeriodId();
+        } else {
+            Period period = periodRepository.getPeriodByPeriodIdAndServiceId(periodId, serviceId);
+            if (period == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id for this service not found !");
+            }
         }
 
         //if have item in cart -> update quantity and price only
