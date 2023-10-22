@@ -46,6 +46,9 @@ public class OrderItem {
     @Column(name = "original_price")
     private int originalPrice;
 
+    @Column(name = "period_name")
+    private String periodName;
+
     @Transient
     private int discountPrice;
 
