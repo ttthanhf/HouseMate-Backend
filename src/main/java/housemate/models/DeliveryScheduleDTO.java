@@ -8,8 +8,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import housemate.constants.Cycle;
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 
