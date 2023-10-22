@@ -8,8 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,10 +38,7 @@ import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolationException;
 import housemate.models.ServiceViewDTO.ServicePrice;
-
-import java.sql.SQLException;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
 
@@ -181,7 +176,6 @@ public class TheService {
 		// set combo price for each service
 		List<ServicePrice> priceList = new ArrayList<>();
 		ServicePrice servicePrice = new ServicePrice();
-		
 		List<Period> periodServiceList = periodRepo.findAllByServiceId(serviceId);
 		periodServiceList.forEach(s -> priceList.add(mapper.map(s, ServicePrice.class)));
 		serviceDtoForDetail.setPriceList(priceList);
