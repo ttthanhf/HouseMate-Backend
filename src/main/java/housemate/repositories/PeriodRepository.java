@@ -19,16 +19,25 @@ import org.springframework.data.repository.query.Param;
  * @author ThanhF
  */
 public interface PeriodRepository extends JpaRepository<Period, Integer> {
-	
-	List<Period> findAllByServiceId(int serviceId);
-	
-	void deleteAllByServiceId(int serviceId);
+
+    List<Period> findAllByServiceId(int serviceId);
+
+    void deleteAllByServiceId(int serviceId);
 
     @Query("SELECT p FROM Period p WHERE p.periodId = :periodId")
-    Period getPeriodByid(@Param("periodId") int periodId);
+    Period getPeriodById(@Param("periodId") int periodId);
+
+    @Query("SELECT p FROM Period p WHERE p.periodId = :periodId AND p.serviceId = :serviceId")
+    Period getPeriodByPeriodIdAndServiceId(@Param("periodId") int periodId, @Param("serviceId") int serviceId);
 
     @Modifying
     @Transactional
     @Query("UPDATE Period p SET p.percent = :percent WHERE p.periodId = :periodId")
     void updatePeriodPercentByPeriodId(@Param("periodId") int periodId, @Param("percent") Float percent);
+
+    @Query("SELECT p FROM Period p WHERE p.serviceId = :serviceId ORDER BY periodValue LIMIT 1")
+    Period getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(int serviceId);
+
+    @Query("SELECT p FROM Period p WHERE p.serviceId = :serviceId")
+    List<Period> getAllPeriodByServiceId(int serviceId);
 }
