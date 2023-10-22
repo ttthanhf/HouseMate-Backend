@@ -59,4 +59,7 @@ public interface CartRepository extends JpaRepository<Cart, Integer> {
 
     @Query("SELECT sum(c.quantity) FROM Cart c WHERE c.userId = :userId")
     int getTotalQuantityCart(@Param("userId") int userId);
+
+    @Query("SELECT COUNT(c) FROM Cart c WHERE c.userId = :userId")
+    int getCartLength(@Param("userId") int userId);
 }

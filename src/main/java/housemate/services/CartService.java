@@ -70,6 +70,8 @@ public class CartService {
 
         Cart cart = cartRepository.getCartByUserIdAndServiceId(userId, serviceId);
 
+        int cartLength = cartRepository.getCartLength(userId);
+
         //if have item in cart -> update quantity and price only
         if (cart != null) {
 
@@ -93,7 +95,7 @@ public class CartService {
             }
 
             cartRepository.updateCart(userId, serviceId, quantity, periodId);
-            return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
+            return ResponseEntity.status(HttpStatus.OK).body(cartLength + ""); // ko toString được
         }
 
         Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
@@ -106,7 +108,7 @@ public class CartService {
         cart.setQuantity(cartDTO.getQuantity());
         cartRepository.save(cart);
 
-        return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
+        return ResponseEntity.status(HttpStatus.OK).body((cartLength + 1) + ""); // ko toString được
     }
 
     public ResponseEntity<String> updateToCart(HttpServletRequest request, CartDTO cartDTO) {
