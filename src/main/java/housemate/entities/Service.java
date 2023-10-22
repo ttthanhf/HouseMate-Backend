@@ -44,9 +44,6 @@ public class Service {
     @Column(name = "final_price", nullable = false)
     private int finalPrice;
 
-	@Column(name = "sale_price")
-	private int salePrice;
-
 	@Enumerated(EnumType.STRING)
 	@Column(name = "unit_of_measure", nullable = false)
 	private UnitOfMeasure unitOfMeasure;
@@ -82,11 +79,5 @@ public class Service {
 	@JsonInclude(value = Include.NON_NULL)
 	@Transient
 	private Integer numberOfComment;
-	
-	@PrePersist
-	@PreUpdate
-	private void preDoing() {
-		salePrice = originalPrice - finalPrice ;
-		this.setSalePrice(salePrice);
-	}
+
 }

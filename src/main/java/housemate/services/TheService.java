@@ -457,7 +457,6 @@ public class TheService {
 			oldService.setDescription(serviceDTO.getDescription());
 			oldService.setOriginalPrice(serviceDTO.getOriginalPrice());
 			oldService.setFinalPrice(serviceDTO.getFinalPrice());
-			oldService.setSalePrice(oldService.getOriginalPrice() - oldService.getFinalPrice());
 			oldService.setGroupType(serviceDTO.getGroupType());
 
 			// TODO: UPDATE IMAGES
