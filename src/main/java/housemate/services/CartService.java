@@ -49,6 +49,9 @@ public class CartService {
             cart.setService(service);
             List<Period> listPeriod = periodRepository.getAllPeriodByServiceId(cart.getServiceId());
             cart.setListPeriod(listPeriod);
+            Period period = periodRepository.getPeriodById(cart.getPeriodId());
+            cart.setFinalPrice(period.getFinalPrice());
+            cart.setOriginalPrice(period.getOriginalPrice());
 
         }
 
