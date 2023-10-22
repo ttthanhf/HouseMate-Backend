@@ -43,6 +43,12 @@ public class Cart {
     private int periodId;
 
     @Transient
+    private int finalPrice;
+
+    @Transient
+    private int originalPrice;
+
+    @Transient
     private List<Period> listPeriod;
 
     @Transient
