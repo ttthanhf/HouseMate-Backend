@@ -36,11 +36,11 @@ public class ServiceNewDTO {
 	@Min(value = 1000, message = "Price must from 1,000 VND upper")
 	@Schema(description = "Original price")
 	private Integer originalPrice;
-
+	
 	@Schema(description = "Sale price")
 	@PositiveOrZero(message = "Set the Final Price from 0 to upper and smaller than or equal Original Price")
 	private Integer finalPrice;
-
+	
 	@NotNull(message = "The unit of measure type must not be empty")
 	@Schema(description = "The Unit of measure in one of these type: KG, HOUR, TIME, COMBO."
 			+ " With package - unit measure default = COMBO")
@@ -56,14 +56,14 @@ public class ServiceNewDTO {
 	@JsonInclude(value = Include.NON_NULL)
 	private SaleStatus saleStatus;
 
+	@NotNull(message = "The group type must not be null")
+	@Schema(description = "The Group Type in one of these type: "
+			+ "CLEANING_SERVICE, RETURN_SERVICE, DELIVERY_SERVICE")
+	private GroupType groupType;
+	
 	@NotEmpty(message = "Require at least one image")
 	@Schema(description = "Images Of Service")
 	private List<String> images;
-
-	@NotNull(message = "The group type must not be null")
-	@Schema(description = "The Group Type in one of these type: "
-			+ "CLEANING_SERVICE, RETURN_SERVICE, DELIVERY_SERVICE, OTHER")
-	private GroupType groupType;
 
 	@NotNull(message = "Specify this category of service isPackage or single by true or false")
 	@Schema(description = "Is package: true ? false")
