@@ -6,7 +6,9 @@ package housemate.repositories;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Sort;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import housemate.entities.Service;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,15 +38,18 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	List<Service> findAllByIsPackageFalse();
 
 	@Query("SELECT s FROM Service s WHERE "
-			+ "s.saleStatus = :saleStatus "
-			+ "AND LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')) "
-			+ "AND s.avgRating >= :ratingFrom ")
-	List<Service> searchFilterAllKind(
+			+ "(:saleStatus IS NULL OR s.saleStatus = :saleStatus) "
+			+ "AND s.saleStatus <> 'DISCONTINUED'"
+			+ "AND (:keyword IS NULL OR LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')))  "
+			+ "AND s.avgRating >= :ratingFrom "
+			+ "AND (:isPackage IS NULL OR s.isPackage = :isPackage) ")
+	Page<Service> searchFilterAllAvailable(
 			@Param("saleStatus") SaleStatus saleStatus,
 			@Param("keyword") String keyword,
 			@Param("ratingFrom") int ratingFrom,
-			Sort sort);
-
+			@Param("isPackage") Boolean isPackage,
+			Pageable page);
+	
 	@Query("SELECT s FROM Service s WHERE "
 			+ "s.saleStatus = 'ONSALE' "
 			+ "ORDER BY s.numberOfSold DESC "
@@ -64,9 +69,6 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	
 	@Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
 	int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
-
-	@Query("SELECT s.salePrice FROM Service s WHERE s.serviceId = :serviceId")
-	int getSalePriceByServiceId(@Param("serviceId") int serviceId);
 
 	@Query("SELECT s FROM Service s WHERE s.serviceId = :serviceId")
 	Service getServiceByServiceId(@Param("serviceId") int serviceId);
