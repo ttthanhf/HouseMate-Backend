@@ -32,13 +32,14 @@ public class ServiceViewDTO {
 
 	@Data
 	@NoArgsConstructor
-	@AllArgsConstructor
-	public static class ServicePrice { // let this class to access directly
+	@AllArgsConstructor // let this class to access directly
+	public static class ServicePrice { 
 		private int periodId;
 		private int serviceId;
-		private float periodValue;
+		private int periodValue;
 		private String periodName;
-		private float finalPrice;
+		private int originalPrice;
+		private int finalPrice;		
 	}
 
 }
