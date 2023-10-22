@@ -52,6 +52,9 @@ public class Order {
 
     @Column(name = "transaction_date")
     private String transactionDate;
+    
+    @Column(name = "address")
+    private String address;
 
     @Transient
     private int discountPrice;

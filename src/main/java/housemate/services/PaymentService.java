@@ -51,65 +51,66 @@ import org.springframework.http.ResponseEntity;
  */
 @org.springframework.stereotype.Service
 public class PaymentService {
-
+    
     @Autowired
     private AuthorizationUtil authorizationUtil;
-
+    
     @Autowired
     private OrderRepository orderRepository;
-
+    
     @Autowired
     private OrderItemRepository orderItemRepository;
-
+    
     @Autowired
     private ServiceRepository serviceRepository;
-
+    
     @Autowired
     private CartRepository cartRepository;
-
+    
     @Autowired
     private UserRepository userRepository;
-
+    
     @Autowired
     private PackageServiceItemRepository packageServiceItemRepository;
-
+    
     @Autowired
     private UserUsageRepository userUsageRepository;
-
+    
     private final String language = "en";
     private final String vnp_IpAddr = "127.0.0.1";
     private final String bankCode = "";
-
+    
     @Value("${vnp.version}")
     private String vnp_Version;
-
+    
     @Value("${vnp.pay_url}")
     private String vnp_PayUrl;
-
+    
     @Value("${vnp.return_url}")
     private String vnp_ReturnUrl;
-
+    
     @Value("${vnp.api_url}")
     private String vnp_ApiUrl;
-
+    
     @Value("${vnp.TmnCode}")
     private String vnp_TmnCode;
-
+    
     @Value("${vnp.secretKey}")
     private String secretKey;
-
+    
     public ResponseEntity<String> createVNPayPayment(HttpServletRequest request, UserInfoOrderDTO userInfoOrderDTO) throws UnsupportedEncodingException {
-
+        
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
 
         //id address null => set new address
+        String address = userInfoOrderDTO.getAddress();
         if (user.getAddress() == null) {
-            user.setAddress(userInfoOrderDTO.getAddress());
+            user.setAddress(address);
         }
-
+        
         user = userRepository.save(user);
-
+        
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
 
         //if user dont have order => can not pay
@@ -122,13 +123,14 @@ public class PaymentService {
         if (!"vnpay".equals(paymentMethod)) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Only supports vnpay at the present time !");
         }
-
+        
+        order.setAddress(address);
         order.setPaymentMethod(paymentMethod);
         orderRepository.save(order);
 
         //much to plus 100 => vnpay api faq
         long amount = order.getFinalPrice() * 100;
-
+        
         String vnp_TxnRef = RandomUtil.getRandomNumber(8);
         String vnp_Command = "pay";
 
@@ -147,17 +149,17 @@ public class PaymentService {
         vnp_Params.put("vnp_OrderType", "other"); //options, can remove
         vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-
+        
         ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh");
         ZonedDateTime now = ZonedDateTime.now(zoneId);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         String vnp_CreateDate = now.format(formatter);
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
-
+        
         vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang:" + vnp_TxnRef);
-
+        
         ZonedDateTime expireDate = now.plusMinutes(15);
-
+        
         String vnp_ExpireDate = expireDate.format(formatter);
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
@@ -188,18 +190,18 @@ public class PaymentService {
         //create hash for checksum
         String vnp_SecureHash = EncryptUtil.hmacSHA512(secretKey, hashData.toString());
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
-
+        
         String paymentUrl = vnp_PayUrl + "?" + queryUrl;
-
+        
         return ResponseEntity.status(HttpStatus.OK).body(paymentUrl);
     }
-
+    
     public ResponseEntity<?> checkVNPayPayment(HttpServletRequest request, String vnp_TxnRef, String vnp_TransactionDate) throws IOException {
-
+        
         String vnp_RequestId = RandomUtil.getRandomNumber(8);
         String vnp_Command = "querydr";
         String vnp_OrderInfo = "Result: " + vnp_TxnRef;
-
+        
         ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh");
         ZonedDateTime now = ZonedDateTime.now(zoneId);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -220,7 +222,7 @@ public class PaymentService {
         //create hash for checksum
         String hash_Data = String.join("|", vnp_RequestId, vnp_Version, vnp_Command, vnp_TmnCode, vnp_TxnRef, vnp_TransactionDate, vnp_CreateDate, vnp_IpAddr, vnp_OrderInfo);
         String vnp_SecureHash = EncryptUtil.hmacSHA512(secretKey, hash_Data);
-
+        
         vnp_Params.addProperty("vnp_SecureHash", vnp_SecureHash);
 
         //Send request for vnpay to get status payment info
@@ -246,17 +248,17 @@ public class PaymentService {
         Matcher matcherResponseCode = patternResponseCode.matcher(response.toString());
         Pattern patternResponseMessage = Pattern.compile(RegexConstants.PATTERN_RESPONSE_MASSAGE_PAYMENT);
         Matcher matcherResponseMessage = patternResponseMessage.matcher(response.toString());
-
+        
         if (!matcherResponseCode.find()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find RsCode");
         }
         String responseCode = matcherResponseCode.group(1);
-
+        
         if (!matcherResponseMessage.find()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find RsMsg");
         }
         String responseMessage = matcherResponseMessage.group(1);
-
+        
         if (!"00".equals(responseCode)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseMessage);
         }
@@ -294,17 +296,17 @@ public class PaymentService {
                     userUsage.setServiceId(packageServiceItem.getSingleServiceId());
                     userUsage.setRemaining(packageServiceItem.getQuantity() * orderItem.getQuantity());
                     userUsage.setTotal(packageServiceItem.getQuantity() * orderItem.getQuantity());
-                    userUsage.setEndDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
+                    userUsage.setEndDate(orderItem.getExpireDate());
                     userUsageRepository.save(userUsage);
                 }
-
+                
             } else {
                 UserUsage userUsage = new UserUsage();
                 userUsage.setUserId(userId);
                 userUsage.setServiceId(service.getServiceId());
                 userUsage.setRemaining(orderItem.getQuantity());
                 userUsage.setTotal(orderItem.getQuantity());
-                userUsage.setEndDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
+                userUsage.setEndDate(orderItem.getExpireDate());
                 userUsageRepository.save(userUsage);
             }
         }
@@ -320,7 +322,7 @@ public class PaymentService {
         order.setDiscountPrice(order.getSubTotal() - order.getFinalPrice());
         order.setListOrderItem(listOrderItem);
         order.setUser(user);
-
+        
         return ResponseEntity.status(HttpStatus.OK).body(order);
     }
 }

@@ -42,6 +42,4 @@ public class Period {
     @Column(name = "original_price")
     private int originalPrice;
 
-    @Column(name = "percent")
-    private float percent;
 }
