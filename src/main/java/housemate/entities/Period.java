@@ -40,6 +40,9 @@ public class Period {
     @Column(name = "final_price")
     private int finalPrice;
     
+    @Column(name = "original_price")
+    private int originalPrice;
+    
     @Column(name = "percent")
     private float percent;
 }

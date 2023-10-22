@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -141,7 +143,7 @@ public class TheService {
 		if (serviceList.isEmpty() || serviceList == null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
 
-		return  ResponseEntity.ok(serviceList);
+		return ResponseEntity.ok(serviceList);
 	}
 
 	public ResponseEntity<?> getOne(int serviceId) {
@@ -214,7 +216,7 @@ public class TheService {
 			//check valid between original price and final price of service 
 			if (serviceDTO.getFinalPrice() > serviceDTO.getOriginalPrice())
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-						.body("Set the Final Price from 0 to upper and smaller than or equal Original Price ");
+						.body("Set the Final Price from 0 to upper, smaller than or equal Original Price ");
 
 			// Set auto sale status
 			if (serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED))
@@ -265,7 +267,7 @@ public class TheService {
 				}
 			}
 
-			// TODO: check service price cycle list constraints
+			// check service price cycle list constraints
 			List<Integer> cycleList = List.of(3, 6, 9, 12);
 			Map<Integer, Integer> cylcePriceListOfNewServ = serviceDTO.getPeriodPriceServiceList();
 			if (cylcePriceListOfNewServ.size() != 4 || !cycleList.containsAll(cylcePriceListOfNewServ.keySet()))
@@ -279,7 +281,7 @@ public class TheService {
 
 			// ==after check all then map to DTO & save SavedService into DB to get newservice Id==
 			savedService = serviceRepo.save(mapper.map(serviceDTO, Service.class));
-
+			
 			if (savedService == null)
 				return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed !");
 
@@ -298,25 +300,27 @@ public class TheService {
 			if (serviceDTO.getServiceChildList() != null && serviceDTO.getIsPackage() && savedService != null) {
 				int savedServiceId = savedService.getServiceId();
 				Map<Integer, Integer> childServiceSet = serviceDTO.getServiceChildList();
-				int sumSingleServiceSalePrice = 0;
+				int sumSingleServiceOriginalPrice = 0;
 				for (Integer singleServiceId : childServiceSet.keySet()) {
 					PackageServiceItem item = new PackageServiceItem(); // save package service item
 					item.setPackageServiceId(savedServiceId);
 					item.setSingleServiceId(singleServiceId);
 					item.setQuantity(childServiceSet.get(singleServiceId));
-					sumSingleServiceSalePrice += (serviceRepo.findByServiceId(singleServiceId).orElse(null)
-							                     .getOriginalPrice() * item.getQuantity());
+					sumSingleServiceOriginalPrice += (serviceRepo.findByServiceId(singleServiceId).orElse(null)
+							                      .getOriginalPrice() * item.getQuantity());
 					packageServiceItemRepo.save(item);
 				}
 
 				// check original price of package
-				if (serviceDTO.getOriginalPrice() != sumSingleServiceSalePrice) {
+				if (serviceDTO.getOriginalPrice() != sumSingleServiceOriginalPrice) {
 					TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-							.body("The original price of package must be the sum of all single service child list ! "
-								+ "\nThe original price of package should be " + sumSingleServiceSalePrice);
+							.body("The original price of package must be the sum of all single service child list !"
+							    + "\nThe original price of package should be " + sumSingleServiceOriginalPrice);
 				}
-				savedService.setOriginalPrice(sumSingleServiceSalePrice);
+				
+				//Auto saving sum originalPrice
+				savedService.setOriginalPrice(sumSingleServiceOriginalPrice);
 				serviceRepo.save(savedService);
 			}
 			
@@ -327,8 +331,9 @@ public class TheService {
 						.periodValue(cycleVaule)
 						.periodName(UsageDurationUnit.MONTH.name())
 						.finalPrice(cylcePriceListOfNewServ.get(cycleVaule))
+						.originalPrice(savedService.getOriginalPrice()*cycleVaule)
 						.build();
-				Period savedPeriod = periodRepo.save(newServicePeriod);
+				periodRepo.save(newServicePeriod);
 			}
 			
 			// TODO SAVE IMAGES
@@ -349,7 +354,7 @@ public class TheService {
 		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
 
-		Service savedService = null;
+		Service updatedService = null;
 
 		try {
 			Service oldService = serviceRepo.findById(serviceId).orElse(null);
@@ -357,7 +362,9 @@ public class TheService {
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The service does not exists !");
 
 			// Check Valid Name For Update
-			if (!serviceDTO.getTitleName().equalsIgnoreCase(removeDiacriticalMarks(oldService.getTitleName())))
+			String formatedTitleName = serviceDTO.getTitleName().trim().replaceAll("\\s+", " ");
+			serviceDTO.setTitleName(formatedTitleName);
+			if (!formatedTitleName.equalsIgnoreCase(oldService.getTitleName()))
 				if (serviceRepo.findByTitleNameIgnoreCase(removeDiacriticalMarks(serviceDTO.getTitleName().trim())) != null)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The title name has existed before !");
 			
@@ -394,10 +401,10 @@ public class TheService {
 				if (serviceDTO.getServiceChildList() != null)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("This sevice id is the single service. Not allow to set service child list !");
-				if (serviceDTO.getTypeNameList() == null)
-					serviceTypeRepo.deleteAllByServiceId(serviceId);
+				if (serviceDTO.getTypeNameList().isEmpty())
+					serviceTypeRepo.updateServiceIdForRemove(serviceId);
 				// check type name of each single service is unique ignore case after request
-				if (serviceDTO.getTypeNameList() != null) {
+				if (!serviceDTO.getTypeNameList().isEmpty()) {
 					Set<String> typeNameList = serviceDTO.getTypeNameList();
 					Set<String> uniqueNames = new HashSet<>();
 					// check any type name have equal ignore case
@@ -406,7 +413,7 @@ public class TheService {
 							return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 									.body("Duplicated the type name of this service !");
 					// Reset Type Name List and Update
-					serviceTypeRepo.deleteAllByServiceId(serviceId);
+					serviceTypeRepo.updateServiceIdForRemove(serviceId);
 					for (String element : serviceDTO.getTypeNameList()) {
 						ServiceType type = new ServiceType();
 						type.setServiceId(serviceId);
@@ -441,24 +448,6 @@ public class TheService {
 				}
 			}
 			
-			List<Integer> cycleList = List.of(3, 6, 9, 12);
-			Map<Integer, Integer> cylcePriceListOfNewServ = serviceDTO.getPeriodPriceServiceList();
-			if (cylcePriceListOfNewServ.size() != 4 || !cycleList.containsAll(cylcePriceListOfNewServ.keySet()))
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-						.body("Have to set price foreach 4 cycles : 3, 6, 9 ,12 of this service");
-			if (!cylcePriceListOfNewServ.entrySet().stream().allMatch(p -> p.getValue() >= 1000))
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-						.body("Set the price for each cycle from 1000 upper");
-			periodRepo.deleteAllByServiceId(oldService.getServiceId());
-			for (Integer cycleVaule : cylcePriceListOfNewServ.keySet()) {
-				periodRepo.save(Period.builder().serviceId(
-						oldService.getServiceId())
-						.periodValue(cycleVaule)
-						.periodName(UsageDurationUnit.MONTH.name())
-						.finalPrice(cylcePriceListOfNewServ.get(cycleVaule))
-						.build());
-			}
-
 			// check typename list and single service list ok then save all into db
 			oldService.setTitleName(serviceDTO.getTitleName());
 			oldService.setDescription(serviceDTO.getDescription());
@@ -467,7 +456,27 @@ public class TheService {
 			oldService.setGroupType(serviceDTO.getGroupType());
 
 			// TODO: UPDATE IMAGES
-			savedService = serviceRepo.save(oldService);
+			updatedService = serviceRepo.save(oldService);
+			
+			//Update the price cycle list of this service
+			List<Integer> cycleList = List.of(3, 6, 9, 12);
+			Map<Integer, Integer> cylcePriceListOfNewServ = serviceDTO.getPeriodPriceServiceList();
+			if (cylcePriceListOfNewServ.size() != 4 || !cycleList.containsAll(cylcePriceListOfNewServ.keySet()))
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+						.body("Have to set price foreach 4 cycles : 3, 6, 9 ,12 of this service");
+			if (!cylcePriceListOfNewServ.entrySet().stream().allMatch(p -> p.getValue() >= 1000))
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+						.body("Set the price for each cycle from 1000 upper");
+			for (Integer cycleVaule : cylcePriceListOfNewServ.keySet()) {
+				periodRepo.save(Period.builder()
+						.periodId(periodRepo.findByServiceIdAndPeriodValue(oldService.getServiceId(),cycleVaule).getPeriodId())
+						.serviceId(oldService.getServiceId())
+						.periodValue(cycleVaule)
+						.periodName(UsageDurationUnit.MONTH.name())
+						.finalPrice(cylcePriceListOfNewServ.get(cycleVaule))
+						.originalPrice(updatedService.getOriginalPrice()*cycleVaule)
+						.build());
+			}
 
 		} catch (Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -475,7 +484,7 @@ public class TheService {
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Update Failed ! ");
 		}
 
-		return this.getOne(savedService.getServiceId());
+		return this.getOne(updatedService.getServiceId());
 	}
 	
 	  private static String removeDiacriticalMarks(String str) {
@@ -485,5 +494,6 @@ public class TheService {
 	    }
 
 	// TODO: DELETE SERVICE LATER
+	  
 
 }
