@@ -17,10 +17,12 @@ import org.springframework.data.repository.query.Param;
  * @author ThanhF
  */
 public interface PeriodRepository extends JpaRepository<Period, Integer> {
-
-    List<Period> findAllByServiceId(int serviceId);
-
-    void deleteAllByServiceId(int serviceId);
+	
+	List<Period> findAllByServiceId(int serviceId);
+	
+	Period findByServiceIdAndPeriodValue(int serviceId, int cycleValue);
+	
+	void deleteAllByServiceId(int serviceId);
 
     @Query("SELECT p FROM Period p WHERE p.periodId = :periodId")
     Period getPeriodById(@Param("periodId") int periodId);
@@ -33,4 +35,10 @@ public interface PeriodRepository extends JpaRepository<Period, Integer> {
 
     @Query("SELECT p FROM Period p WHERE p.serviceId = :serviceId")
     List<Period> getAllPeriodByServiceId(int serviceId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Period p SET p.percent = :percent WHERE p.periodId = :periodId")
+    void updatePeriodPercentByPeriodId(@Param("periodId") int periodId, @Param("percent") Float percent);
+    
 }

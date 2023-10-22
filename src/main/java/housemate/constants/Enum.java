@@ -25,8 +25,7 @@ public class Enum {
 	public static enum GroupType {
 		HOURLY_SERVICE,
 		RETURN_SERVICE,
-		DELIVERY_SERVICE,
-		OTHER
+		DELIVERY_SERVICE
 	}
 
 	public static enum SaleStatus {
