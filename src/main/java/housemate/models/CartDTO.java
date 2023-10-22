@@ -6,6 +6,7 @@ package housemate.models;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 
 /**
@@ -24,6 +25,6 @@ public class CartDTO {
     @Positive(message = "Quantity must be greater than 0")
     private int quantity;
 
-    @Positive(message = "Period Id must be greater than 0")
+    @PositiveOrZero(message = "Period Id must be greater than 0")
     private int periodId;
 }

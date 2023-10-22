@@ -34,7 +34,7 @@ public class PeriodService {
     }
 
     public ResponseEntity<String> updatePeriodPercentByPeriodId(HttpServletRequest request, int periodId, Float percent) {
-        Period period = periodRepository.getPeriodByid(periodId);
+        Period period = periodRepository.getPeriodById(periodId);
         if (period == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("PeriodId not found");
         }

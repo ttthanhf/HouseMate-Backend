@@ -157,10 +157,10 @@ public class OrderService {
             orderItem.setQuantity(cart.getQuantity());
             orderItem.setOrderId(order.getOrderId());
 
-            Period period = periodRepository.getPeriodByid(cart.getPeriodId());
+            Period period = periodRepository.getPeriodById(cart.getPeriodId());
             orderItem.setPeriodName(period.getPeriodName());
 
-            float percent = periodRepository.getPeriodByid(cart.getPeriodId()).getPercent();
+            float percent = periodRepository.getPeriodById(cart.getPeriodId()).getPercent();
             int quantity = cart.getQuantity();
 
             int finalPriceService = serviceRepository.getFinalPriceByServiceId(cart.getServiceId());
