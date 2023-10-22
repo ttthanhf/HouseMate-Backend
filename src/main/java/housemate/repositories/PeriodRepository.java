@@ -35,10 +35,5 @@ public interface PeriodRepository extends JpaRepository<Period, Integer> {
 
     @Query("SELECT p FROM Period p WHERE p.serviceId = :serviceId")
     List<Period> getAllPeriodByServiceId(int serviceId);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE Period p SET p.percent = :percent WHERE p.periodId = :periodId")
-    void updatePeriodPercentByPeriodId(@Param("periodId") int periodId, @Param("percent") Float percent);
     
 }
