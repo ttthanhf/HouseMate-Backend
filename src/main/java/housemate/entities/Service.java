@@ -40,12 +40,12 @@ public class Service {
 
 	@Column(name = "original_price", nullable = false)
 	private int originalPrice;
+	
+    @Column(name = "final_price", nullable = false)
+    private int finalPrice;
 
 	@Column(name = "sale_price")
 	private int salePrice;
-	
-    @Column(name = "final_price")
-    private int finalPrice;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "unit_of_measure", nullable = false)
@@ -86,8 +86,7 @@ public class Service {
 	@PrePersist
 	@PreUpdate
 	private void preDoing() {
-		finalPrice = salePrice == 0 ? originalPrice : originalPrice - originalPrice * salePrice / 100;
-		this.setFinalPrice(finalPrice);
+		salePrice = originalPrice - finalPrice ;
+		this.setSalePrice(salePrice);
 	}
-
 }
