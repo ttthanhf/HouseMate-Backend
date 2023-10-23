@@ -1,12 +1,16 @@
 package housemate.controllers;
 
+import housemate.models.UploadDTO;
 import housemate.services.S3Service;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,19 +30,15 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/upload")
 @CrossOrigin
 @Tag(name = "Upload")
+@SecurityRequirement(name = "bearerAuth")
 public class UploadController {
 
     @Autowired
     S3Service s3Service;
 
-    @PostMapping("/service/{serviceId}")
-    public ResponseEntity<String> uploadServiceImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @PathVariable int serviceId) {
-        return s3Service.uploadImage(request, files, serviceId, false);
-    }
-
-    @PostMapping("/task/{taskId}")
-    public ResponseEntity<String> uploadTaskImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @PathVariable int taskId) {
-        return s3Service.uploadImage(request, files, taskId, true);
+    @PostMapping()
+    public ResponseEntity<String> uploadImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @Valid @ModelAttribute UploadDTO uploadDTO) {
+        return s3Service.uploadImage(request, files, uploadDTO);
     }
 
     @DeleteMapping("/detele/{imageId}")

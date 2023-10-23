@@ -17,6 +17,7 @@ import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
 import housemate.constants.Role;
 import housemate.entities.Image;
+import housemate.models.UploadDTO;
 import housemate.repositories.ImageRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -71,7 +72,7 @@ public class S3Service {
     }
 
     @Async
-    public ResponseEntity<String> uploadImage(HttpServletRequest request, MultipartFile[] files, int entityId, boolean isTask) {
+    public ResponseEntity<String> uploadImage(HttpServletRequest request, MultipartFile[] files, UploadDTO uploadDTO) {
 
         for (MultipartFile file : files) {
             if (!file.getContentType().startsWith("image/")) {
@@ -84,7 +85,7 @@ public class S3Service {
 
             long currentTimeStamp = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
             String extensionImage = ".webp";
-            String imageName = entityId + "." + currentTimeStamp + extensionImage;
+            String imageName = uploadDTO.getEntityId() + "." + uploadDTO.getImageType() + "." + currentTimeStamp + extensionImage;
 
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(bucket, imageName);
             InitiateMultipartUploadResult initResult = s3client.initiateMultipartUpload(initRequest);
@@ -126,8 +127,8 @@ public class S3Service {
 
             Image image = new Image();
             image.setImageUrl(domainCDN + imageName);
-            image.setTask(isTask);
-            image.setEntityId(entityId);
+            image.setEntityId(uploadDTO.getEntityId());
+            image.setImageType(uploadDTO.getImageType());
             image.setUserId(authorizationUtil.getUserIdFromAuthorizationHeader(request));
             imageRepository.save(image);
 
