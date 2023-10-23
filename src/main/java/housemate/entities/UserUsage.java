@@ -28,9 +28,6 @@ public class UserUsage {
     @Column(name = "service_id")
     private int serviceId;
 
-    @Column(name = "order_item_id")
-    private int orderItemId;
-
     @Column(name = "remaining")
     private int remaining;
 
@@ -42,4 +39,7 @@ public class UserUsage {
 
     @Column(name = "end_date")
     private LocalDateTime endDate;
+
+    @Column(name = "order_item_id")
+    private int orderItemId;
 }
