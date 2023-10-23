@@ -26,6 +26,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.modelmapper.internal.bytebuddy.asm.Advice.Return;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -82,11 +84,16 @@ public class S3Service {
             if (file.getSize() > 5 * 1024 * 1024) { // 5MB
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Image size must not exceed 5MB");
             }
-
-            long currentTimeStamp = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
-            String extensionImage = ".webp";
-            String imageName = uploadDTO.getEntityId() + "." + uploadDTO.getImageType() + "." + currentTimeStamp + extensionImage;
-
+            String imageName = "";
+            try {
+            	 long currentTimeStamp = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
+                 String extensionImage = ".webp";
+                  imageName = uploadDTO.getEntityId() + "." + uploadDTO.getImageType() + "." + currentTimeStamp + extensionImage;
+            }catch(Exception e) {
+            	
+            	e.printStackTrace();
+            	return ResponseEntity.badRequest().body("FAILED THIET NHA");
+            }
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(bucket, imageName);
             InitiateMultipartUploadResult initResult = s3client.initiateMultipartUpload(initRequest);
 

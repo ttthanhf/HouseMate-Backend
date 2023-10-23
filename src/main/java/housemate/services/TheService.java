@@ -8,8 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +23,7 @@ import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
 import housemate.constants.Enum.SortRequired;
 import housemate.constants.Enum.UnitOfMeasure;
-import housemate.constants.Enum.UsageDurationUnit;
+import housemate.constants.Enum.TimeUnit;
 import housemate.entities.PackageServiceItem;
 import housemate.entities.Period;
 import housemate.entities.Service;
@@ -40,10 +38,7 @@ import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolationException;
 import housemate.models.ServiceViewDTO.ServicePrice;
-
-import java.sql.SQLException;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
 
@@ -333,7 +328,7 @@ public class TheService {
 				Period newServicePeriod = Period.builder()
 						.serviceId(savedService.getServiceId())
 						.periodValue(cycleVaule)
-						.periodName(UsageDurationUnit.MONTH.name())
+						.periodName(TimeUnit.MONTH.name())
 						.finalPrice(cylcePriceListOfNewServ.get(cycleVaule))
 						.originalPrice(savedService.getOriginalPrice()*cycleVaule)
 						.build();
@@ -476,7 +471,7 @@ public class TheService {
 						.periodId(periodRepo.findByServiceIdAndPeriodValue(oldService.getServiceId(),cycleVaule).getPeriodId())
 						.serviceId(oldService.getServiceId())
 						.periodValue(cycleVaule)
-						.periodName(UsageDurationUnit.MONTH.name())
+						.periodName(TimeUnit.MONTH.name())
 						.finalPrice(cylcePriceListOfNewServ.get(cycleVaule))
 						.originalPrice(updatedService.getOriginalPrice()*cycleVaule)
 						.build());

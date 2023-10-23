@@ -1,6 +1,6 @@
 package housemate.entities;
 
-import housemate.constants.ImageType;
+import housemate.constants.Enum.ImageType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,7 +9,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -22,6 +24,8 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name = "images")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Image {
 
     @Id
