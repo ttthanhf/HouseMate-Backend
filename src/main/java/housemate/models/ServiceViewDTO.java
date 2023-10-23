@@ -3,6 +3,8 @@ package housemate.models;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+import housemate.entities.Image;
 import housemate.entities.PackageServiceItem;
 import housemate.entities.Service;
 import housemate.entities.ServiceType;
@@ -28,7 +30,7 @@ public class ServiceViewDTO {
 	List<ServicePrice> priceList;
 
 	// TODO: Update imgList later
-	List<String> images;
+	List<Image> images;
 
 	@Data
 	@NoArgsConstructor

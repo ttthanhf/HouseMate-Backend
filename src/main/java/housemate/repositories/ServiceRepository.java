@@ -26,12 +26,6 @@ import housemate.constants.Enum.SaleStatus;
 @Repository
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
 
-	List<Service> findAll();
-
-	// get all available services for customer
-	@Query(value = "SELECT s FROM Service s WHERE s.saleStatus <> 'DISCONTINUED'")
-	List<Service> findAllAvailable();
-
     @Query("SELECT s.finalPrice FROM Service s WHERE s.serviceId = :serviceId")
     int getFinalPriceByServiceId(@Param("serviceId") int serviceId);
 	
@@ -44,6 +38,18 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 			+ "AND s.avgRating >= :ratingFrom "
 			+ "AND (:isPackage IS NULL OR s.isPackage = :isPackage) ")
 	Page<Service> searchFilterAllAvailable(
+			@Param("saleStatus") SaleStatus saleStatus,
+			@Param("keyword") String keyword,
+			@Param("ratingFrom") int ratingFrom,
+			@Param("isPackage") Boolean isPackage,
+			Pageable page);
+	
+	@Query("SELECT s FROM Service s WHERE "
+			+ "(:saleStatus IS NULL OR s.saleStatus = :saleStatus) "
+			+ "AND (:keyword IS NULL OR LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')))  "
+			+ "AND s.avgRating >= :ratingFrom "
+			+ "AND (:isPackage IS NULL OR s.isPackage = :isPackage) ")
+	Page<Service> searchFilterAllKind(
 			@Param("saleStatus") SaleStatus saleStatus,
 			@Param("keyword") String keyword,
 			@Param("ratingFrom") int ratingFrom,

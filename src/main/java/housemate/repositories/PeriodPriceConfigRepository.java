@@ -12,10 +12,13 @@ import housemate.constants.Enum.TimeUnit;
 import housemate.entities.PeriodPriceConfig;
 
 @Repository
-public interface PeriodConfigRepository extends JpaRepository<PeriodPriceConfig, Integer> {
+public interface PeriodPriceConfigRepository extends JpaRepository<PeriodPriceConfig, Integer> {
 
 	@Query("SELECT p FROM PeriodPriceConfig p WHERE :datetimeNow BETWEEN p.dateStart AND p.dateEnd ")
 	List<PeriodPriceConfig> findAllInUsed(@Param("datetimeNow") LocalDateTime dateTimeNow);
+	
+	@Query("SELECT p FROM PeriodPriceConfig p WHERE :datetimeNow BETWEEN p.dateStart AND p.dateEnd ")
+	List<PeriodPriceConfig> findByConfigValue(@Param("datetimeNow") LocalDateTime dateTimeNow);
 	
 	@Query("SELECT p FROM PeriodPriceConfig p "
 			+ "WHERE :datetimeNow BETWEEN p.dateStart AND p.dateEnd "
