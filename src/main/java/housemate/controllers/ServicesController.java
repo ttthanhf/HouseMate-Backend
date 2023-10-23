@@ -97,7 +97,8 @@ public class ServicesController {
 	@Operation(summary = "get the list of all kind of service")
 	@SecurityRequirement(name = "bearerAuth")
 	public ResponseEntity<?> searchAllKind(
-			@RequestParam(required = false) String keyword,
+			HttpServletRequest request,
+			@RequestParam(required = false) Optional<String> keyword,
 			@RequestParam(required = false) Optional<ServiceCategory> category,
 			@RequestParam(required = false) Optional<SaleStatus> saleStatus,
 			@RequestParam(required = false) Optional<Integer> rating,
@@ -105,7 +106,7 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<SortRequired> orderBy,
 			@RequestParam(required = false) Optional<Integer> page,
 			@RequestParam(required = false) Optional<Integer> size) {
-		return servDao.searchFilterAllKind(keyword, category, saleStatus, rating, sortBy, orderBy, page, size);
+		return servDao.searchFilterAllKind(request, keyword, category, saleStatus, rating, sortBy, orderBy, page, size);
 	}
 	
 	//TODO delete service

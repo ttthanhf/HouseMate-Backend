@@ -52,18 +52,15 @@ public class PeriodPriceConfigService {
 
 		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
-		
+
 		PeriodPriceConfig newPeriodPriceProporConfig = mapper.map(newPeriodConfig, PeriodPriceConfig.class);
-		System.out.println("MAX====" + newPeriodConfig.getMax());
-		System.out.println("MIN====" + newPeriodConfig.getMin());
 
 		if (newPeriodPriceProporConfig.getMin() >= newPeriodPriceProporConfig.getMax())
 			return ResponseEntity.badRequest().body("Set the min < max");
 		// check if have the same configvalue and configname in db
 		// if the differ min-max --> set the time end to now to end in used
 		PeriodPriceConfig existedPeriodConfig = perCofgRepo.findByConfigValueAndConfigName(
-				LocalDateTime.now(dateTimeZone),
-				newPeriodPriceProporConfig.getConfigValue(),
+				LocalDateTime.now(dateTimeZone), newPeriodPriceProporConfig.getConfigValue(),
 				newPeriodPriceProporConfig.getConfigName());
 		// existed same min max value
 		if (existedPeriodConfig != null)
@@ -72,16 +69,16 @@ public class PeriodPriceConfigService {
 			else
 				// same config value and name differ min max -> create new one
 				existedPeriodConfig.setDateEnd(LocalDateTime.now(dateTimeZone));
-		
+
 		newPeriodPriceProporConfig.setDateStart(LocalDateTime.now(dateTimeZone));
 		newPeriodPriceProporConfig.setDateEnd(LocalDateTime.of(2100, 12, 31, 6, 0));
 		PeriodPriceConfig savedPeriodPriceConfig = perCofgRepo.save(newPeriodPriceProporConfig);
-		
+
 		if (savedPeriodPriceConfig == null) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed ! ");
 		}
-		
+
 		return ResponseEntity.ok(savedPeriodPriceConfig);
 	}
 
@@ -90,32 +87,31 @@ public class PeriodPriceConfigService {
 
 		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
-		
+
 		PeriodPriceConfig newPeriodPriceProporConfig = mapper.map(newPeriodConfig, PeriodPriceConfig.class);
 		if (newPeriodPriceProporConfig.getMin() >= newPeriodPriceProporConfig.getMax())
 			return ResponseEntity.badRequest().body("Set the min < max");
 		// check if have the same configvalue and configname in db
 		// if the same min-max --> set the time end to now to end in used
 		PeriodPriceConfig existedPeriodConfig = perCofgRepo.findByConfigValueAndConfigName(
-				LocalDateTime.now(dateTimeZone),
-				newPeriodPriceProporConfig.getConfigValue(), 
+				LocalDateTime.now(dateTimeZone), newPeriodPriceProporConfig.getConfigValue(),
 				newPeriodPriceProporConfig.getConfigName());
 		if (existedPeriodConfig == null)
 			return ResponseEntity.badRequest().body("Not found to update. Let create new one !");
 		if (existedPeriodConfig != null)
 			if (existedPeriodConfig.equals(newPeriodPriceProporConfig))
 				return ResponseEntity.ok("Has existed before !\n " + existedPeriodConfig);
-		
+
 		existedPeriodConfig.setDateEnd(LocalDateTime.now(dateTimeZone));
 		newPeriodPriceProporConfig.setDateStart(LocalDateTime.now(dateTimeZone));
 		newPeriodPriceProporConfig.setDateEnd(LocalDateTime.of(2100, 12, 31, 6, 0));
 		PeriodPriceConfig savedPeriodPriceConfig = perCofgRepo.save(newPeriodPriceProporConfig);
-		
+
 		if (savedPeriodPriceConfig == null) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Something Error ! Saved Failed ! ");
 		}
-		
+
 		return ResponseEntity.ok(savedPeriodPriceConfig);
 	}
 
