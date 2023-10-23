@@ -47,60 +47,68 @@ public class CartService {
 
             Service service = serviceRepository.getServiceByServiceId(cart.getServiceId());
             cart.setService(service);
-
-            Period period = periodRepository.getPeriodByid(cart.getPeriodId());
-
-            int finalPriceService = (int) (period.getPercent() * service.getFinalPrice());
-            cart.setFinalPrice(finalPriceService);
-
-            int originalPriceService = (int) (period.getPercent() * service.getOriginalPrice());
-            cart.setOriginPrice(originalPriceService);
+            List<Period> listPeriod = periodRepository.getAllPeriodByServiceId(cart.getServiceId());
+            cart.setListPeriod(listPeriod);
+            Period period = periodRepository.getPeriodById(cart.getPeriodId());
+            cart.setFinalPrice(period.getFinalPrice());
+            cart.setOriginalPrice(period.getOriginalPrice());
 
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(listCart);
     }
 
-    public ResponseEntity<String> addToCart(HttpServletRequest request, CartDTO carDTO) {
+    public ResponseEntity<String> addToCart(HttpServletRequest request, CartDTO cartDTO) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        int serviceId = carDTO.getServiceId();
+        int serviceId = cartDTO.getServiceId();
 
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Service not found");
         }
 
+        Cart cart = cartRepository.getCartByUserIdAndServiceId(userId, serviceId);
+
+        int cartLength = cartRepository.getCartLength(userId);
+
         //if have item in cart -> update quantity and price only
-        if (cartRepository.getCartByUserIdAndServiceId(userId, serviceId) != null) {
+        if (cart != null) {
 
-            Cart cart = cartRepository.getCartByUserIdAndServiceId(userId, serviceId);
+            int periodId = cartDTO.getPeriodId();
+            if (periodId != 0) {
+                Period period = periodRepository.getPeriodByPeriodIdAndServiceId(periodId, serviceId);
+                if (period == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id for this service not found !");
+                }
+            } else {
+                periodId = cart.getPeriodId();
+            }
 
-            int quantity = cart.getQuantity() + carDTO.getQuantity();
+            cart = cartRepository.getCartByUserIdAndServiceId(userId, serviceId);
+
+            int quantity = cart.getQuantity() + cartDTO.getQuantity();
 
             //if quantity set > 9999 => bad request
             if (quantity > 9999) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Maxium quanity one item in cart is 9999");
             }
 
-            int periodId = carDTO.getPeriodId();
-
             cartRepository.updateCart(userId, serviceId, quantity, periodId);
-            return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
+            return ResponseEntity.status(HttpStatus.OK).body(cartLength + ""); // ko toString được
         }
 
+        Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
+        int periodId = periodFirst.getPeriodId();
         //if dont have item in cart -> create new item in cart
-        int quantity = carDTO.getQuantity();
-        int periodId = carDTO.getPeriodId();
-
-        Cart cart = new Cart();
+        cart = new Cart();
         cart.setUserId(userId);
         cart.setServiceId(serviceId);
         cart.setPeriodId(periodId);
-        cart.setQuantity(quantity);
+        cart.setQuantity(cartDTO.getQuantity());
         cartRepository.save(cart);
 
-        return ResponseEntity.status(HttpStatus.OK).body("Added to cart");
+        return ResponseEntity.status(HttpStatus.OK).body((cartLength + 1) + ""); // ko toString được
     }
 
     public ResponseEntity<String> updateToCart(HttpServletRequest request, CartDTO cartDTO) {
@@ -121,7 +129,7 @@ public class CartService {
 
         //check period id exist or not
         int periodId = cartDTO.getPeriodId();
-        Period period = periodRepository.getPeriodByid(periodId);
+        Period period = periodRepository.getPeriodByPeriodIdAndServiceId(periodId, serviceId);
         if (period == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id not found");
         }

@@ -16,12 +16,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 /**
  *
  * @author Anh
  */
-
 @Entity
 @Data
 @NoArgsConstructor
@@ -30,13 +28,13 @@ import lombok.NoArgsConstructor;
 @Table(name = "service")
 public class Service {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "service_id")
-	private int serviceId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "service_id")
+    private int serviceId;
 
-	@Column(name = "title_name", unique = true, nullable = false)
-	private String titleName;
+    @Column(name = "title_name", unique = true, nullable = false)
+    private String titleName;
 
 	@Column(name = "original_price", nullable = false)
 	private int originalPrice;
