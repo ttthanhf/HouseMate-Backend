@@ -68,7 +68,7 @@ public class Service {
 	
 	//TODO: Update Img Later
 	@Transient
-	private final String mainImg = "bit.ly/3tsNi4d";
+	private Image mainImg;
 	
 	@JsonInclude(value = Include.NON_NULL)
 	@Transient
