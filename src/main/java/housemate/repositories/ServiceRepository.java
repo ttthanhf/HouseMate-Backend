@@ -59,7 +59,7 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 	Optional<Service> findByServiceId(int id);
 
 	Service findByTitleNameIgnoreCase(String titleName);
-
+	
 	@Transactional
 	@Modifying
 	@Query("UPDATE Service s SET s.avgRating = "
