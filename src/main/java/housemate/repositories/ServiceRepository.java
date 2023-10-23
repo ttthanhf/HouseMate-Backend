@@ -26,11 +26,11 @@ import housemate.constants.Enum.SaleStatus;
 @Repository
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
 
-	List<Service> findAll();
+    List<Service> findAll();
 
-	// get all available services for customer
-	@Query(value = "SELECT s FROM Service s WHERE s.saleStatus <> 'DISCONTINUED'")
-	List<Service> findAllAvailable();
+    // get all available services for customer
+    @Query(value = "SELECT s FROM Service s WHERE s.saleStatus <> 'DISCONTINUED'")
+    List<Service> findAllAvailable();
 
     @Query("SELECT s.finalPrice FROM Service s WHERE s.serviceId = :serviceId")
     int getFinalPriceByServiceId(@Param("serviceId") int serviceId);
