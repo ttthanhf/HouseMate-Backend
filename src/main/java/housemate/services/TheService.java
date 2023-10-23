@@ -172,7 +172,8 @@ public class TheService {
 			if (packageServiceChildList != null) {
 				for (PackageServiceItem packageServiceItem : packageServiceChildList) {
 					Service serviceChild = serviceRepo.findByServiceId(packageServiceItem.getSingleServiceId()).orElse(null);
-					packageServiceItem.setDescription(serviceChild.getTitleName() + " : " + serviceChild.getDescription());
+					packageServiceItem.setDescription(serviceChild.getDescription());
+					packageServiceItem.setSingleServiceName(serviceChild.getTitleName());
 				}
 				serviceDtoForDetail.setPackageServiceItemList(packageServiceChildList);
 			}
