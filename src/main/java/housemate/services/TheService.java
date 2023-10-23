@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,21 +21,26 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
+import housemate.constants.Enum.ImageType;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
 import housemate.constants.Enum.ServiceField;
 import housemate.constants.Enum.SortRequired;
 import housemate.constants.Enum.UnitOfMeasure;
 import housemate.constants.Enum.TimeUnit;
+import housemate.entities.Image;
 import housemate.entities.PackageServiceItem;
 import housemate.entities.Period;
+import housemate.entities.PeriodPriceConfig;
 import housemate.entities.Service;
 import housemate.entities.ServiceType;
 import housemate.models.ServiceNewDTO;
 import housemate.models.ServiceViewDTO;
 import housemate.repositories.CommentRepository;
 import housemate.repositories.FeedbackRepository;
+import housemate.repositories.ImageRepository;
 import housemate.repositories.PackageServiceItemRepository;
+import housemate.repositories.PeriodPriceConfigRepository;
 import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
@@ -40,6 +48,8 @@ import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import housemate.models.ServiceViewDTO.ServicePrice;
 import java.text.Normalizer;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.regex.Pattern;
 
 /**
@@ -69,25 +79,17 @@ public class TheService {
 	PeriodRepository periodRepo;
 	
 	@Autowired
+	ImageRepository imgRepo;
+	
+	@Autowired
+	PeriodPriceConfigRepository perPriceConfRepo;
+	
+	@Autowired
     AuthorizationUtil authorizationUtil;
 
 	ModelMapper mapper = new ModelMapper();
-
-	public ResponseEntity<?> getAllAvailable() {
-		List<Service> serviceList = serviceRepo.findAllAvailable();
-		if (serviceList.isEmpty())
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Empty Services Now !");
-		return ResponseEntity.ok(serviceList);
-	}
-
-	public ResponseEntity<?> getAllKind(HttpServletRequest request) {
-		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
-		List<Service> serviceList = serviceRepo.findAll();
-		if (serviceList == null)
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
-		return ResponseEntity.ok().body(serviceList);
-	}
+	
+	private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
 	public ResponseEntity<?> getAllSingleService() {
 		List<Service> serviceList = serviceRepo.findAllByIsPackageFalse();
@@ -102,8 +104,51 @@ public class TheService {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
 		return ResponseEntity.ok().body(serviceList);
 	}
+	
+	public ResponseEntity<?> searchFilterAllKind (
+			String keyword,
+			Optional<ServiceCategory> category,
+			Optional<SaleStatus> saleStatus,
+			Optional<Integer> rating,
+			Optional<ServiceField> sortBy,
+			Optional<SortRequired> orderBy,
+			Optional<Integer> page,
+			Optional<Integer> size) {
 
-	public ResponseEntity<?> searchFilterAllKindAvailable(
+		String keywordValue = keyword == null ? null : removeDiacriticalMarks(keyword.trim().replaceAll("\\s+", " "));
+		Boolean categoryValue = category.isEmpty() ? null : (category.get().equals(ServiceCategory.PACKAGE) == true ? true : false);
+		SaleStatus statusValue = saleStatus.orElse(null);
+		int ratingValue = rating.orElse(0);
+		ServiceField fieldname = sortBy.orElse(ServiceField.PRICE);
+		SortRequired requireOrder = orderBy.orElse(SortRequired.ASC);
+		int pageNo = page.orElse(0);
+		int pageSize = size.orElse(9);
+
+		if (pageNo < 0 || pageSize < 1)
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("Page number starts with 1. Page size must not be less than 1");
+		
+		// setting sort
+		Sort sort;
+		sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
+		if (requireOrder.equals(SortRequired.DESC))
+			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
+
+		Pageable sortedPage = pageNo == 0 ? PageRequest.of(0, pageSize, sort)
+				                          : PageRequest.of(pageNo - 1, pageSize, sort);
+
+		Page<Service> serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, categoryValue, sortedPage);
+		int maxPages = (int) Math.ceil((double) serviceList.getTotalPages());
+		
+		if (serviceList.isEmpty() || serviceList == null)
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
+		
+		serviceList.forEach(s -> s.setMainImg(imgRepo.findFirtsByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE)));
+
+		return ResponseEntity.ok(serviceList);
+	}
+
+	public ResponseEntity<?> searchFilterAllKindAvailable (
 			String keyword,
 			Optional<ServiceCategory> category,
 			Optional<SaleStatus> saleStatus,
@@ -140,6 +185,8 @@ public class TheService {
 		
 		if (serviceList.isEmpty() || serviceList == null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
+		
+		serviceList.forEach(s -> s.setMainImg(imgRepo.findFirtsByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE)));
 
 		return ResponseEntity.ok(serviceList);
 	}
@@ -180,15 +227,7 @@ public class TheService {
 		periodServiceList.forEach(s -> priceList.add(mapper.map(s, ServicePrice.class)));
 		serviceDtoForDetail.setPriceList(priceList);
 
-		// TODO: Update imgList later
-		List<String> imgList = new ArrayList<>();
-		imgList.add("https://www.mollymaid.com/us/en-us/molly-maid/_assets/images/services/mly-service-kitchen-2.webp");
-		imgList.add("https://i.ebayimg.com/images/g/DBkAAOSwA5limhuC/s-l1600.jpg");
-		imgList.add("https://images6.fanpop.com/image/photos/37000000/Doing-Housework-disney-37043579-1680-1050.jpg");
-		imgList.add("https://i.ytimg.com/vi/gmZstKaBtj8/maxresdefault.jpg");
-		imgList.add("https://images.squarespace-cdn.com/content/v1/5d815167fadd7b051fbda1e8/1587078895641-E42HDAP26ZJL6BO1HEA2/IMG_0801e.jpg");
-		imgList.add("https://www.happywater.my/wp-content/uploads/2020/07/Water-Delivery-malaysia.jpg");
-		imgList.add("https://res.cloudinary.com/jerrick/image/upload/c_scale,f_jpg,q_auto/5e88760f9671a2001cc57c50.jpg");
+		List<Image> imgList = imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.SERVICE);
 		serviceDtoForDetail.setImages(imgList);
 
 		return ResponseEntity.ok().body(serviceDtoForDetail);
@@ -271,11 +310,22 @@ public class TheService {
 			if (cylcePriceListOfNewServ.size() != 4 || !cycleList.containsAll(cylcePriceListOfNewServ.keySet()))
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 						.body("Have to set price foreach 4 cycles : 3, 6, 9 ,12 of this service");
-			if (!cylcePriceListOfNewServ.entrySet().stream().allMatch(p -> p.getValue() >= 1000))
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-						.body("Set the price for each cycle from 1000 upper");
-
-			// TODO CHECK IMAGES CONSTRAINTS HERE IF HAVE
+			Function<Integer, PeriodPriceConfig> findByConfigValueAndConfigName = key -> perPriceConfRepo
+					.findByConfigValueAndConfigName(LocalDateTime.now(dateTimeZone), key, TimeUnit.MONTH);
+			for (Entry<Integer, Integer> period : cylcePriceListOfNewServ.entrySet()) {
+				PeriodPriceConfig periPriceConfig = findByConfigValueAndConfigName.apply(period.getKey());
+				if (periPriceConfig != null) {
+					float min = periPriceConfig.getMin();
+					float max = periPriceConfig.getMax();
+					float periodPrice = period.getValue();
+					float propor = periodPrice / serviceDTO.getOriginalPrice();
+					boolean validSetting = min <= propor && propor <= max;
+					if (!validSetting) {
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+								.body("Period price for cycle " + period.getKey() + " out of range proportion [" + min + "-" + max + "] against the original price " + serviceDTO.getOriginalPrice());
+					}
+				}
+			}
 
 			// ==after check all then map to DTO & save SavedService into DB to get newservice Id==
 			savedService = serviceRepo.save(mapper.map(serviceDTO, Service.class));
@@ -334,8 +384,6 @@ public class TheService {
 				periodRepo.save(newServicePeriod);
 			}
 			
-			// TODO SAVE IMAGES
-
 		} catch (Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			e.printStackTrace();
@@ -457,14 +505,28 @@ public class TheService {
 			updatedService = serviceRepo.save(oldService);
 			
 			//Update the price cycle list of this service
+			// check service price cycle list constraints
 			List<Integer> cycleList = List.of(3, 6, 9, 12);
 			Map<Integer, Integer> cylcePriceListOfNewServ = serviceDTO.getPeriodPriceServiceList();
 			if (cylcePriceListOfNewServ.size() != 4 || !cycleList.containsAll(cylcePriceListOfNewServ.keySet()))
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 						.body("Have to set price foreach 4 cycles : 3, 6, 9 ,12 of this service");
-			if (!cylcePriceListOfNewServ.entrySet().stream().allMatch(p -> p.getValue() >= 1000))
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-						.body("Set the price for each cycle from 1000 upper");
+			Function<Integer, PeriodPriceConfig> findByConfigValueAndConfigName = key -> perPriceConfRepo
+					.findByConfigValueAndConfigName(LocalDateTime.now(dateTimeZone), key, TimeUnit.MONTH);
+			for (Entry<Integer, Integer> period : cylcePriceListOfNewServ.entrySet()) {
+				PeriodPriceConfig periPriceConfig = findByConfigValueAndConfigName.apply(period.getKey());
+				if (periPriceConfig != null) {
+					float min = periPriceConfig.getMin();
+					float max = periPriceConfig.getMax();
+					float periodPrice = period.getValue();
+					float propor = periodPrice / serviceDTO.getOriginalPrice();
+					boolean validSetting = min <= propor && propor <= max;
+					if (!validSetting) {
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+								.body("Period price for cycle " + period.getKey() + " out of range proportion [" + min + "-" + max + "] against the original price " + serviceDTO.getOriginalPrice());
+					}
+				}
+			}
 			for (Integer cycleVaule : cylcePriceListOfNewServ.keySet()) {
 				periodRepo.save(Period.builder()
 						.periodId(periodRepo.findByServiceIdAndPeriodValue(oldService.getServiceId(),cycleVaule).getPeriodId())

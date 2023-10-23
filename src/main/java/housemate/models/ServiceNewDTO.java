@@ -60,10 +60,6 @@ public class ServiceNewDTO {
 	@Schema(description = "The Group Type in one of these type: "
 			+ "CLEANING_SERVICE, RETURN_SERVICE, DELIVERY_SERVICE")
 	private GroupType groupType;
-	
-	@NotEmpty(message = "Require at least one image")
-	@Schema(description = "Images Of Service")
-	private List<String> images;
 
 	@NotNull(message = "Specify this category of service isPackage or single by true or false")
 	@Schema(description = "Is package: true ? false")

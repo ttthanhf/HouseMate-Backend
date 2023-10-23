@@ -14,7 +14,7 @@ import java.util.List;
 import housemate.constants.Role;
 import housemate.entities.PeriodPriceConfig;
 import housemate.models.PeriodConfigNewDTO;
-import housemate.repositories.PeriodConfigRepository;
+import housemate.repositories.PeriodPriceConfigRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -24,7 +24,7 @@ public class PeriodPriceConfigService {
 	private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
 	@Autowired
-	PeriodConfigRepository perCofgRepo;
+	PeriodPriceConfigRepository perCofgRepo;
 
 	ModelMapper mapper = new ModelMapper();
 
@@ -69,9 +69,10 @@ public class PeriodPriceConfigService {
 		if (existedPeriodConfig != null)
 			if (existedPeriodConfig.equals(newPeriodPriceProporConfig))
 				return ResponseEntity.ok("Has existed before !\n " + existedPeriodConfig);
+			else
+				// same config value and name differ min max -> create new one
+				existedPeriodConfig.setDateEnd(LocalDateTime.now(dateTimeZone));
 		
-		// same config value and name differ min max -> create new one
-		existedPeriodConfig.setDateEnd(LocalDateTime.now(dateTimeZone));
 		newPeriodPriceProporConfig.setDateStart(LocalDateTime.now(dateTimeZone));
 		newPeriodPriceProporConfig.setDateEnd(LocalDateTime.of(2100, 12, 31, 6, 0));
 		PeriodPriceConfig savedPeriodPriceConfig = perCofgRepo.save(newPeriodPriceProporConfig);
