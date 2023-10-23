@@ -4,7 +4,6 @@
  */
 package housemate.entities;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

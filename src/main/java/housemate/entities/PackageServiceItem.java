@@ -10,6 +10,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 /**
  *
  * @author Anh
@@ -40,6 +43,10 @@ public class PackageServiceItem {
 	@Id
 	@Column(name = "service_id")
     private int singleServiceId;
+	
+	@JsonInclude(value = Include.NON_NULL)
+	@Transient
+	private String singleServiceName;
 	
     @Column(name = "quantity")
     private int quantity;
