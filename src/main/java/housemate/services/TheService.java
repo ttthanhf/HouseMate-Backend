@@ -176,7 +176,6 @@ public class TheService {
 		// set combo price for each service
 		List<ServicePrice> priceList = new ArrayList<>();
 		ServicePrice servicePrice = new ServicePrice();
-		
 		List<Period> periodServiceList = periodRepo.findAllByServiceId(serviceId);
 		periodServiceList.forEach(s -> priceList.add(mapper.map(s, ServicePrice.class)));
 		serviceDtoForDetail.setPriceList(priceList);
