@@ -108,9 +108,16 @@ public class PaymentService {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
 
-        //id address null => set new address
-        if (user.getAddress() == null) {
-            user.setAddress(userInfoOrderDTO.getAddress());
+        //if address null => set new address
+        String address = userInfoOrderDTO.getAddress();
+        if (user.getAddress() == null || user.getAddress().isBlank() || user.getAddress().isEmpty()) {
+            user.setAddress(address);
+        }
+
+        //if phone null => set new phone
+        if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank() || user.getPhoneNumber().isEmpty()) {
+            String phone = userInfoOrderDTO.getPhone();
+            user.setPhoneNumber(phone);
         }
 
         user = userRepository.save(user);
@@ -128,6 +135,7 @@ public class PaymentService {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Only supports vnpay at the present time !");
         }
 
+        order.setAddress(address);
         order.setPaymentMethod(paymentMethod);
         orderRepository.save(order);
 
@@ -300,11 +308,10 @@ public class PaymentService {
                     userUsage.setServiceId(packageServiceItem.getSingleServiceId());
                     userUsage.setRemaining(packageServiceItem.getQuantity() * orderItem.getQuantity());
                     userUsage.setTotal(packageServiceItem.getQuantity() * orderItem.getQuantity());
-                    userUsage.setStartDate(LocalDateTime.now());
 
-                    Period period = periodRepository.getPeriodByid(orderItem.getPeriodId());
-                    userUsage.setEndDate(LocalDateTime.now().plusMonths(period.getPeriodValue()));
-
+                    userUsage.setStartDate(order.getDate());
+                    userUsage.setEndDate(orderItem.getExpireDate());
+                    
                     userUsage.setOrderItemId(orderItem.getOrderItemId());
                     userUsageRepository.save(userUsage);
                 }
@@ -315,10 +322,9 @@ public class PaymentService {
                 userUsage.setServiceId(service.getServiceId());
                 userUsage.setRemaining(orderItem.getQuantity());
                 userUsage.setTotal(orderItem.getQuantity());
-                userUsage.setStartDate(LocalDateTime.now());
-
-                Period period = periodRepository.getPeriodByid(orderItem.getPeriodId());
-                userUsage.setEndDate(LocalDateTime.now().plusMonths(period.getPeriodValue()));
+                
+                userUsage.setStartDate(order.getDate());
+                userUsage.setEndDate(orderItem.getExpireDate());
 
                 userUsage.setOrderItemId(orderItem.getOrderItemId());
                 userUsageRepository.save(userUsage);
