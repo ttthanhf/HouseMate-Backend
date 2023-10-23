@@ -74,6 +74,10 @@ public class S3Service {
     @Async
     public ResponseEntity<String> uploadImage(HttpServletRequest request, MultipartFile[] files, UploadDTO uploadDTO) {
 
+        if(files.length == 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Select at least one file to upload"); 
+        }
+        
         for (MultipartFile file : files) {
             if (!file.getContentType().startsWith("image/")) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Only image support");
