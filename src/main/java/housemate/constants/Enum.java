@@ -37,6 +37,7 @@ public class Enum {
 
 	public static enum UnitOfMeasure {
 		HOUR,
+		KG,
 		TIMES,
 		ITEM,
 		COMBO
