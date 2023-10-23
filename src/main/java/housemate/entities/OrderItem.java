@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import java.time.LocalDateTime;
 import lombok.Data;
 
 /**
@@ -33,8 +34,8 @@ public class OrderItem {
     @Column(name = "service_id")
     private int serviceId;
 
-    @Column(name = "period_name")
-    private String periodName;
+    @Column(name = "expire_date")
+    private LocalDateTime expireDate;
 
     @Column(name = "quantity")
     private int quantity;
@@ -44,6 +45,9 @@ public class OrderItem {
 
     @Column(name = "original_price")
     private int originalPrice;
+
+    @Column(name = "period_name")
+    private String periodName;
 
     @Transient
     private int discountPrice;
