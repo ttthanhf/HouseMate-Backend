@@ -19,6 +19,7 @@ import java.util.Optional;
  */
 @Repository
 public interface UserUsageRepository extends JpaRepository<UserUsage, Integer> {
+
     List<UserUsage> getByUserId(int userId);
 
     @Query("SELECT u FROM UserUsage u WHERE u.userId = :userId")
@@ -27,8 +28,11 @@ public interface UserUsageRepository extends JpaRepository<UserUsage, Integer> {
     @Query("SELECT u FROM UserUsage u WHERE u.userId = :userId AND u.serviceId = :serviceId")
     List<UserUsage> getAllUserUsageByServiceIdAndUserId(int serviceId, int userId);
 
-    @Query("SELECT u FROM UserUsage u " +
-            "WHERE u.serviceId = :serviceId AND u.userId = :userId AND u.remaining <> 0 AND CURDATE() < u.endDate " +
-            "ORDER BY u.endDate LIMIT 1")
+    @Query("SELECT u FROM UserUsage u WHERE u.userId = :userId AND u.orderItemId = :orderItemId AND u.isExpired = false")
+    List<UserUsage> getAllUserUsageByOrderItemIdAndUserIdAndNotExpired(int orderItemId, int userId);
+
+    @Query("SELECT u FROM UserUsage u "
+            + "WHERE u.serviceId = :serviceId AND u.userId = :userId AND u.remaining <> 0 AND CURDATE() < u.endDate "
+            + "ORDER BY u.endDate LIMIT 1")
     Optional<UserUsage> getSoonerSchedule(int serviceId, int userId);
 }

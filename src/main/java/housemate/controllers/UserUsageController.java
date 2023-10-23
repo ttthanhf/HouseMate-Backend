@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,6 +37,12 @@ public class UserUsageController {
     @GetMapping("/all")
     public ResponseEntity<List<UserUsageResponse>> getAllUserUsage(HttpServletRequest request) {
         return userUsageService.getAllUserUsage(request);
+    }
+
+    @Operation(summary = "Get period item by order item id")
+    @GetMapping("/{orderItemId}")
+    public ResponseEntity<UserUsageResponse> getUserUsageByOrderItemId(HttpServletRequest request, @PathVariable int orderItemId) {
+        return userUsageService.getUserUsageByOrderItemId(request, orderItemId);
     }
 
 }

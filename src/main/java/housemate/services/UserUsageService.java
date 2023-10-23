@@ -4,13 +4,16 @@
  */
 package housemate.services;
 
+import housemate.entities.OrderItem;
 import housemate.entities.Service;
 import housemate.entities.UserUsage;
 import housemate.models.responses.UserUsageResponse;
+import housemate.repositories.OrderItemRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.UserUsageRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +36,9 @@ public class UserUsageService {
     @Autowired
     private ServiceRepository serviceRepository;
 
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
     public ResponseEntity<List<UserUsageResponse>> getAllUserUsage(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 
@@ -40,6 +46,7 @@ public class UserUsageService {
 
         List<UserUsage> listUserUsage = userUsageRepository.getAllUserUsageByUserId(userId);
         for (UserUsage userUsage : listUserUsage) {
+
             Service service = serviceRepository.getServiceByServiceId(userUsage.getServiceId());
 
             UserUsageResponse userUsageResponse = new UserUsageResponse();
@@ -52,5 +59,26 @@ public class UserUsageService {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(listUserUsageResponse);
+    }
+
+    public ResponseEntity<UserUsageResponse> getUserUsageByOrderItemId(HttpServletRequest request, int orderItemId) {
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        OrderItem orderItem = orderItemRepository.findById(orderItemId);
+
+        UserUsageResponse userUsageResponse = new UserUsageResponse();
+        List<UserUsage> listUserUsage = userUsageRepository.getAllUserUsageByOrderItemIdAndUserIdAndNotExpired(orderItemId, userId);
+        for (UserUsage userUsage : listUserUsage) {
+            if (userUsage.getEndDate().compareTo(LocalDateTime.now()) < 0) {
+                userUsage.setExpired(true);
+                userUsageRepository.save(userUsage);
+            }
+        }
+        listUserUsage = userUsageRepository.getAllUserUsageByOrderItemIdAndUserIdAndNotExpired(orderItemId, userId);
+        userUsageResponse.setListUserUsage(listUserUsage);
+
+        Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+        userUsageResponse.setService(service);
+
+        return ResponseEntity.status(HttpStatus.OK).body(userUsageResponse);
     }
 }
