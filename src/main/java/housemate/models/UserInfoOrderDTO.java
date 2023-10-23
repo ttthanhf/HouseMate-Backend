@@ -19,6 +19,10 @@ public class UserInfoOrderDTO {
     @Schema(example = "Example", description = "Address")
     private String address;
 
+    @Size(min = 10, max = 12)
+    @Schema(example = "0909990099", description = "Phone")
+    private String phone;
+
     @Schema(example = "vnpay", description = "Payment Method")
     private String paymentMethod;
 
