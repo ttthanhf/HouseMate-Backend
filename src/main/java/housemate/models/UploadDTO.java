@@ -4,7 +4,8 @@
  */
 package housemate.models;
 
-import housemate.constants.ImageType;
+import housemate.constants.Enum.ImageType;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 /**

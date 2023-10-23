@@ -11,10 +11,11 @@ public class Enum {
 		PACKAGE
 	}
 
-	public static enum UsageDurationUnit {
+	public static enum TimeUnit {
+		MONTH,
 		DAY,
-		WEEK,
-		MONTH
+		WEEK
+		
 	}
 
 	public static enum SortRequired {
@@ -37,8 +38,8 @@ public class Enum {
 	public static enum UnitOfMeasure {
 		HOUR,
 		KG,
-		TIME,
-		BOTTLE,
+		TIMES,
+		ITEM,
 		COMBO
 	}
 	
@@ -50,6 +51,12 @@ public class Enum {
 		NUMBER_OF_SOLD("numberOfSold");
 
 		private String fieldName;
+	}
+	
+	public static enum ImageType {
+	    AVATAR,
+	    SERVICE,
+	    WORKING
 	}
 
 }
