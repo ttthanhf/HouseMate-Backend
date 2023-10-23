@@ -103,10 +103,16 @@ public class PaymentService {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
 
-        //id address null => set new address
+        //if address null => set new address
         String address = userInfoOrderDTO.getAddress();
-        if (user.getAddress() == null) {
+        if (user.getAddress() == null || user.getAddress().isBlank() || user.getAddress().isEmpty()) {
             user.setAddress(address);
+        }
+
+        //if phone null => set new phone
+        if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank() || user.getPhoneNumber().isEmpty()) {
+            String phone = userInfoOrderDTO.getPhone();
+            user.setPhoneNumber(phone);
         }
 
         user = userRepository.save(user);

@@ -104,6 +104,10 @@ public class OrderService {
             user.setAddress("");
         }
 
+        if (user.getPhoneNumber() == null) {
+            user.setPhoneNumber("");
+        }
+
         order.setUser(user);
         order.setDiscountPrice(order.getSubTotal() - order.getFinalPrice());
         order.setListOrderItem(listOrderItem);
@@ -126,7 +130,6 @@ public class OrderService {
             order = new Order();
             order.setUserId(userId);
             order.setComplete(false);
-            order.setAddress("");
 
             order = orderRepository.save(order);
         }
