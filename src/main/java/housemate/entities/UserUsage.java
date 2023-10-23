@@ -42,4 +42,7 @@ public class UserUsage {
 
     @Column(name = "order_item_id")
     private int orderItemId;
+
+    @Column(name = "is_expired")
+    private boolean isExpired;
 }
