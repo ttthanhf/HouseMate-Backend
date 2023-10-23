@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import java.util.List;
 import lombok.Data;
 
 /**
@@ -42,10 +43,13 @@ public class Cart {
     private int periodId;
 
     @Transient
-    private int originPrice;
+    private int finalPrice;
 
     @Transient
-    private int finalPrice;
+    private int originalPrice;
+
+    @Transient
+    private List<Period> listPeriod;
 
     @Transient
     private Service service;
