@@ -22,20 +22,20 @@ import lombok.NoArgsConstructor;
 @Table(name = "period_service")
 public class Period {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "period_id")
     private int periodId;
-    
+
     @Column(name = "service_id")
     private int serviceId;
-    
+
     @Column(name = "period_value")
     private int periodValue;
-    
+
     @Column(name = "period_name")
     private String periodName;
-    
+
     @Column(name = "final_price")
     private int finalPrice;
     
@@ -44,4 +44,5 @@ public class Period {
     
     @Column(name = "percent")
     private float percent;
+
 }
