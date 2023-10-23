@@ -12,6 +12,7 @@ import java.util.function.Function;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -105,8 +106,9 @@ public class TheService {
 		return ResponseEntity.ok().body(serviceList);
 	}
 	
-	public ResponseEntity<?> searchFilterAllKind (
-			String keyword,
+	public ResponseEntity<?> searchFilterAllKind(
+			HttpServletRequest request,
+			Optional<String> keyword,
 			Optional<ServiceCategory> category,
 			Optional<SaleStatus> saleStatus,
 			Optional<Integer> rating,
@@ -115,19 +117,24 @@ public class TheService {
 			Optional<Integer> page,
 			Optional<Integer> size) {
 
-		String keywordValue = keyword == null ? null : removeDiacriticalMarks(keyword.trim().replaceAll("\\s+", " "));
-		Boolean categoryValue = category.isEmpty() ? null : (category.get().equals(ServiceCategory.PACKAGE) == true ? true : false);
+		// check the role admin is allowed
+		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+
+		String keywordValue = !keyword.isPresent() ? null : removeDiacriticalMarks(keyword.get().trim().replaceAll("\\s+", " "));
+		Boolean categoryValue = category.isEmpty() 
+				              ? null
+				              : (category.get().equals(ServiceCategory.PACKAGE) == true ? true : false);
 		SaleStatus statusValue = saleStatus.orElse(null);
 		int ratingValue = rating.orElse(0);
 		ServiceField fieldname = sortBy.orElse(ServiceField.PRICE);
 		SortRequired requireOrder = orderBy.orElse(SortRequired.ASC);
 		int pageNo = page.orElse(0);
 		int pageSize = size.orElse(9);
-
 		if (pageNo < 0 || pageSize < 1)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 					.body("Page number starts with 1. Page size must not be less than 1");
-		
+
 		// setting sort
 		Sort sort;
 		sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
@@ -135,7 +142,7 @@ public class TheService {
 			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
 
 		Pageable sortedPage = pageNo == 0 ? PageRequest.of(0, pageSize, sort)
-				                          : PageRequest.of(pageNo - 1, pageSize, sort);
+										  : PageRequest.of(pageNo - 1, pageSize, sort);
 
 		Page<Service> serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, categoryValue, sortedPage);
 		int maxPages = (int) Math.ceil((double) serviceList.getTotalPages());
@@ -143,12 +150,28 @@ public class TheService {
 		if (serviceList.isEmpty() || serviceList == null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
 		
-		serviceList.forEach(s -> s.setMainImg(imgRepo.findFirtsByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE)));
-
-		return ResponseEntity.ok(serviceList);
+		serviceList.forEach(
+				s -> s.setMainImg(imgRepo.findFirtsByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE)));
+		
+		List<ServiceViewDTO> serviceViewList = new ArrayList<>();
+		for (Service service : serviceList.getContent()) {
+			ServiceViewDTO serviceView = new  ServiceViewDTO();
+			//set service to view
+			serviceView.setService(service);
+			List<ServicePrice> priceList = new ArrayList<>();
+			ServicePrice servicePrice = new ServicePrice();
+			List<Period> periodServiceList = periodRepo.findAllByServiceId(service.getServiceId());
+			periodServiceList.forEach(s -> priceList.add(mapper.map(s, ServicePrice.class)));
+			serviceView.setPriceList(priceList);
+			serviceViewList.add(serviceView);
+		}
+		Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+		Page<ServiceViewDTO> serviceViewPage = new PageImpl<ServiceViewDTO>(serviceViewList, serviceList.getPageable(), serviceList.getTotalElements());
+		
+		return ResponseEntity.ok(serviceViewPage);
 	}
 
-	public ResponseEntity<?> searchFilterAllKindAvailable (
+	public ResponseEntity<?> searchFilterAllKindAvailable(
 			String keyword,
 			Optional<ServiceCategory> category,
 			Optional<SaleStatus> saleStatus,
