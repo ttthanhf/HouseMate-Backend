@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -50,7 +52,10 @@ public class PackageServiceItem {
 	@Column(name = "quantity")
 	private int quantity;
 
+	@ManyToOne
+	@JoinColumn(name="service_id", referencedColumnName = "service_id", updatable = false, insertable = false)
+	private Service service;
+	
 	@Transient
-	private String description;
-
+	private List<ServiceType> typeList;
 }
