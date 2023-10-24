@@ -6,6 +6,7 @@ package housemate.models.responses;
 
 import housemate.entities.Service;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Data;
 
 /**
@@ -13,11 +14,10 @@ import lombok.Data;
  * @author ThanhF
  */
 @Data
-public class ServiceUsageResponse {
+public class MyPurchasedResponse {
 
-    private int total;
-    private int remaining;
     private Service service;
+    private List<String> singleServiceName;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 }

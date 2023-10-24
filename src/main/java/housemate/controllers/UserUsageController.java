@@ -4,6 +4,7 @@
  */
 package housemate.controllers;
 
+import housemate.models.responses.MyPurchasedResponse;
 import housemate.models.responses.UserUsageResponse;
 import housemate.services.UserUsageService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,15 +34,21 @@ public class UserUsageController {
     @Autowired
     private UserUsageService userUsageService;
 
-    @Operation(summary = "Get all period item")
+    @Operation(summary = "Get all User Usage")
     @GetMapping("/all")
     public ResponseEntity<List<UserUsageResponse>> getAllUserUsage(HttpServletRequest request) {
         return userUsageService.getAllUserUsage(request);
     }
 
-    @Operation(summary = "Get period item by order item id")
+    @Operation(summary = "Get all User Usage for my purchased")
+    @GetMapping("/my-purchased")
+    public ResponseEntity<List<MyPurchasedResponse>> getAllUserUsageForMyPurchased(HttpServletRequest request) {
+        return userUsageService.getAllUserUsageForMyPurchased(request);
+    }
+
+    @Operation(summary = "Get User Usage item by order item id")
     @GetMapping("/{orderItemId}")
-    public ResponseEntity<UserUsageResponse> getUserUsageByOrderItemId(HttpServletRequest request, @PathVariable int orderItemId) {
+    public ResponseEntity<?> getUserUsageByOrderItemId(HttpServletRequest request, @PathVariable int orderItemId) {
         return userUsageService.getUserUsageByOrderItemId(request, orderItemId);
     }
 

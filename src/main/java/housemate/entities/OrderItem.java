@@ -37,6 +37,9 @@ public class OrderItem {
     @Column(name = "expire_date")
     private LocalDateTime expireDate;
 
+    @Column(name = "create_date")
+    private LocalDateTime createDate;
+
     @Column(name = "quantity")
     private int quantity;
 

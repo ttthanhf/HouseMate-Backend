@@ -45,4 +45,7 @@ public class UserUsage {
 
     @Column(name = "is_expired")
     private boolean isExpired;
+    
+    @Transient
+    private Service service;
 }
