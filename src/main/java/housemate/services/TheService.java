@@ -1,6 +1,7 @@
 package housemate.services;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -237,8 +237,7 @@ public class TheService {
 			if (packageServiceChildList != null) {
 				for (PackageServiceItem packageServiceItem : packageServiceChildList) {
 					Service serviceChild = serviceRepo.findByServiceId(packageServiceItem.getSingleServiceId()).orElse(null);
-					packageServiceItem.setDescription(serviceChild.getDescription());
-					packageServiceItem.setSingleServiceName(serviceChild.getTitleName());
+					packageServiceItem.setTypeList(serviceTypeRepo.findAllByServiceId(serviceId).orElse(Collections.EMPTY_LIST));
 				}
 				serviceDtoForDetail.setPackageServiceItemList(packageServiceChildList);
 			}
