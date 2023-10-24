@@ -52,23 +52,49 @@ public class UserUsageService {
     @Autowired
     private OrderRepository orderRepository;
 
-    public ResponseEntity<List<UserUsageResponse>> getAllUserUsage(HttpServletRequest request) {
+    public ResponseEntity<List<UserUsageResponse>> getAllUserUsageForSchedule(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 
-        List<UserUsageResponse> listUserUsageResponse = new ArrayList<>();
+        Map<Integer, UserUsageResponse> mapUserUsageResponse = new HashMap<>();
 
         List<UserUsage> listUserUsage = userUsageRepository.getAllUserUsageByUserId(userId);
         for (UserUsage userUsage : listUserUsage) {
 
-            Service service = serviceRepository.getServiceByServiceId(userUsage.getServiceId());
+            if (userUsage.getEndDate().compareTo(LocalDateTime.now()) < 0) {
+                userUsage.setExpired(true);
+                userUsageRepository.save(userUsage);
+                continue;
+            }
 
-            UserUsageResponse userUsageResponse = new UserUsageResponse();
-            userUsageResponse.setService(service);
+            int serviceId = userUsage.getServiceId();
 
-            List<UserUsage> listUserUsageSet = userUsageRepository.getAllUserUsageByServiceIdAndUserId(userUsage.getServiceId(), userId);
-            userUsageResponse.setListUserUsage(listUserUsageSet);
+            int orderItemId = userUsage.getOrderItemId();
+            OrderItem orderItem = orderItemRepository.findById(orderItemId);
 
-            listUserUsageResponse.add(userUsageResponse);
+            Service service = serviceRepository.getServiceByServiceId(serviceId);
+
+            UserUsageResponse userUsageResponse = mapUserUsageResponse.get(serviceId);
+            if (userUsageResponse == null) {
+                userUsageResponse = new UserUsageResponse();
+                userUsageResponse.setService(service);
+                userUsageResponse.setListUserUsage(new ArrayList<>());
+                mapUserUsageResponse.put(service.getServiceId(), userUsageResponse);
+            }
+
+            int currentTotal = userUsageResponse.getTotal();
+            userUsageResponse.setTotal(currentTotal + userUsage.getTotal());
+
+            int currentRemaining = userUsageResponse.getRemaining();
+            userUsageResponse.setRemaining(currentRemaining + userUsage.getRemaining());
+
+            Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+            userUsage.setService(serviceChild);
+            userUsageResponse.getListUserUsage().add(userUsage);
+        }
+
+        List<UserUsageResponse> listUserUsageResponse = new ArrayList<>();
+        for (UserUsageResponse value : mapUserUsageResponse.values()) {
+            listUserUsageResponse.add(value);
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(listUserUsageResponse);
@@ -101,7 +127,8 @@ public class UserUsageService {
             totalRemaining += userUsage.getRemaining();
 
         }
-        listUserUsage = userUsageRepository.getAllUserUsageByOrderItemIdAndUserIdAndNotExpired(orderItemId, userId);
+
+//        listUserUsage = userUsageRepository.getAllUserUsageByOrderItemIdAndUserIdAndNotExpired(orderItemId, userId); //comment lại để xét logic
         userUsageResponse.setListUserUsage(listUserUsage);
 
         Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
@@ -110,7 +137,7 @@ public class UserUsageService {
         userUsageResponse.setStartDate(startDate);
         userUsageResponse.setEndDate(orderItem.getExpireDate());
         userUsageResponse.setTotal(total);
-        userUsageResponse.setTotalRemaining(totalRemaining);
+        userUsageResponse.setRemaining(totalRemaining);
 
         return ResponseEntity.status(HttpStatus.OK).body(userUsageResponse);
     }

@@ -16,17 +16,17 @@ import lombok.Data;
  */
 @Data
 public class UserUsageResponse {
-    
+
     private int total;
-    
-    private int totalRemaining;
-    
+
+    private int remaining;
+
     private LocalDateTime startDate;
-   
+
     private LocalDateTime endDate;
 
     private Service service;
 
     private List<UserUsage> listUserUsage;
-    
+
 }

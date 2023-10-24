@@ -39,6 +39,7 @@ public class Enum {
 		KG,
 		TIME,
 		BOTTLE,
+                ITEM,
 		COMBO
 	}
 	

@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author ThanhF
  */
 @RestController
-@RequestMapping("/userusage")
+@RequestMapping("/user-usage")
 @CrossOrigin
 @Tag(name = "User Usage")
 @SecurityRequirement(name = "bearerAuth")
@@ -35,9 +35,9 @@ public class UserUsageController {
     private UserUsageService userUsageService;
 
     @Operation(summary = "Get all User Usage")
-    @GetMapping("/all")
-    public ResponseEntity<List<UserUsageResponse>> getAllUserUsage(HttpServletRequest request) {
-        return userUsageService.getAllUserUsage(request);
+    @GetMapping("/schedule")
+    public ResponseEntity<List<UserUsageResponse>> getAllUserUsageForSchedule(HttpServletRequest request) {
+        return userUsageService.getAllUserUsageForSchedule(request);
     }
 
     @Operation(summary = "Get all User Usage for my purchased")
@@ -46,7 +46,7 @@ public class UserUsageController {
         return userUsageService.getAllUserUsageForMyPurchased(request);
     }
 
-    @Operation(summary = "Get User Usage item by order item id")
+    @Operation(summary = "Get User Usage item for my purchased detail")
     @GetMapping("/{orderItemId}")
     public ResponseEntity<?> getUserUsageByOrderItemId(HttpServletRequest request, @PathVariable int orderItemId) {
         return userUsageService.getUserUsageByOrderItemId(request, orderItemId);
