@@ -10,21 +10,20 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 /**
  *
  * @author Anh
  */
 
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
- class IdComboPackageServiceItem implements Serializable {
-    private int packageServiceId; //same name with the key
-    private int singleServiceId;
+class IdComboPackageServiceItem implements Serializable {
+	private int packageServiceId; // same name with the key
+	private int singleServiceId;
 }
 
 @Data
@@ -38,22 +37,20 @@ public class PackageServiceItem {
 
 	@Id
 	@Column(name = "package_service_id")
-    private int packageServiceId;
-	
+	private int packageServiceId;
+
 	@Id
 	@Column(name = "service_id")
-    private int singleServiceId;
-	
+	private int singleServiceId;
+
 	@JsonInclude(value = Include.NON_NULL)
 	@Transient
 	private String singleServiceName;
-	
-    @Column(name = "quantity")
-    private int quantity;
-    
-    @Transient
-    private String description;
 
+	@Column(name = "quantity")
+	private int quantity;
+
+	@Transient
+	private String description;
 
 }
-

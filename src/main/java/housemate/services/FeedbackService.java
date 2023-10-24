@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import housemate.constants.ImageType;
 import housemate.constants.Role;
 import housemate.entities.ServiceFeedback;
 import housemate.entities.UserAccount;
@@ -21,6 +22,7 @@ import housemate.models.FeedbackNewDTO;
 import housemate.models.FeedbackViewDTO;
 import housemate.models.FeedbackViewDTO.FeedbackViewDetailDTO;
 import housemate.repositories.FeedbackRepository;
+import housemate.repositories.ImageRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.UserRepository;
 import housemate.utils.AuthorizationUtil;
@@ -33,12 +35,15 @@ public class FeedbackService {
 
 	@Autowired
 	UserRepository userRepo;
-	
+
 	@Autowired
 	ServiceRepository servRepo;
 
 	@Autowired
 	AuthorizationUtil authorizationUtil;
+
+	@Autowired
+	ImageRepository imgRepo;
 
 	ModelMapper mapper = new ModelMapper();
 
@@ -80,6 +85,7 @@ public class FeedbackService {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
 			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
+			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.AVATAR));
 			feebackDetailList.add(feedbackViewDetail);
 		}
 
@@ -104,6 +110,7 @@ public class FeedbackService {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
 			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
+			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.AVATAR));
 			feebackDetailList.add(feedbackViewDetail);
 		}
 

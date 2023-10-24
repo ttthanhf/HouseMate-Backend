@@ -15,7 +15,6 @@ public class Enum {
 		MONTH,
 		DAY,
 		WEEK
-		
 	}
 
 	public static enum SortRequired {
@@ -26,7 +25,8 @@ public class Enum {
 	public static enum GroupType {
 		HOURLY_SERVICE,
 		RETURN_SERVICE,
-		DELIVERY_SERVICE
+		DELIVERY_SERVICE,
+		OTHER
 	}
 
 	public static enum SaleStatus {
@@ -42,21 +42,14 @@ public class Enum {
 		ITEM,
 		COMBO
 	}
-	
+
 	@Getter
 	@AllArgsConstructor
 	public static enum ServiceField {
-		NAME("titleName"),
-		PRICE("finalPrice"),
+		NAME("titleName"), PRICE("finalPrice"),
 		NUMBER_OF_SOLD("numberOfSold");
 
 		private String fieldName;
 	}
 	
-	public static enum ImageType {
-	    AVATAR,
-	    SERVICE,
-	    WORKING
-	}
-
 }
