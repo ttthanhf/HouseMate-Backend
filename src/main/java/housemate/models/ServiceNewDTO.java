@@ -1,6 +1,5 @@
 package housemate.models;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -36,11 +35,11 @@ public class ServiceNewDTO {
 	@Min(value = 1000, message = "Price must from 1,000 VND upper")
 	@Schema(description = "Original price")
 	private Integer originalPrice;
-	
+
 	@Schema(description = "Sale price")
 	@PositiveOrZero(message = "Set the Final Price from 0 to upper and smaller than or equal Original Price")
 	private Integer finalPrice;
-	
+
 	@NotNull(message = "The unit of measure type must not be empty")
 	@Schema(description = "The Unit of measure in one of these type: KG, HOUR, TIME, COMBO."
 			+ " With package - unit measure default = COMBO")
@@ -76,11 +75,11 @@ public class ServiceNewDTO {
 			+ "}", description = "Choose single services from single service list and set the quantity")
 	@JsonInclude(value = Include.NON_NULL)
 	Map<Integer, Integer> serviceChildList; // one for id - one for quantity
-	
+
 	@NotEmpty(message = "You have to must set the price cycle list for this service")
 	@Schema(example = "{\r\n" + "\"3\": 1000,\r\n" + "\"6\": 1000,\r\n" + "\"9\": 1000\r\n," + "\"12\": 1000\r\n"
 			+ "}", description = "Set the price for each cycle")
 	@Size(min = 4, max = 4, message = "Have to set price foreach 4 cycles : 3, 6, 9 ,12 of this service")
-	Map<Integer, Integer> periodPriceServiceList; 
+	Map<Integer, Integer> periodPriceServiceList;
 
 }

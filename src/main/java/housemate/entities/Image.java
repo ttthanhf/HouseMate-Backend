@@ -1,6 +1,6 @@
 package housemate.entities;
 
-import housemate.constants.Enum.ImageType;
+import housemate.constants.ImageType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
