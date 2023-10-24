@@ -78,9 +78,6 @@ public class PaymentService {
     @Autowired
     private UserUsageRepository userUsageRepository;
 
-    @Autowired
-    private PeriodRepository periodRepository;
-
     private final String language = "en";
     private final String vnp_IpAddr = "127.0.0.1";
     private final String bankCode = "";
