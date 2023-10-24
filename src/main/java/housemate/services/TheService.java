@@ -151,7 +151,7 @@ public class TheService {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
 		
 		serviceList.forEach(
-				s -> s.setMainImg(imgRepo.findFirtsByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE)));
+				s -> s.setMainImg(imgRepo.findFirstByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE)));
 		
 		List<ServiceViewDTO> serviceViewList = new ArrayList<>();
 		for (Service service : serviceList.getContent()) {
@@ -209,7 +209,7 @@ public class TheService {
 		if (serviceList.isEmpty() || serviceList == null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
 		
-		serviceList.forEach(s -> s.setMainImg(imgRepo.findFirtsByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE)));
+		serviceList.forEach(s -> s.setMainImg(imgRepo.findFirstByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE)));
 
 		return ResponseEntity.ok(serviceList);
 	}
