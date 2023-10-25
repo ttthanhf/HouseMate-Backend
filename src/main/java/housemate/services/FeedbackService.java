@@ -86,7 +86,7 @@ public class FeedbackService {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
 			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
-			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
+			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(customer.getUserId(), ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
 			feebackDetailList.add(feedbackViewDetail);
 		}
 
@@ -111,7 +111,7 @@ public class FeedbackService {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
 			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
-			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
+			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(customer.getUserId(), ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
 			feebackDetailList.add(feedbackViewDetail);
 		}
 
