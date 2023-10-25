@@ -57,7 +57,7 @@ public class UserUsageService {
 
         Map<Integer, UserUsageResponse> mapUserUsageResponse = new HashMap<>();
 
-        List<UserUsage> listUserUsage = userUsageRepository.getAllUserUsageByUserId(userId);
+        List<UserUsage> listUserUsage = userUsageRepository.getAllUserUsageByUserIdAndNotExpired(userId);
         for (UserUsage userUsage : listUserUsage) {
 
             if (userUsage.getEndDate().compareTo(LocalDateTime.now()) < 0) {

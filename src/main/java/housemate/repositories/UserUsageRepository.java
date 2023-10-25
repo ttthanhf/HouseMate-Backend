@@ -25,6 +25,9 @@ public interface UserUsageRepository extends JpaRepository<UserUsage, Integer> {
     @Query("SELECT u FROM UserUsage u WHERE u.userId = :userId")
     List<UserUsage> getAllUserUsageByUserId(int userId);
 
+    @Query("SELECT u FROM UserUsage u WHERE u.userId = :userId AND u.isExpired = false")
+    List<UserUsage> getAllUserUsageByUserIdAndNotExpired(int userId);
+
     @Query("SELECT u FROM UserUsage u WHERE u.userId = :userId AND u.serviceId = :serviceId")
     List<UserUsage> getAllUserUsageByServiceIdAndUserId(int serviceId, int userId);
 
