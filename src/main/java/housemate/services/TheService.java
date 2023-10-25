@@ -151,7 +151,7 @@ public class TheService {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
 		
 		serviceList.forEach(
-				s -> s.setMainImg(imgRepo.findFirstByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE)));
+				s -> s.setMainImg(imgRepo.findFirstByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(null)));
 		
 		List<ServiceViewDTO> serviceViewList = new ArrayList<>();
 		for (Service service : serviceList.getContent()) {
@@ -168,6 +168,11 @@ public class TheService {
 		Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 		Page<ServiceViewDTO> serviceViewPage = new PageImpl<ServiceViewDTO>(serviceViewList, serviceList.getPageable(), serviceList.getTotalElements());
 		
+		if (serviceViewPage.isEmpty() || serviceViewPage == null)
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
+		
+		serviceViewPage.forEach(s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getService().getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST))) ;
+
 		return ResponseEntity.ok(serviceViewPage);
 	}
 
@@ -209,7 +214,7 @@ public class TheService {
 		if (serviceList.isEmpty() || serviceList == null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
 		
-		serviceList.forEach(s -> s.setMainImg(imgRepo.findFirstByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE)));
+		serviceList.forEach(s -> s.setMainImg(imgRepo.findFirstByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(null)));		
 
 		return ResponseEntity.ok(serviceList);
 	}
@@ -250,7 +255,7 @@ public class TheService {
 		periodServiceList.forEach(s -> priceList.add(mapper.map(s, ServicePrice.class)));
 		serviceDtoForDetail.setPriceList(priceList);
 
-		List<Image> imgList = imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.SERVICE);
+		List<Image> imgList = imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.SERVICE).orElse(Collections.EMPTY_LIST);
 		serviceDtoForDetail.setImages(imgList);
 
 		return ResponseEntity.ok().body(serviceDtoForDetail);
