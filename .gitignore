@@ -38,3 +38,4 @@ src/main/resources/application.properties
 **/src/test/
 nbactions.xml
 nb-configuration.xml
+/src/main/resources/application.properties
