@@ -7,6 +7,8 @@ package housemate.repositories;
 import housemate.constants.ImageType;
 import housemate.entities.Image;
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -17,8 +19,8 @@ public interface ImageRepository extends JpaRepository<Image, Integer> {
 
 	Image findById(int id);
 
-	List<Image> findAllByEntityIdAndImageType(int entityId, ImageType imgType);
+	Optional<List<Image>> findAllByEntityIdAndImageType(int entityId, ImageType imgType);
 
-	Image findFirstByEntityIdAndImageType(int entityId, ImageType imgType);
+	Optional<Image> findFirstByEntityIdAndImageType(int entityId, ImageType imgType);
 
 }

@@ -3,6 +3,7 @@ package housemate.services;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +86,7 @@ public class FeedbackService {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
 			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
-			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.AVATAR));
+			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
 			feebackDetailList.add(feedbackViewDetail);
 		}
 
@@ -110,7 +111,7 @@ public class FeedbackService {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
 			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
-			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.AVATAR));
+			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
 			feebackDetailList.add(feedbackViewDetail);
 		}
 
