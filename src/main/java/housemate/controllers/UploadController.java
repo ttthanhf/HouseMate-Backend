@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,7 +37,7 @@ public class UploadController {
     S3Service s3Service;
 
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<String> uploadImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @Valid @ModelAttribute UploadDTO uploadDTO) {
+    public ResponseEntity<String> uploadImage(HttpServletRequest request, @RequestPart("file") MultipartFile[] files, @Valid @ModelAttribute UploadDTO uploadDTO) {
         return s3Service.uploadImage(request, files, uploadDTO);
     }
 

@@ -5,7 +5,6 @@
 package housemate.models;
 
 import housemate.constants.ImageType;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -15,9 +14,6 @@ import lombok.Data;
 @Data
 public class UploadDTO {
 
-    @NotBlank
     private int entityId;
-
-    @NotBlank
     private ImageType imageType;
 }
