@@ -16,6 +16,7 @@ import lombok.Data;
 @Data
 public class MyPurchasedResponse {
 
+    private int orderItemId;
     private Service service;
     private List<String> singleServiceName;
     private LocalDateTime startDate;
