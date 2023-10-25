@@ -2,7 +2,7 @@ package housemate.services;
 
 import housemate.constants.Cycle;
 import housemate.constants.Enum.GroupType;
-import housemate.constants.Role;
+import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
 import housemate.mappers.ScheduleMapper;
 import housemate.models.DeliveryScheduleDTO;
@@ -20,7 +20,10 @@ import org.springframework.http.ResponseEntity;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author hdang09
@@ -28,10 +31,9 @@ import java.util.*;
 @org.springframework.stereotype.Service
 public class ScheduleService {
 
-    private final int FIND_STAFF_HOURS = 3;
     private static final int OFFICE_HOURS_START = 6;
     private static final int OFFICE_HOURS_END = 18;
-
+    private final int FIND_STAFF_HOURS = 3;
     private final ServiceRepository serviceRepository;
     private final ScheduleRepository scheduleRepository;
     private final ScheduleMapper scheduleMapper;
@@ -59,11 +61,12 @@ public class ScheduleService {
         this.userRepository = userRepository;
     }
 
-    public ResponseEntity<List<EventRes>> getScheduleForUser(HttpServletRequest request) {
-        List<EventRes> events = new ArrayList<>();
+    public ResponseEntity<List<EventRes>> getScheduleForCustomer(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        List<EventRes> events = new ArrayList<>();
+        List<Schedule> schedules = scheduleRepository.getByCustomerId(userId);
 
-        for (Schedule schedule : scheduleRepository.getByCustomerId(userId)) {
+        for (Schedule schedule : schedules) {
             Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
 
             if (service.getGroupType() == GroupType.RETURN_SERVICE) {
@@ -80,17 +83,60 @@ public class ScheduleService {
                 setStaffInfo(events, schedule, event);
             }
         }
+
         return ResponseEntity.status(HttpStatus.OK).body(events);
+    }
+
+    public ResponseEntity<List<EventRes>> getScheduleForStaff(HttpServletRequest request) {
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        List<EventRes> events = getEventsForStaff(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(events);
+    }
+
+    public ResponseEntity<List<EventRes>> getScheduleByUserId(int userId) {
+        List<EventRes> events =  getEventsForStaff(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(events);
+    }
+
+    private List<EventRes> getEventsForStaff(int staffId) {
+        List<EventRes> events = new ArrayList<>();
+        List<Schedule> schedules = scheduleRepository.getByStaffId(staffId);
+
+        for (Schedule schedule : schedules) {
+            Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
+
+            if (service.getGroupType() == GroupType.RETURN_SERVICE) {
+                EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
+                pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
+                setCustomerInfo(events, schedule, pickupEvent);
+
+                EventRes receivedEvent = scheduleMapper.mapToEventRes(schedule, service);
+                receivedEvent.setStart(receivedEvent.getEnd());
+                receivedEvent.setEnd(receivedEvent.getEnd().plusHours(1));
+                setCustomerInfo(events, schedule, receivedEvent);
+            } else {
+                EventRes event = scheduleMapper.mapToEventRes(schedule, service);
+                setCustomerInfo(events, schedule, event);
+            }
+        }
+
+        return events;
     }
 
     private void setStaffInfo(List<EventRes> events, Schedule schedule, EventRes event) {
         if (schedule.getStaffId() != 0) {
-            UserAccount user = userRepository.findByUserId(schedule.getStaffId());
-            if (user.getRole() == Role.STAFF) {
-                event.setStaff(user.getFullName());
-                event.setPhone(user.getPhoneNumber());
-            }
+            UserAccount staff = userRepository.findByUserId(schedule.getStaffId());
+            event.setStaff(staff.getFullName());
+            event.setPhone(staff.getPhoneNumber());
         }
+        events.add(event);
+    }
+
+    private void setCustomerInfo(List<EventRes> events, Schedule schedule, EventRes event) {
+        UserAccount customer = userRepository.findByUserId(schedule.getCustomerId());
+        event.setStaff(customer.getFullName());
+        event.setPhone(customer.getPhoneNumber());
+
         events.add(event);
     }
 
@@ -369,5 +415,34 @@ public class ScheduleService {
         }
 
         return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));
+    }
+
+    public ResponseEntity<String> updateHourlySchedule(
+            HttpServletRequest request, HourlyScheduleDTO hourlyScheduleDTO, int scheduleId
+    ) {
+        if (isStatusInvalid(scheduleId)) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
+
+        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
+    }
+
+    public ResponseEntity<String> updateReturnSchedule(
+            HttpServletRequest request, ReturnScheduleDTO returnScheduleDTO, int scheduleId
+    ) {
+        if (isStatusInvalid(scheduleId)) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
+
+        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
+    }
+
+    public ResponseEntity<String> updateDeliverySchedule(
+            HttpServletRequest request, DeliveryScheduleDTO deliveryScheduleDTO, int scheduleId
+    ) {
+        if (isStatusInvalid(scheduleId)) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
+
+        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
+    }
+
+    private boolean isStatusInvalid(int scheduleId) {
+        ScheduleStatus status = scheduleRepository.getByScheduleId(scheduleId).getStatus();
+        return status != ScheduleStatus.PROCESSING && status != ScheduleStatus.PENDING;
     }
 }
