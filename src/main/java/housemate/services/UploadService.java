@@ -39,7 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
  * @author ThanhF
  */
 @Service
-public class S3Service {
+public class UploadService {
 
     private final AmazonS3 s3client;
 
@@ -56,7 +56,7 @@ public class S3Service {
     private AuthorizationUtil authorizationUtil;
 
     @Autowired
-    public S3Service(
+    public UploadService(
             @Value("${s3.endpoint}") String endpoint,
             @Value("${s3.region}") String region,
             @Value("${s3.access-key}") String accessKey,
