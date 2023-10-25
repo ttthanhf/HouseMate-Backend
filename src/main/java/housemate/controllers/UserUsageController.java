@@ -47,7 +47,7 @@ public class UserUsageController {
     }
 
     @Operation(summary = "Get User Usage item for my purchased detail")
-    @GetMapping("/{orderItemId}")
+    @GetMapping("/my-purchased/{orderItemId}")
     public ResponseEntity<?> getUserUsageByOrderItemId(HttpServletRequest request, @PathVariable int orderItemId) {
         return userUsageService.getUserUsageByOrderItemId(request, orderItemId);
     }
