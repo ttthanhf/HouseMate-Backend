@@ -1,7 +1,7 @@
 package housemate.controllers;
 
 import housemate.models.UploadDTO;
-import housemate.services.S3Service;
+import housemate.services.UploadService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UploadController {
 
     @Autowired
-    S3Service s3Service;
+    UploadService s3Service;
 
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<String> uploadImage(HttpServletRequest request, @RequestPart("file") MultipartFile[] files, @Valid @ModelAttribute UploadDTO uploadDTO) {
