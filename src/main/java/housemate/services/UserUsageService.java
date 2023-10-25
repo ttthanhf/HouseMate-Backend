@@ -167,6 +167,7 @@ public class UserUsageService {
                 } else {
                     listSingleServiceName.add(service.getTitleName());
                 }
+                myPurchasedResponse.setOrderItemId(orderItem.getOrderItemId());
                 myPurchasedResponse.setEndDate(orderItem.getExpireDate());
                 myPurchasedResponse.setStartDate(orderItem.getExpireDate());
                 myPurchasedResponse.setSingleServiceName(listSingleServiceName);
