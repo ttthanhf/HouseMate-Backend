@@ -2,17 +2,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package housemate.models;
-
-import housemate.constants.ImageType;
-import lombok.Data;
+package housemate.services;
 
 /**
  *
  * @author ThanhF
  */
-@Data
-public class UploadDTO {
-    private int entityId;
-    private ImageType imageType;
+class ImageType {
+    
 }
