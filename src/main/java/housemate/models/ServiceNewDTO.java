@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import housemate.constants.Enum.GroupType;
 import housemate.constants.Enum.SaleStatus;
-import housemate.constants.Enum.UnitOfMeasure;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -43,7 +42,7 @@ public class ServiceNewDTO {
 	@NotNull(message = "The unit of measure type must not be empty")
 	@Schema(description = "The Unit of measure in one of these type: KG, HOUR, TIME, COMBO."
 			+ " With package - unit measure default = COMBO")
-	private UnitOfMeasure unitOfMeasure;
+	private String unitOfMeasure;
 
 	@NotBlank(message = "Filling the description of the service")
 	@Schema(description = "Description of your service")

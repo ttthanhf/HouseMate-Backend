@@ -22,13 +22,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
-import housemate.constants.Enum.SaleStatus;
-import housemate.constants.Enum.ServiceCategory;
-import housemate.constants.Enum.ServiceField;
-import housemate.constants.Enum.SortRequired;
-import housemate.constants.Enum.UnitOfMeasure;
+import housemate.constants.Enum.*;
 import housemate.constants.ImageType;
-import housemate.constants.Enum.TimeUnit;
 import housemate.entities.Image;
 import housemate.entities.PackageServiceItem;
 import housemate.entities.Period;
@@ -46,6 +41,7 @@ import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
 import housemate.utils.AuthorizationUtil;
+import housemate.utils.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import housemate.models.ServiceViewDTO.ServicePrice;
 import java.text.Normalizer;
@@ -121,7 +117,7 @@ public class TheService {
 		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
 
-		String keywordValue = !keyword.isPresent() ? null : removeDiacriticalMarks(keyword.get().trim().replaceAll("\\s+", " "));
+		String keywordValue = !keyword.isPresent() ? null : StringUtil.stringNormalizationForCompare(keyword.get());
 		Boolean categoryValue = category.isEmpty() 
 				              ? null
 				              : (category.get().equals(ServiceCategory.PACKAGE) == true ? true : false);
@@ -186,7 +182,7 @@ public class TheService {
 			Optional<Integer> page,
 			Optional<Integer> size) {
 
-		String keywordValue = keyword == null ? null : removeDiacriticalMarks(keyword.trim().replaceAll("\\s+", " "));
+		String keywordValue = keyword == null ? null : StringUtil.stringNormalizationForCompare(keyword);
 		Boolean categoryValue = category.isEmpty() ? null : (category.get().equals(ServiceCategory.PACKAGE) == true ? true : false);
 		SaleStatus statusValue = saleStatus.orElse(null);
 		int ratingValue = rating.orElse(0);
@@ -273,9 +269,9 @@ public class TheService {
 		try {
 			// Check all before saving object service
 			// Check duplicate title name
-			String formatedTitleName = serviceDTO.getTitleName().trim().replaceAll("\\s+", " ");
+			String formatedTitleName = StringUtil.formatedString(serviceDTO.getTitleName());
 			serviceDTO.setTitleName(formatedTitleName);
-			if (serviceRepo.findByTitleNameIgnoreCase(removeDiacriticalMarks(formatedTitleName)) != null)
+			if (serviceRepo.findByTitleNameIgnoreCase(StringUtil.removeDiacriticalMarks(formatedTitleName)) != null)
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The title name has existed before !");
 
 			//check valid between original price and final price of service 
@@ -297,7 +293,7 @@ public class TheService {
 				if (serviceDTO.getServiceChildList() != null)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("The single service not allow to set service child list !");
-				if (serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
+				if (serviceDTO.getUnitOfMeasure().equals("COMBO"))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("The unit of measure of single service should not be COMBO !");
 				if (serviceDTO.getTypeNameList() != null) {
@@ -305,7 +301,7 @@ public class TheService {
 					Set<String> uniqueNames = new HashSet<>();
 					// check any type name have equal ignore case
 					for (String typeName : typeNameList)
-						if (!uniqueNames.add(removeDiacriticalMarks(typeName.toLowerCase().trim().replaceAll("\\s+", " "))))
+						if (!uniqueNames.add(StringUtil.stringNormalizationForCompare(typeName)))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("Duplicated the type name in this service !");
 				}
@@ -319,7 +315,7 @@ public class TheService {
 				if (serviceDTO.getServiceChildList() == null || serviceDTO.getServiceChildList().size() < 2)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("The package contains at least 2 single services !");
-				if (!serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
+				if (!serviceDTO.getUnitOfMeasure().equals("COMBO"))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("The unit of measure of package must be COMBO !");
 				for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
@@ -350,7 +346,7 @@ public class TheService {
 					boolean validSetting = min <= propor && propor <= max;
 					if (!validSetting) {
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-								.body("Period price for cycle " + period.getKey() + " out of range proportion [" + min + "-" + max + "] against the original price " + serviceDTO.getOriginalPrice());
+								.body("Period price for cycle " + period.getKey() + " out of range proportion [" + min + "-" + max + "]" + " ~ [" + min + "-" + max + "]" + " against the original price " + serviceDTO.getOriginalPrice());
 					}
 				}
 			}
@@ -436,10 +432,10 @@ public class TheService {
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The service does not exists !");
 
 			// Check Valid Name For Update
-			String formatedTitleName = serviceDTO.getTitleName().trim().replaceAll("\\s+", " ");
+			String formatedTitleName = StringUtil.formatedString(serviceDTO.getTitleName());
 			serviceDTO.setTitleName(formatedTitleName);
 			if (!formatedTitleName.equalsIgnoreCase(oldService.getTitleName()))
-				if (serviceRepo.findByTitleNameIgnoreCase(removeDiacriticalMarks(serviceDTO.getTitleName().trim())) != null)
+				if (serviceRepo.findByTitleNameIgnoreCase(StringUtil.removeDiacriticalMarks(formatedTitleName)) != null)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The title name has existed before !");
 			
 			//check valid between original price and final price of service 
@@ -483,7 +479,7 @@ public class TheService {
 					Set<String> uniqueNames = new HashSet<>();
 					// check any type name have equal ignore case
 					for (String typeName : typeNameList)
-						if (!uniqueNames.add(removeDiacriticalMarks(typeName.toLowerCase().trim().replaceAll("\\s+", " "))))
+						if (!uniqueNames.add(StringUtil.stringNormalizationForCompare(typeName)))
 							return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 									.body("Duplicated the type name of this service !");
 					// Reset Type Name List and Update
@@ -574,12 +570,6 @@ public class TheService {
 
 		return this.getOne(updatedService.getServiceId());
 	}
-	
-	  private static String removeDiacriticalMarks(String str) {
-	        str = Normalizer.normalize(str, Normalizer.Form.NFD);
-	        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-	        return pattern.matcher(str).replaceAll("");
-	    }
 
 	// TODO: DELETE SERVICE LATER
 	  

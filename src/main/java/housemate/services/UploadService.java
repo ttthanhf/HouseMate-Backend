@@ -15,11 +15,13 @@ import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
 import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
+import housemate.constants.ImageType;
 import housemate.constants.Role;
 import housemate.entities.Image;
 import housemate.models.UploadDTO;
 import housemate.repositories.ImageRepository;
 import housemate.utils.AuthorizationUtil;
+import housemate.utils.RandomUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -40,7 +42,7 @@ import org.springframework.web.multipart.MultipartFile;
  * @author ThanhF
  */
 @Service
-public class S3Service {
+public class UploadService {
 
     private final AmazonS3 s3client;
 
@@ -57,7 +59,7 @@ public class S3Service {
     private AuthorizationUtil authorizationUtil;
 
     @Autowired
-    public S3Service(
+    public UploadService(
             @Value("${s3.endpoint}") String endpoint,
             @Value("${s3.region}") String region,
             @Value("${s3.access-key}") String accessKey,
@@ -74,6 +76,30 @@ public class S3Service {
 
     @Async
     public ResponseEntity<String> uploadImage(HttpServletRequest request, MultipartFile[] files, UploadDTO uploadDTO) {
+
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
+
+        if (uploadDTO.getEntityId() == 0 || uploadDTO.getImageType().equals(null) || uploadDTO.getImageType().equals("")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing entity id or image type");
+        }
+
+        if (files.length == 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Select at least one file to upload");
+        }
+
+        if (uploadDTO.getImageType().equals(ImageType.AVATAR.toString())) {
+            if (files.length > 1) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Only one image for set avatar");
+            }
+            if (uploadDTO.getEntityId() != userId) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Entity ID not match with User Id when set avatar");
+            }
+        }
+
+        if (uploadDTO.getImageType().equals(ImageType.SERVICE.toString()) && !role.equals(Role.ADMIN.toString())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Only admin role can upload image for service");
+        }
 
         for (MultipartFile file : files) {
             if (!file.getContentType().startsWith("image/")) {
@@ -93,6 +119,7 @@ public class S3Service {
             	e.printStackTrace();
             	return ResponseEntity.badRequest().body("FAILED THIET NHA");
             }
+
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(bucket, imageName);
             InitiateMultipartUploadResult initResult = s3client.initiateMultipartUpload(initRequest);
 
@@ -135,7 +162,7 @@ public class S3Service {
             image.setImageUrl(domainCDN + imageName);
             image.setEntityId(uploadDTO.getEntityId());
             image.setImageType(uploadDTO.getImageType());
-            image.setUserId(authorizationUtil.getUserIdFromAuthorizationHeader(request));
+            image.setUserId(userId);
             imageRepository.save(image);
 
         }
