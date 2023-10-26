@@ -35,12 +35,6 @@ public class Enum {
 		DISCONTINUED
 	}
 
-	public static enum UnitOfMeasure {
-		HOUR,
-		TIMES,
-		ITEM,
-		COMBO
-	}
 
 	@Getter
 	@AllArgsConstructor

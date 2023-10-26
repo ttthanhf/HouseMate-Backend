@@ -1,7 +1,7 @@
 package housemate.controllers;
 
 import housemate.models.UploadDTO;
-import housemate.services.S3Service;
+import housemate.services.UploadService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,10 +34,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class UploadController {
 
     @Autowired
-    S3Service s3Service;
+    UploadService s3Service;
 
-    @PostMapping
-    public ResponseEntity<String> uploadImage(HttpServletRequest request, @RequestParam("file") MultipartFile[] files, @Valid @ModelAttribute UploadDTO uploadDTO) {
+
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<String> uploadImage(HttpServletRequest request, @RequestPart("file") MultipartFile[] files, @Valid @ModelAttribute UploadDTO uploadDTO) {
         return s3Service.uploadImage(request, files, uploadDTO);
     }
 

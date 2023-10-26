@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import housemate.constants.Enum.GroupType;
 import housemate.constants.Enum.SaleStatus;
-import housemate.constants.Enum.UnitOfMeasure;
 import jakarta.persistence.*;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
@@ -46,7 +45,7 @@ public class Service {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "unit_of_measure", nullable = false)
-	private UnitOfMeasure unitOfMeasure;
+	private String unitOfMeasure;
 
 	@Column(name = "description", nullable = false)
 	private String description;
