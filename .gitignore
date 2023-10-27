@@ -35,3 +35,6 @@ build/
 
 ### OWN ###
 src/main/resources/application.properties
+**/src/test/
+nbactions.xml
+nb-configuration.xml

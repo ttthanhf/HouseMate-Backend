@@ -7,7 +7,6 @@ package housemate.configs;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -22,16 +21,25 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests
                         -> authorizeRequests
-//                        .requestMatchers("/api/**").authenticated()
+<<<<<<< HEAD
+                        .requestMatchers("/auth/callback/google/redirect").authenticated()
                         .anyRequest().permitAll()
                 )
-                .csrf(AbstractHttpConfigurer::disable);
+                .csrf(AbstractHttpConfigurer::disable)
+                .oauth2Login(oauth2Login -> oauth2Login
+                .defaultSuccessUrl("/auth/callback/google/redirect", true));
+                
+=======
+                        .requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll()
+                );
 //                .oauth2Login(oauth2Login -> oauth2Login
 //                .defaultSuccessUrl("/callback/google/user", true));
 //                .logout(logout -> logout
 //                .logoutUrl("/logout")
 //                .logoutSuccessUrl("/")
 //                );
+>>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
         return http.build();
     }
 }
