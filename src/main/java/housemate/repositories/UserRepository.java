@@ -7,14 +7,12 @@ package housemate.repositories;
 import housemate.constants.Role;
 import housemate.entities.UserAccount;
 import org.springframework.data.jpa.repository.*;
-<<<<<<< HEAD
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-=======
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
+
 
 /**
  *
@@ -23,12 +21,7 @@ import java.util.List;
 @Repository
 public interface UserRepository extends JpaRepository<UserAccount, Integer> {
 
-<<<<<<< HEAD
     UserAccount findByEmailAddress(String emailAddress);
-=======
-    // @Query("SELECT u FROM UserAccount u WHERE u.email_address = :emailAddress")
-    // UserAccount findByEmailAddress(@Param("emailAddress") String emailAddress);
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
 
     UserAccount findByUserId(int userId);
 

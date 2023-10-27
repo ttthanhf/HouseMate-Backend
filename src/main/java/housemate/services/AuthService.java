@@ -4,10 +4,7 @@
  */
 package housemate.services;
 
-<<<<<<< HEAD
 import housemate.entities.JwtPayload;
-=======
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
 import housemate.entities.UserAccount;
 import housemate.mappers.AccountMapper;
 import housemate.mappers.JwtPayloadMapper;
@@ -16,7 +13,6 @@ import housemate.models.LoginAccountDTO;
 import housemate.models.RegisterAccountDTO;
 import housemate.models.ResetPasswordDTO;
 import housemate.repositories.UserRepository;
-<<<<<<< HEAD
 import housemate.utils.BcryptUtil;
 import housemate.utils.JwtUtil;
 import java.net.URI;
@@ -28,10 +24,8 @@ import java.util.UUID;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-=======
-import java.util.List;
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -47,7 +41,6 @@ public class AuthService {
     @Autowired
     UserRepository userRepository;
 
-<<<<<<< HEAD
     @Autowired
     JwtUtil jwtUtil;
 
@@ -209,19 +202,4 @@ public class AuthService {
         URI uri = URI.create(url);
         return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
     }
-=======
-    public ResponseEntity<Void> login(LoginAccountDTO loginAccountDTO) {
-        return null;
-    }
-    
-    public ResponseEntity<List<UserAccount>> getAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
-    }
-
-    public ResponseEntity<String> register(RegisterAccountDTO registerAccountDTO) {
-        UserAccount userAccount = new UserAccount().fromRegisterAccountDTO(registerAccountDTO);
-        userRepository.save(userAccount);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Register successfully!");
-    }
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
 }

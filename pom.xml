@@ -117,7 +117,6 @@
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
         </dependency>
-<<<<<<< HEAD
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -133,9 +132,6 @@
             <artifactId>aws-java-sdk-s3</artifactId>
             <version>1.12.571</version>
         </dependency>
-=======
-
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
     </dependencies>
     <build>
         <plugins>
