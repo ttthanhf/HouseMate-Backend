@@ -1,10 +1,8 @@
 package housemate.responses;
 
-import housemate.constants.Enum.GroupType;
 import housemate.entities.ServiceType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.util.List;
 import java.util.Objects;
 

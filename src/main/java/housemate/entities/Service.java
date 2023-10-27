@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import housemate.constants.Enum.GroupType;
 import housemate.constants.Enum.SaleStatus;
 import jakarta.persistence.*;
 import jakarta.persistence.Id;

@@ -155,7 +155,12 @@ public class FeedbackService {
 		if(feedback == null)
 			return ResponseEntity.badRequest().body("This feedback does not exist");
 		
-		return ResponseEntity.ok(feedback);
+		FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feedback, FeedbackViewDetailDTO.class);
+		UserAccount customer = userRepo.findByUserId(feedback.getCustomerId());
+		feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
+		feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(customer.getUserId(), ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
+		
+		return ResponseEntity.ok(feedbackViewDetail);
 	}
 
 	@Transactional
@@ -177,7 +182,7 @@ public class FeedbackService {
 		
 		servRepo.updateAvgRating(feedback.getServiceId());
 		
-		return ResponseEntity.ok(addedFeedback);
+		return this.getOne(feedback.getServiceFeedbackId());
 	}
 
 	@Transactional
@@ -202,7 +207,7 @@ public class FeedbackService {
 		
 		servRepo.updateAvgRating(oldFeedback.getServiceId());
 		
-		return ResponseEntity.ok(updatedFeedback);
+		return this.getOne(oldFeedback.getServiceFeedbackId());
 	}
 	
 	@Transactional

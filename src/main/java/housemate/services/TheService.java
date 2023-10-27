@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
-import housemate.constants.ServiceConfiguration;
+import housemate.constants.Enum.ServiceConfiguration;
 import housemate.constants.Enum.*;
 import housemate.constants.ImageType;
 import housemate.entities.Image;
@@ -46,10 +46,8 @@ import housemate.utils.AuthorizationUtil;
 import housemate.utils.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import housemate.models.ServiceViewDTO.ServicePrice;
-import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -316,9 +314,9 @@ public class TheService {
 				if (serviceDTO.getServiceChildList() != null)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("The single service not allow to set service child list !");
-				if (serviceDTO.getUnitOfMeasure().equals("COMBO"))
+				if (serviceDTO.getUnitOfMeasure().equals("Gói"))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-							.body("The unit of measure of single service should not be COMBO !");
+							.body("The unit of measure of single service should not be Gói !");
 				if (serviceDTO.getTypeNameList() != null) {
 					Set<String> typeNameList = serviceDTO.getTypeNameList();
 					Set<String> uniqueNames = new HashSet<>();
@@ -338,9 +336,9 @@ public class TheService {
 				if (serviceDTO.getServiceChildList() == null || serviceDTO.getServiceChildList().size() < 2)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("The package contains at least 2 single services !");
-				if (!serviceDTO.getUnitOfMeasure().equals("COMBO"))
+				if (!serviceDTO.getUnitOfMeasure().equals("Gói"))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-							.body("The unit of measure of package must be COMBO !");
+							.body("The unit of measure of package must be Gói !");
 				for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
 					if (serviceRepo.findByServiceId(singleServiceId).isEmpty())
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(

@@ -7,9 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-
 import housemate.constants.Role;
-import housemate.constants.ServiceConfiguration;
+import housemate.constants.Enum.ServiceConfiguration;
 import housemate.entities.ServiceConfig;
 import housemate.models.ServiceConfigNewDTO;
 import housemate.repositories.ServiceConfigRepository;
