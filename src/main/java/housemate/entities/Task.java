@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -16,26 +17,30 @@ import java.util.Date;
  * @author ThanhF
  */
 @Entity
-@Table(name = "Task")
+@Table(name = "task")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Task {
 
-    @Id
-    @Column(name = "task_id")
-    private int id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "task_id")
+	private int id;
 
-    @Column(name = "service_schedule_id")
-    private int serviceScheduleId;
+	@Column(name = "service_schedule_id")
+	private int serviceScheduleId;
 
-    @Column(name = "customer_id")
-    private int customerId;
+	@Column(name = "created_at")
+	private LocalDate created_at;
 
-    @Column(name = "post_at")
-    private Date postAt;
+	@Column(name = "staff_id")
+	private int staffId;
 
-    @Column(name = "task_status")
-    private String taskStatus;
+	@Column(name = "post_at")
+	private LocalDate received_at;
+
+	@Column(name = "task_status")
+	private String taskStatus;
 
 }

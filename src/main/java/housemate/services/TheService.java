@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
-import housemate.constants.ServiceConfiguration;
+import housemate.constants.Enum.ServiceConfiguration;
 import housemate.constants.Enum.*;
 import housemate.constants.ImageType;
 import housemate.entities.Image;
@@ -46,10 +46,8 @@ import housemate.utils.AuthorizationUtil;
 import housemate.utils.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import housemate.models.ServiceViewDTO.ServicePrice;
-import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.regex.Pattern;
 
 /**
  *

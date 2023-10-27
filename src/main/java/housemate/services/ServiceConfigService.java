@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import housemate.constants.Enum.ServiceConfiguration;
 import housemate.constants.Role;
-import housemate.constants.ServiceConfiguration;
 import housemate.entities.ServiceConfig;
 import housemate.models.ServiceConfigNew;
 import housemate.repositories.ServiceConfigRepository;
