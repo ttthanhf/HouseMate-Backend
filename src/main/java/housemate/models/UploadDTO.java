@@ -13,7 +13,6 @@ import lombok.Data;
  */
 @Data
 public class UploadDTO {
-
-	private int entityId;
-	private ImageType imageType;
+    private int entityId;
+    private ImageType imageType;
 }
