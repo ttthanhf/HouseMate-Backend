@@ -66,7 +66,7 @@ public class ScheduleService {
         for (Schedule schedule : scheduleRepository.getByCustomerId(userId)) {
             Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
 
-            if (service.getGroupType() == GroupType.RETURN_SERVICE) {
+            if (service.getGroupType().equals(GroupType.RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
                 pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
                 setStaffInfo(events, schedule, pickupEvent);
@@ -122,7 +122,7 @@ public class ScheduleService {
     public ResponseEntity<String> createHourlySchedule(HttpServletRequest request, HourlyScheduleDTO scheduleDTO) {
         // Check correct group type
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
-        if (service.getGroupType() != GroupType.HOURLY_SERVICE) {
+        if (!(service.getGroupType()).equals(GroupType.HOURLY_SERVICE)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 
@@ -166,7 +166,7 @@ public class ScheduleService {
     public ResponseEntity<String> createReturnSchedule(HttpServletRequest request, ReturnScheduleDTO scheduleDTO) {
         // Check correct group type
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
-        if (service.getGroupType() != GroupType.RETURN_SERVICE) {
+        if (!(service.getGroupType().equals(GroupType.RETURN_SERVICE))) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 
@@ -211,7 +211,7 @@ public class ScheduleService {
     public ResponseEntity<String> createDeliverySchedule(HttpServletRequest request, DeliveryScheduleDTO scheduleDTO) {
         // Check correct group type
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
-        if (service.getGroupType() != GroupType.DELIVERY_SERVICE) {
+        if (!(service.getGroupType().equals(GroupType.DELIVERY_SERVICE))) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 
