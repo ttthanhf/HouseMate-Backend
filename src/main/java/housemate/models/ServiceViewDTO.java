@@ -29,8 +29,6 @@ public class ServiceViewDTO {
 
 	List<ServicePrice> priceList;
 
-	// TODO: Update imgList later
-	List<Image> images;
 
 	@Data
 	@NoArgsConstructor

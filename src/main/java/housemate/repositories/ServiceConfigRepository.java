@@ -14,13 +14,12 @@ import housemate.entities.ServiceConfig;
 @Repository
 public interface ServiceConfigRepository extends JpaRepository<ServiceConfig, Integer> {
 
-	@Query("SELECT * FROM service WHERE" 
-			+ " LOWER(configType) COLLATE utf8_bin = LOWER(:configType)"
-			+ " LOWER(configValue) COLLATE utf8_bin = LOWER(:configValue)")
-	Optional<ServiceConfig> findByConfigTypeAndConfigValue(
-			@Param("configType") ServiceConfiguration configType,
+	@Query(value = "SELECT * FROM service_config sf "
+			+ "WHERE LOWER(sf.config_type) COLLATE utf8_bin = LOWER(:configType) "
+			+ "AND LOWER(sf.config_value) COLLATE utf8_bin = LOWER(:configValue)", nativeQuery = true)
+	Optional<ServiceConfig> findByConfigTypeAndConfigValue(@Param("configType") String configType,
 			@Param("configValue") String configValue);
-	
+
 	List<ServiceConfig> findAllByConfigType(ServiceConfiguration configType);
 
 }

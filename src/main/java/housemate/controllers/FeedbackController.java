@@ -53,6 +53,12 @@ public class FeedbackController {
 	public ResponseEntity<?> getOne(@PathVariable("feedback-id") int feedbackId) {
 		return feedbackDao.getOne(feedbackId);
 	}
+	
+	@GetMapping("/service/top-feedaback")
+	@Operation(summary = "View top feedback")
+	public ResponseEntity<?> getTopFeedback(@RequestParam("rating") int rating) {
+		return feedbackDao.findTopFeedback(rating);
+	}
 
 	@PostMapping("/new")
 	@Operation(summary = "Create new feedback")
