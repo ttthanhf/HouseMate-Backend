@@ -44,4 +44,9 @@ public class Enum {
 		private String fieldName;
 	}
 	
+	public enum ServiceConfiguration {
+		SERVICE_GROUPS,
+		SERVICE_UNITS;
+	}
+	
 }

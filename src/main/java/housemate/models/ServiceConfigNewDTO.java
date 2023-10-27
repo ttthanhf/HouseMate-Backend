@@ -1,6 +1,6 @@
 package housemate.models;
 
-import housemate.constants.ServiceConfiguration;
+import housemate.constants.Enum.ServiceConfiguration;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import housemate.entities.Image;
+import housemate.entities.Service;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,7 +41,7 @@ public class FeedbackViewDTO {
 	@AllArgsConstructor
 	public static class FeedbackViewDetailDTO {
 		private int serviceFeedbackId;
-	    private int serviceId;
+	    private Service service;
 		private int taskId;
 		private int customerId;
 		private String customerName;
