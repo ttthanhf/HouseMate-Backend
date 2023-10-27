@@ -3,6 +3,7 @@ package housemate.services;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import housemate.constants.ImageType;
 import housemate.constants.Role;
 import housemate.entities.ServiceFeedback;
 import housemate.entities.UserAccount;
@@ -21,6 +23,7 @@ import housemate.models.FeedbackNewDTO;
 import housemate.models.FeedbackViewDTO;
 import housemate.models.FeedbackViewDTO.FeedbackViewDetailDTO;
 import housemate.repositories.FeedbackRepository;
+import housemate.repositories.ImageRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.UserRepository;
 import housemate.utils.AuthorizationUtil;
@@ -33,12 +36,15 @@ public class FeedbackService {
 
 	@Autowired
 	UserRepository userRepo;
-	
+
 	@Autowired
 	ServiceRepository servRepo;
 
 	@Autowired
 	AuthorizationUtil authorizationUtil;
+
+	@Autowired
+	ImageRepository imgRepo;
 
 	ModelMapper mapper = new ModelMapper();
 
@@ -80,6 +86,7 @@ public class FeedbackService {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
 			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
+			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(customer.getUserId(), ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
 			feebackDetailList.add(feedbackViewDetail);
 		}
 
@@ -87,6 +94,25 @@ public class FeedbackService {
 		serviceFeedback.setFeedbackList(feebackDetailList);
 
 		return ResponseEntity.ok(serviceFeedback);
+	}
+	
+	public ResponseEntity<?> findTopFeedback(int ratingLevel) {
+
+		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findTopFeedback(ratingLevel);
+
+		if (serviceFeedbList.isEmpty())
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found");
+
+		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
+		for (ServiceFeedback feeback : serviceFeedbList) {
+			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
+			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
+			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
+			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(customer.getUserId(), ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
+			feebackDetailList.add(feedbackViewDetail);
+		}
+
+		return ResponseEntity.ok(feebackDetailList);
 	}
 
 	public ResponseEntity<?> filterServiceFeedbackByRating(int serviceId, int ratingLevel) {
@@ -104,6 +130,7 @@ public class FeedbackService {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
 			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
+			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(customer.getUserId(), ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
 			feebackDetailList.add(feedbackViewDetail);
 		}
 
