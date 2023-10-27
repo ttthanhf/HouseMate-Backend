@@ -44,4 +44,25 @@ public class Enum {
 		private String fieldName;
 	}
 	
+	public enum ServiceConfiguration {
+		SERVICE_GROUPS,
+		SERVICE_UNITS;
+	}
+	
+	public enum StaffWorkingStatus {
+		ACTIVE,
+		INACTIVE,
+		BANNED;
+	}
+	
+	public enum TaskStatus {
+		PENDING_APPLICATION,
+		PENDING_WORKING,
+		CANCELLED_BY_STAFF,
+		CANCELLED_BY_CUSTOMER,
+		ARRIVED_DOING,
+		DONE;
+	}
+	
+	
 }
