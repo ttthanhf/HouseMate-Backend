@@ -20,7 +20,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/period-config")
 @CrossOrigin
-@Tag(name = "config")
+@Tag(name = "Config")
 @SecurityRequirement(name = "bearerAuth")
 public class PeriodPriceConfigController {
 

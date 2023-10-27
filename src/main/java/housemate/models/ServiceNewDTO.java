@@ -57,7 +57,7 @@ public class ServiceNewDTO {
 	@NotNull(message = "The group type must not be null")
 	@Schema(description = "The Group Type in one of these type: "
 			+ "CLEANING_SERVICE, RETURN_SERVICE, DELIVERY_SERVICE")
-	private GroupType groupType;
+	private String groupType;
 
 	@NotNull(message = "Specify this category of service isPackage or single by true or false")
 	@Schema(description = "Is package: true ? false")
@@ -67,18 +67,24 @@ public class ServiceNewDTO {
 	@Schema(example = "[\r\n" + "\"type 1\",\r\n" + "\"type 2\"\r\n"
 			+ "]", description = "how many types this service has")
 	@JsonInclude(value = Include.NON_NULL)
-	Set<String> typeNameList;
+	private Set<String> typeNameList;
 
 	// TODO: FE constraint to pop up only for creating single service
 	@Schema(example = "{\r\n" + "\"1\": 0,\r\n" + "\"2\": 0,\r\n" + "\"3\": 0\r\n"
 			+ "}", description = "Choose single services from single service list and set the quantity")
 	@JsonInclude(value = Include.NON_NULL)
-	Map<Integer, Integer> serviceChildList; // one for id - one for quantity
+	private Map<Integer, Integer> serviceChildList; // one for id - one for quantity
 
 	@NotEmpty(message = "You have to must set the price cycle list for this service")
 	@Schema(example = "{\r\n" + "\"3\": 1000,\r\n" + "\"6\": 1000,\r\n" + "\"9\": 1000\r\n," + "\"12\": 1000\r\n"
 			+ "}", description = "Set the price for each cycle")
 	@Size(min = 4, max = 4, message = "Have to set price foreach 4 cycles : 3, 6, 9 ,12 of this service")
-	Map<Integer, Integer> periodPriceServiceList;
+	private Map<Integer, Integer> periodPriceServiceList;
+
+	@PositiveOrZero
+	private int min;
+
+	@PositiveOrZero
+	private int max;
 
 }

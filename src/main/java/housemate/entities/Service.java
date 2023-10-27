@@ -4,6 +4,7 @@
  */
 package housemate.entities;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -43,7 +44,6 @@ public class Service {
 	@Column(name = "final_price", nullable = false)
 	private int finalPrice;
 
-	@Enumerated(EnumType.STRING)
 	@Column(name = "unit_of_measure", nullable = false)
 	private String unitOfMeasure;
 
@@ -54,9 +54,8 @@ public class Service {
 	@Column(name = "sale_status", nullable = false)
 	private SaleStatus saleStatus;
 
-	@Enumerated(EnumType.STRING)
 	@Column(name = "group_type", nullable = false)
-	private GroupType groupType;
+	private String groupType;
 
 	@Column(name = "avg_rating", columnDefinition = "float default 0")
 	private float avgRating;
@@ -66,10 +65,15 @@ public class Service {
 
 	@Column(name = "isPackage", nullable = false)
 	private boolean isPackage;
+	
+	@Column(name = "min_usage")
+	private int min;
+	
+	@Column(name = "max_usage")
+	private int max;
 
-	// TODO: Update Img Later
 	@Transient
-	private Image mainImg;
+	private List<Image> images = Collections.EMPTY_LIST;
 	
 	@JsonInclude(value = Include.NON_NULL)
 	@Transient

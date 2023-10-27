@@ -13,7 +13,7 @@ import java.util.Objects;
 public class PurchasedServiceRes {
     private int serviceId;
     private String titleName;
-    private GroupType groupType;
+    private String groupType;
     private List<ServiceType> type;
 
     // Check uniqueness of serviceId for Set<PurchasedServiceRes>

@@ -95,6 +95,25 @@ public class FeedbackService {
 
 		return ResponseEntity.ok(serviceFeedback);
 	}
+	
+	public ResponseEntity<?> findTopFeedback(int ratingLevel) {
+
+		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findTopFeedback(ratingLevel);
+
+		if (serviceFeedbList.isEmpty())
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found");
+
+		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
+		for (ServiceFeedback feeback : serviceFeedbList) {
+			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
+			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
+			feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
+			feedbackViewDetail.setAvatar(imgRepo.findAllByEntityIdAndImageType(customer.getUserId(), ImageType.AVATAR).orElse(Collections.EMPTY_LIST));
+			feebackDetailList.add(feedbackViewDetail);
+		}
+
+		return ResponseEntity.ok(feebackDetailList);
+	}
 
 	public ResponseEntity<?> filterServiceFeedbackByRating(int serviceId, int ratingLevel) {
 

@@ -54,9 +54,15 @@ public class PeriodPriceConfigService {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
 
 		PeriodPriceConfig newPeriodPriceProporConfig = mapper.map(newPeriodConfig, PeriodPriceConfig.class);
-
-		if (newPeriodPriceProporConfig.getMin() >= newPeriodPriceProporConfig.getMax())
-			return ResponseEntity.badRequest().body("Set the min < max");
+		
+		if ((newPeriodPriceProporConfig.getConfigValue() != 1)){
+			if(newPeriodPriceProporConfig.getMin() >= newPeriodPriceProporConfig.getMax())
+				return ResponseEntity.badRequest().body("Set the min < max");
+		}
+		if ((newPeriodPriceProporConfig.getConfigValue() == 1) && newPeriodPriceProporConfig.getMin() != 0
+				|| newPeriodPriceProporConfig.getMax() != 0)
+			return ResponseEntity.badRequest().body("The default for min and max of cycle 1 must set to be 0");
+		
 		// check if have the same configvalue and configname in db
 		// if the differ min-max --> set the time end to now to end in used
 		PeriodPriceConfig existedPeriodConfig = perCofgRepo.findByConfigValueAndConfigName(
