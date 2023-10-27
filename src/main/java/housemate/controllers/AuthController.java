@@ -16,17 +16,8 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-<<<<<<< HEAD
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
-=======
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
 
 /**
  *
@@ -47,17 +38,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-<<<<<<< HEAD
     public ResponseEntity<String> login(@Valid @RequestBody LoginAccountDTO account) {
         return authService.login(account);
-=======
-    public ResponseEntity<Void> login(@RequestBody LoginAccountDTO account) {
-        return service.login(account);
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
     }
 
     @PostMapping("/register")
-<<<<<<< HEAD
     public ResponseEntity<String> register(@Valid @RequestBody RegisterAccountDTO account) {
         return authService.register(account);
     }
@@ -78,9 +63,3 @@ public class AuthController {
         return authService.loginWithGoogle(user);
     }
 }
-=======
-    public ResponseEntity<String> register (@RequestBody RegisterAccountDTO account) {
-        return service.register(account);
-    }
-}
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)

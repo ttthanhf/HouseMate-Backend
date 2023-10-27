@@ -22,7 +22,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class LoginAccountDTO {
-<<<<<<< HEAD
+
 
     @NotNull(message = "Email must not be null")
     @Email(message = "Please enter a valid email")
@@ -35,14 +35,5 @@ public class LoginAccountDTO {
             message = "Password must be 8 to 16 characters, include a number, an uppercase letter, and a lowercase letter"
     )
     @Schema(example = "Password123", description = "Password of an account")
-=======
-    @Pattern(regexp = "[a-zA-Z ]*", message = "Please enter a valid email!")
-    public String email;
-    
-    @Pattern(
-            regexp = "/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$/", 
-            message = "Must be at least 8 characters, include a number, an uppercase letter, and a lowercase letter."
-    )
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
     public String password;
 }
