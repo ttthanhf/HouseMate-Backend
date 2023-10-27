@@ -35,7 +35,6 @@ public class Enum {
 		DISCONTINUED
 	}
 
-
 	@Getter
 	@AllArgsConstructor
 	public static enum ServiceField {
