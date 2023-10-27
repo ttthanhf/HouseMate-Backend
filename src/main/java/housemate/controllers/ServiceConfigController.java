@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import housemate.constants.ServiceConfiguration;
-import housemate.models.ServiceConfigNew;
+import housemate.models.ServiceConfigNewDTO;
 import housemate.services.ServiceConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -47,13 +47,13 @@ public class ServiceConfigController {
 	
 	@PostMapping("/new")
 	@Operation(summary = "Create new config value for the specific config type")
-	public ResponseEntity<?> createNewConfigValue(HttpServletRequest request, @Valid @RequestBody ServiceConfigNew serviceConfigNew){
+	public ResponseEntity<?> createNewConfigValue(HttpServletRequest request, @Valid @RequestBody ServiceConfigNewDTO serviceConfigNew){
 		return servConfDao.createNewServConf(request, serviceConfigNew);
 	}
 	
 	@PutMapping("/{id}")
 	@Operation(summary = "Update new config value for the specific config type")
-	public ResponseEntity<?> updateConfigValue(HttpServletRequest request, @PathVariable("id") int serviceConfigId, @Valid @RequestBody ServiceConfigNew serviceConfigNew){
+	public ResponseEntity<?> updateConfigValue(HttpServletRequest request, @PathVariable("id") int serviceConfigId, @Valid @RequestBody ServiceConfigNewDTO serviceConfigNew){
 		return servConfDao.updateServConf(request, serviceConfigId, serviceConfigNew);
 	}
 	

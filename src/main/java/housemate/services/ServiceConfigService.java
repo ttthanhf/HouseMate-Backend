@@ -11,7 +11,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
 import housemate.constants.ServiceConfiguration;
 import housemate.entities.ServiceConfig;
-import housemate.models.ServiceConfigNew;
+import housemate.models.ServiceConfigNewDTO;
 import housemate.repositories.ServiceConfigRepository;
 import housemate.utils.AuthorizationUtil;
 import housemate.utils.StringUtil;
@@ -43,7 +43,7 @@ public class ServiceConfigService {
 	}
 
 	@Transactional
-	public ResponseEntity<?> createNewServConf(HttpServletRequest request, ServiceConfigNew newServiceConf) {
+	public ResponseEntity<?> createNewServConf(HttpServletRequest request, ServiceConfigNewDTO newServiceConf) {
 
 		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
@@ -68,7 +68,7 @@ public class ServiceConfigService {
 
 	@Transactional
 	public ResponseEntity<?> updateServConf(HttpServletRequest request, int serviceConfigId,
-			ServiceConfigNew newServiceConf) {
+			ServiceConfigNewDTO newServiceConf) {
 
 		ServiceConfig existedServConf = servConfRepo.findById(serviceConfigId).orElse(null);
 

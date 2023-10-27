@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class ServiceConfigNew {
+public class ServiceConfigNewDTO {
 
 	@NotNull
 	private ServiceConfiguration configType;
