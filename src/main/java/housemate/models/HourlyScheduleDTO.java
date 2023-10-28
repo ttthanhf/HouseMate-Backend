@@ -37,6 +37,8 @@ public class HourlyScheduleDTO {
     @Schema(example = "[\"13:25\", \"15:25\"]")
     private ArrayList<LocalTime> timeRanges;
 
-    @NotNull(message = "Type ID must not be null")
+    @NotNull(message = "User usage ID must not be null")
+    private int userUsageId;
+
     private int typeId;
 }
