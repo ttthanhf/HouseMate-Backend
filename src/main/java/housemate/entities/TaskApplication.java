@@ -19,9 +19,8 @@ public class TaskApplication {
     @Column(name = "task_id")
     private int taskId;
 
-    @Id
     @Column(name = "staff_id")
-    private int staffId;
+    private Integer staffId;
 
     @Column(name = "is_assigned")
     private boolean isAssigned;

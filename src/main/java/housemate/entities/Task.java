@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.util.Date;
 
+import housemate.constants.Enum.TaskStatus;
+
 /**
  *
  * @author ThanhF
@@ -26,21 +28,22 @@ public class Task {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "task_id")
-	private int id;
+	private int taskId;
 
 	@Column(name = "service_schedule_id")
 	private int serviceScheduleId;
 
 	@Column(name = "created_at")
-	private LocalDate created_at;
+	private LocalDate createdAt;
 
 	@Column(name = "staff_id")
-	private int staffId;
+	private Integer staffId;
 
 	@Column(name = "post_at")
 	private LocalDate received_at;
 
 	@Column(name = "task_status")
-	private String taskStatus;
+	@Enumerated(EnumType.STRING)
+	private TaskStatus taskStatus;
 
 }
