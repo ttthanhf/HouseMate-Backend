@@ -6,7 +6,6 @@ package housemate.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import housemate.constants.Enum.GroupType;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
 import jakarta.persistence.*;
@@ -53,9 +52,8 @@ public class Service {
 	@Column(name = "sale_status", nullable = false)
 	private SaleStatus saleStatus;
 	
-	@Enumerated(EnumType.STRING)
 	@Column(name = "group_type", nullable = false)
-	private GroupType groupType;
+	private String groupType;
 	
 	@Column(name = "avg_rating", columnDefinition = "float default 0")
 	private float avgRating;

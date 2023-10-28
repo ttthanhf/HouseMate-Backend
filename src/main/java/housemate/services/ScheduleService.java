@@ -1,13 +1,11 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
-import housemate.constants.Enum.GroupType;
 import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
 import housemate.mappers.ScheduleMapper;
-import housemate.models.DeliveryScheduleDTO;
-import housemate.models.HourlyScheduleDTO;
-import housemate.models.ReturnScheduleDTO;
+import housemate.models.ScheduleDTO;
+import housemate.models.ScheduleUpdateDTO;
 import housemate.repositories.*;
 import housemate.responses.EventRes;
 import housemate.responses.PurchasedServiceRes;
@@ -33,7 +31,9 @@ public class ScheduleService {
 
     private static final int OFFICE_HOURS_START = 6;
     private static final int OFFICE_HOURS_END = 18;
-    private final int FIND_STAFF_HOURS = 3;
+    private static final int FIND_STAFF_HOURS = 3;
+    private static final int MINIMUM_RETURN_HOURS = 4;
+    private static final String RETURN_SERVICE = "RETURN_SERVICE"; // Hard code (This is special service => create 2 schedule)
     private final ServiceRepository serviceRepository;
     private final ScheduleRepository scheduleRepository;
     private final ScheduleMapper scheduleMapper;
@@ -69,7 +69,7 @@ public class ScheduleService {
         for (Schedule schedule : schedules) {
             Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
 
-            if (service.getGroupType() == GroupType.RETURN_SERVICE) {
+            if (service.getGroupType().equals(RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
                 pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
                 setStaffInfo(events, schedule, pickupEvent);
@@ -93,51 +93,9 @@ public class ScheduleService {
         return ResponseEntity.status(HttpStatus.OK).body(events);
     }
 
-    public ResponseEntity<List<EventRes>> getScheduleByUserId(int userId) {
-        List<EventRes> events =  getEventsForStaff(userId);
+    public ResponseEntity<List<EventRes>> getStaffScheduleByUserId(int userId) {
+        List<EventRes> events = getEventsForStaff(userId);
         return ResponseEntity.status(HttpStatus.OK).body(events);
-    }
-
-    private List<EventRes> getEventsForStaff(int staffId) {
-        List<EventRes> events = new ArrayList<>();
-        List<Schedule> schedules = scheduleRepository.getByStaffId(staffId);
-
-        for (Schedule schedule : schedules) {
-            Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
-
-            if (service.getGroupType() == GroupType.RETURN_SERVICE) {
-                EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
-                pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
-                setCustomerInfo(events, schedule, pickupEvent);
-
-                EventRes receivedEvent = scheduleMapper.mapToEventRes(schedule, service);
-                receivedEvent.setStart(receivedEvent.getEnd());
-                receivedEvent.setEnd(receivedEvent.getEnd().plusHours(1));
-                setCustomerInfo(events, schedule, receivedEvent);
-            } else {
-                EventRes event = scheduleMapper.mapToEventRes(schedule, service);
-                setCustomerInfo(events, schedule, event);
-            }
-        }
-
-        return events;
-    }
-
-    private void setStaffInfo(List<EventRes> events, Schedule schedule, EventRes event) {
-        if (schedule.getStaffId() != 0) {
-            UserAccount staff = userRepository.findByUserId(schedule.getStaffId());
-            event.setStaff(staff.getFullName());
-            event.setPhone(staff.getPhoneNumber());
-        }
-        events.add(event);
-    }
-
-    private void setCustomerInfo(List<EventRes> events, Schedule schedule, EventRes event) {
-        UserAccount customer = userRepository.findByUserId(schedule.getCustomerId());
-        event.setStaff(customer.getFullName());
-        event.setPhone(customer.getPhoneNumber());
-
-        events.add(event);
     }
 
     public ResponseEntity<Set<PurchasedServiceRes>> getAllPurchased(HttpServletRequest request) {
@@ -181,41 +139,117 @@ public class ScheduleService {
                 .orElse(null);
     }
 
-    public ResponseEntity<String> createHourlySchedule(HttpServletRequest request, HourlyScheduleDTO scheduleDTO) {
+    public ResponseEntity<String> createSchedule(HttpServletRequest request, ScheduleDTO scheduleDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
+        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), schedule);
+    }
 
+    public ResponseEntity<String> updateSchedule(
+            HttpServletRequest request, ScheduleUpdateDTO scheduleUpdateDTO, int scheduleId
+    ) {
+        if (isStatusInvalid(scheduleId))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
+        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
+    }
+
+    // Uncomment these code if hard code working
+//    public ResponseEntity<String> createHourlySchedule(HttpServletRequest request, HourlyScheduleDTO scheduleDTO) {
+//        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+//        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
+//        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), GroupType.HOURLY_SERVICE, schedule, 1);
+//    }
+//
+//    public ResponseEntity<String> createReturnSchedule(HttpServletRequest request, ReturnScheduleDTO scheduleDTO) {
+//        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+//        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
+//        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), GroupType.RETURN_SERVICE, schedule, MINIMUM_RETURN_HOURS);
+//    }
+//
+//    public ResponseEntity<String> createDeliverySchedule(HttpServletRequest request, DeliveryScheduleDTO scheduleDTO) {
+//        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+//        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
+//        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), GroupType.RETURN_SERVICE, schedule, 0);
+//    }
+
+    // ======================================== REUSABLE FUNCTIONS ========================================
+
+    private List<EventRes> getEventsForStaff(int staffId) {
+        List<EventRes> events = new ArrayList<>();
+        List<Schedule> schedules = scheduleRepository.getByStaffId(staffId);
+
+        for (Schedule schedule : schedules) {
+            Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
+
+            if (service.getGroupType().equals(RETURN_SERVICE)) {
+                EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
+                pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
+                setCustomerInfo(events, schedule, pickupEvent);
+
+                EventRes receivedEvent = scheduleMapper.mapToEventRes(schedule, service);
+                receivedEvent.setStart(receivedEvent.getEnd());
+                receivedEvent.setEnd(receivedEvent.getEnd().plusHours(1));
+                setCustomerInfo(events, schedule, receivedEvent);
+            } else {
+                EventRes event = scheduleMapper.mapToEventRes(schedule, service);
+                setCustomerInfo(events, schedule, event);
+            }
+        }
+
+        return events;
+    }
+
+    private void setStaffInfo(List<EventRes> events, Schedule schedule, EventRes event) {
+        if (schedule.getStaffId() != 0) {
+            UserAccount staff = userRepository.findByUserId(schedule.getStaffId());
+            event.setStaff(staff.getFullName());
+            event.setPhone(staff.getPhoneNumber());
+        }
+        events.add(event);
+    }
+
+    private void setCustomerInfo(List<EventRes> events, Schedule schedule, EventRes event) {
+        UserAccount customer = userRepository.findByUserId(schedule.getCustomerId());
+        event.setStaff(customer.getFullName());
+        event.setPhone(customer.getPhoneNumber());
+
+        events.add(event);
+    }
+
+    private ResponseEntity<String> validateAndProcessSchedule(int userId, int serviceId, int userUsageId, Schedule schedule) {
         // Check service not exist
-        Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
+        Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
         }
 
-        // Check correct group type
-        if (service.getGroupType() != GroupType.HOURLY_SERVICE) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
-        }
+//        // Check correct group type
+//        if (service.getGroupType() != groupType) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
+//        }
 
         // Check correct user usage ID
-        UserUsage userUsage = userUsageRepository.findById(scheduleDTO.getUserUsageId()).orElse(null);
+        UserUsage userUsage = userUsageRepository.findById(userUsageId).orElse(null);
         if (userUsage == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please input correct userUsageID");
         }
-        if (userUsage.getServiceId() != scheduleDTO.getServiceId()) {
+        if (userUsage.getServiceId() != serviceId) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User usage ID is not correct from service ID");
         }
 
         // Validate service ID
-        ResponseEntity<String> serviceIdValidation = validateServiceId(scheduleDTO.getServiceId(), request);
+        ResponseEntity<String> serviceIdValidation = validateServiceId(serviceId, userId);
         if (serviceIdValidation != null) return serviceIdValidation;
 
         // Validate start date
-        LocalDateTime startDate = scheduleDTO.getDate().atTime(scheduleDTO.getTimeRanges().get(0));
+        LocalDateTime startDate = schedule.getStartDate();
         ResponseEntity<String> startDateValidation = validateDate(LocalDateTime.now(), startDate, FIND_STAFF_HOURS, "start time");
         if (startDateValidation != null) return startDateValidation;
 
         // Validate end date
-        LocalDateTime endDate = scheduleDTO.getDate().atTime(scheduleDTO.getTimeRanges().get(1));
-        ResponseEntity<String> endDateValidation = validateDate(startDate, endDate, 1, "end time");
+        LocalDateTime endDate = schedule.getEndDate();
+        String groupType = serviceRepository.getServiceByServiceId(serviceId).getGroupType();
+        ResponseEntity<String> endDateValidation = validateDate(startDate, endDate, groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_HOURS : 1, "end time");
         if (endDateValidation != null) return endDateValidation;
 
         // Validate out range of cycle
@@ -225,9 +259,8 @@ public class ScheduleService {
         }
 
         // Map to entity
-        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
-        schedule.setUserUsageId(scheduleDTO.getUserUsageId());
+        schedule.setUserUsageId(userUsageId);
 
         // Validate quantity
         if (schedule.getQuantityRetrieve() > userUsage.getRemaining()) {
@@ -237,140 +270,25 @@ public class ScheduleService {
         // Store to database
         storeToDatabase(schedule);
 
-        // TODO: Send notification to staff
-
-        return ResponseEntity.status(HttpStatus.OK).body("Set schedule successfully! Please wait for our staff apply this job!");
+        return ResponseEntity.status(HttpStatus.OK).body("Set schedule successfully! Please wait for our staff to apply this job!");
     }
 
-    public ResponseEntity<String> createReturnSchedule(HttpServletRequest request, ReturnScheduleDTO scheduleDTO) {
-        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-
-        // Check service not exist
-        Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
-        if (service == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
-        }
-
-        // Check correct group type
-        if (service.getGroupType() != GroupType.RETURN_SERVICE) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
-        }
-
-        // Check correct user usage ID
-        UserUsage userUsage = userUsageRepository.findById(scheduleDTO.getUserUsageId()).orElse(null);
-        if (userUsage == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please input correct userUsageID");
-        }
-        if (userUsage.getServiceId() != scheduleDTO.getServiceId()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User usage ID is not correct from service ID");
-        }
-
-        // Validate service ID
-        ResponseEntity<String> serviceIdValidation = validateServiceId(scheduleDTO.getServiceId(), request);
-        if (serviceIdValidation != null) return serviceIdValidation;
-
-        // Validate pickupDate > current + 3hr
-        LocalDateTime pickupDate = scheduleDTO.getPickUpDate().atTime(scheduleDTO.getTime());
-        ResponseEntity<String> pickupDateValidation = validateDate(LocalDateTime.now(), pickupDate, FIND_STAFF_HOURS, "pickup date");
-        if (pickupDateValidation != null) return pickupDateValidation;
-
-        // Validate receivedDate > pickupDate + 4
-        LocalDateTime receivedDate = scheduleDTO.getReceiveDate().atTime(scheduleDTO.getReceivedTime());
-        int MINIMUM_RETURN_HOURS = 4;
-        ResponseEntity<String> receivedDateValidation = validateDate(pickupDate, receivedDate, MINIMUM_RETURN_HOURS, "received date");
-        if (receivedDateValidation != null) return receivedDateValidation;
-
-        // Validate out range of cycle
-        if (receivedDate.isAfter(userUsage.getEndDate())) {
-            String formattedDate = userUsage.getEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
-        }
-
-        // Map to entity
-        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-        schedule.setCustomerId(userId);
-        schedule.setUserUsageId(scheduleDTO.getUserUsageId());
-
-        // Validate quantity
-        if (schedule.getQuantityRetrieve() > userUsage.getRemaining()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage");
-        }
-
-        // Store to database
-        storeToDatabase(schedule);
-
-        // TODO: Send notification to staff
-
-        return ResponseEntity.status(HttpStatus.OK).body("Set schedule successfully! Please wait for our staff apply this job!");
-    }
-
-    public ResponseEntity<String> createDeliverySchedule(HttpServletRequest request, DeliveryScheduleDTO scheduleDTO) {
-        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-
-        // Check service not exist
-        Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
-        if (service == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
-        }
-
-        // Check correct group type
-        if (service.getGroupType() != GroupType.DELIVERY_SERVICE) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
-        }
-
-        // Check correct user usage ID
-        UserUsage userUsage = userUsageRepository.findById(scheduleDTO.getUserUsageId()).orElse(null);
-        if (userUsage == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please input correct userUsageID");
-        }
-        if (userUsage.getServiceId() != scheduleDTO.getServiceId()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User usage ID is not correct from service ID");
-        }
-
-        // Validate service ID
-        ResponseEntity<String> serviceIdValidation = validateServiceId(scheduleDTO.getServiceId(), request);
-        if (serviceIdValidation != null) return serviceIdValidation;
-
-        // Validate date > current + 3
-        LocalDateTime date = scheduleDTO.getDate().atTime(scheduleDTO.getTime());
-        ResponseEntity<String> receivedDateValidation = validateDate(LocalDateTime.now(), date, FIND_STAFF_HOURS, "date");
-        if (receivedDateValidation != null) return receivedDateValidation;
-
-        // Validate out range of cycle
-        if (date.isAfter(userUsage.getEndDate())) {
-            String formattedDate = userUsage.getEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
-        }
-
-        // Map to entity
-        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-        schedule.setCustomerId(userId);
-        schedule.setUserUsageId(scheduleDTO.getUserUsageId());
-
-        // Validate quantity
-        if (schedule.getQuantityRetrieve() > userUsage.getRemaining()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage");
-        }
-
-        // Store to database
-        storeToDatabase(schedule);
-
-        // TODO: Send notification to staff
-
-        return ResponseEntity.status(HttpStatus.OK).body("Set schedule successfully! Please wait for our staff apply this job!");
-    }
-
-    private ResponseEntity<String> validateServiceId(int serviceId, HttpServletRequest request) {
+    private ResponseEntity<String> validateServiceId(int serviceId, int userId) {
         // Validate service ID
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this service ID");
         }
 
+        // Get all service ID that user has purchased
+        Set<Integer> purchasedServiceIds = new HashSet<Integer>();
+        List<UserUsage> usageList = userUsageRepository.getAllUserUsageByUserIdAndNotExpired(userId);
+        for (UserUsage userUsage : usageList) {
+            purchasedServiceIds.add(userUsage.getServiceId());
+        }
+
         // Validate serviceId is in order
-        Set<PurchasedServiceRes> allPurchased = getAllPurchased(request).getBody();
-        if (allPurchased == null) return null; // Handle NullPointerException
-        if (!isContainsServiceId(allPurchased, serviceId)) {
+        if (isNotContainsServiceId(purchasedServiceIds, serviceId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("You haven't buy this service");
         }
 
@@ -379,8 +297,8 @@ public class ScheduleService {
         return null;
     }
 
-    private boolean isContainsServiceId(Set<PurchasedServiceRes> purchases, int serviceId) {
-        return purchases.stream().anyMatch(p -> p.getServiceId() == serviceId);
+    private boolean isNotContainsServiceId(Set<Integer> serviceIds, int serviceId) {
+        return serviceIds.stream().noneMatch(p -> p == serviceId);
     }
 
     private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, int hours, String varName) {
@@ -477,30 +395,6 @@ public class ScheduleService {
         }
 
         return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));
-    }
-
-    public ResponseEntity<String> updateHourlySchedule(
-            HttpServletRequest request, HourlyScheduleDTO hourlyScheduleDTO, int scheduleId
-    ) {
-        if (isStatusInvalid(scheduleId)) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
-
-        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
-    }
-
-    public ResponseEntity<String> updateReturnSchedule(
-            HttpServletRequest request, ReturnScheduleDTO returnScheduleDTO, int scheduleId
-    ) {
-        if (isStatusInvalid(scheduleId)) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
-
-        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
-    }
-
-    public ResponseEntity<String> updateDeliverySchedule(
-            HttpServletRequest request, DeliveryScheduleDTO deliveryScheduleDTO, int scheduleId
-    ) {
-        if (isStatusInvalid(scheduleId)) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
-
-        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
     }
 
     private boolean isStatusInvalid(int scheduleId) {

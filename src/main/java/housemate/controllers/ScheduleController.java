@@ -1,8 +1,6 @@
 package housemate.controllers;
 
-import housemate.models.DeliveryScheduleDTO;
-import housemate.models.HourlyScheduleDTO;
-import housemate.models.ReturnScheduleDTO;
+import housemate.models.*;
 import housemate.responses.EventRes;
 import housemate.responses.PurchasedServiceRes;
 import housemate.services.ScheduleService;
@@ -43,10 +41,10 @@ public class ScheduleController {
         return service.getScheduleForStaff(request);
     }
 
-    @Operation(summary = "Get schedule")
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<EventRes>> getScheduleByUserId(@PathVariable int userId) {
-        return service.getScheduleByUserId(userId);
+    @Operation(summary = "Get staff schedule by user ID")
+    @GetMapping("/staff/{userId}")
+    public ResponseEntity<List<EventRes>> getStaffScheduleByUserId(@PathVariable int userId) {
+        return service.getStaffScheduleByUserId(userId);
     }
 
     @Operation(summary = "Get all purchased service for the current user")
@@ -55,52 +53,42 @@ public class ScheduleController {
         return service.getAllPurchased(request);
     }
 
-    @Operation(summary = "Create schedule for Hourly Service")
-    @PostMapping("/create/hourly")
-    public ResponseEntity<String> createHourlySchedule(
-            HttpServletRequest request, @Valid @RequestBody HourlyScheduleDTO hourlyScheduleDTO
-    ) {
-        return service.createHourlySchedule(request, hourlyScheduleDTO);
+//    @Operation(summary = "Create schedule for Hourly Service")
+//    @PostMapping("/create/hourly")
+//    public ResponseEntity<String> createHourlySchedule(
+//            HttpServletRequest request, @Valid @RequestBody HourlyScheduleDTO hourlyScheduleDTO
+//    ) {
+//        return service.createHourlySchedule(request, hourlyScheduleDTO);
+//    }
+//
+//    @Operation(summary = "Create schedule for Return Service")
+//    @PostMapping("/create/return")
+//    public ResponseEntity<String> createReturnSchedule(
+//            HttpServletRequest request, @Valid @RequestBody ReturnScheduleDTO returnScheduleDTO
+//    ) {
+//        return service.createReturnSchedule(request, returnScheduleDTO);
+//    }
+//
+//    @Operation(summary = "Create schedule for Delivery Service")
+//    @PostMapping("/create/delivery")
+//    public ResponseEntity<String> createDeliverySchedule(
+//            HttpServletRequest request, @Valid @RequestBody DeliveryScheduleDTO deliveryScheduleDTO
+//    ) {
+//        return service.createDeliverySchedule(request, deliveryScheduleDTO);
+//    }
+
+    @Operation(summary = "Create schedule")
+    @PostMapping("/create")
+    public ResponseEntity<String> createSchedule(HttpServletRequest request, @Valid @RequestBody ScheduleDTO scheduleDTO) {
+        return service.createSchedule(request, scheduleDTO);
     }
 
-    @Operation(summary = "Create schedule for Return Service")
-    @PostMapping("/create/return")
-    public ResponseEntity<String> createReturnSchedule(
-            HttpServletRequest request, @Valid @RequestBody ReturnScheduleDTO returnScheduleDTO
-    ) {
-        return service.createReturnSchedule(request, returnScheduleDTO);
-    }
-
-    @Operation(summary = "Create schedule for Delivery Service")
-    @PostMapping("/create/delivery")
-    public ResponseEntity<String> createDeliverySchedule(
-            HttpServletRequest request, @Valid @RequestBody DeliveryScheduleDTO deliveryScheduleDTO
-    ) {
-        return service.createDeliverySchedule(request, deliveryScheduleDTO);
-    }
-
-    @Operation(summary = "Update schedule for Hourly Service")
-    @PutMapping("/update/hourly/{scheduleId}")
+    @Operation(summary = "Update schedule")
+    @PutMapping("/update/{scheduleId}")
     public ResponseEntity<String> updateHourlySchedule(
-            HttpServletRequest request, @Valid @RequestBody HourlyScheduleDTO hourlyScheduleDTO, @PathVariable int scheduleId
+            HttpServletRequest request, @Valid @RequestBody ScheduleUpdateDTO scheduleUpdateDTO, @PathVariable int scheduleId
     ) {
-        return service.updateHourlySchedule(request, hourlyScheduleDTO, scheduleId);
-    }
-
-    @Operation(summary = "Update schedule for Return Service")
-    @PutMapping("/update/return/{scheduleId}")
-    public ResponseEntity<String> updateReturnSchedule(
-            HttpServletRequest request, @Valid @RequestBody ReturnScheduleDTO returnScheduleDTO, @PathVariable int scheduleId
-    ) {
-        return service.updateReturnSchedule(request, returnScheduleDTO, scheduleId);
-    }
-
-    @Operation(summary = "Update schedule for Delivery Service")
-    @PutMapping("/update/delivery/{scheduleId}")
-    public ResponseEntity<String> updateDeliverySchedule(
-            HttpServletRequest request, @Valid @RequestBody DeliveryScheduleDTO deliveryScheduleDTO, @PathVariable int scheduleId
-    ) {
-        return service.updateDeliverySchedule(request, deliveryScheduleDTO, scheduleId);
+        return service.updateSchedule(request, scheduleUpdateDTO, scheduleId);
     }
 
 }

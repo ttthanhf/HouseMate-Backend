@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import housemate.constants.Enum.GroupType;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.UnitOfMeasure;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -59,7 +58,7 @@ public class ServiceNewDTO {
 	@NotNull(message = "The group type must not be null")
 	@Schema(description = "The Group Type in one of these type: "
 			+ "CLEANING_SERVICE, RETURN_SERVICE, DELIVERY_SERVICE")
-	private GroupType groupType;
+	private String groupType;
 	
 	@NotEmpty(message = "Require at least one image")
 	@Schema(description = "Images Of Service")
