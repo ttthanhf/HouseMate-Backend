@@ -58,6 +58,9 @@ public class Schedule implements Cloneable {
     @Column(name = "parent_schedule_id")
     private int parentScheduleId;
 
+    @Column(name = "user_usage_id")
+    private int userUsageId;
+
     @SneakyThrows
     @Override
     public Schedule clone() {
