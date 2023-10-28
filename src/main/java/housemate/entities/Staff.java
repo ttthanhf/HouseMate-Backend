@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class staff {
+public class Staff {
 
 	@Id
 	@Column(name = "user_id")

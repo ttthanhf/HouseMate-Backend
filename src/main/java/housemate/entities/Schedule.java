@@ -3,6 +3,7 @@ package housemate.entities;
 import housemate.constants.Cycle;
 import housemate.constants.ScheduleStatus;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @Table(name = "schedule")
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class Schedule implements Cloneable {
 
     @Id
