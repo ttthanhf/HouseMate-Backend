@@ -26,6 +26,7 @@ public class HourlyScheduleDTO {
 
     @FutureOrPresent(message = "Date must be in the present or future")
     @JsonFormat(pattern = "dd/MM/yyyy")
+    @Schema(example = "03/11/2023")
     private LocalDate date;
 
     private String note;

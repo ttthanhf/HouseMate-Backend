@@ -138,8 +138,13 @@ public class ScheduleService {
     public ResponseEntity<String> createHourlySchedule(HttpServletRequest request, HourlyScheduleDTO scheduleDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 
-        // Check correct group type
+        // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
+        if (service == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
+        }
+
+        // Check correct group type
         if (service.getGroupType() != GroupType.HOURLY_SERVICE) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
@@ -148,6 +153,9 @@ public class ScheduleService {
         UserUsage userUsage = userUsageRepository.findById(scheduleDTO.getUserUsageId()).orElse(null);
         if (userUsage == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please input correct userUsageID");
+        }
+        if (userUsage.getServiceId() != scheduleDTO.getServiceId()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User usage ID is not correct from service ID");
         }
 
         // Validate service ID
@@ -191,8 +199,13 @@ public class ScheduleService {
     public ResponseEntity<String> createReturnSchedule(HttpServletRequest request, ReturnScheduleDTO scheduleDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 
-        // Check correct group type
+        // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
+        if (service == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
+        }
+
+        // Check correct group type
         if (service.getGroupType() != GroupType.RETURN_SERVICE) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
@@ -201,6 +214,9 @@ public class ScheduleService {
         UserUsage userUsage = userUsageRepository.findById(scheduleDTO.getUserUsageId()).orElse(null);
         if (userUsage == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please input correct userUsageID");
+        }
+        if (userUsage.getServiceId() != scheduleDTO.getServiceId()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User usage ID is not correct from service ID");
         }
 
         // Validate service ID
@@ -245,8 +261,13 @@ public class ScheduleService {
     public ResponseEntity<String> createDeliverySchedule(HttpServletRequest request, DeliveryScheduleDTO scheduleDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 
-        // Check correct group type
+        // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
+        if (service == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
+        }
+
+        // Check correct group type
         if (service.getGroupType() != GroupType.DELIVERY_SERVICE) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
@@ -255,6 +276,9 @@ public class ScheduleService {
         UserUsage userUsage = userUsageRepository.findById(scheduleDTO.getUserUsageId()).orElse(null);
         if (userUsage == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please input correct userUsageID");
+        }
+        if (userUsage.getServiceId() != scheduleDTO.getServiceId()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User usage ID is not correct from service ID");
         }
 
         // Validate service ID
