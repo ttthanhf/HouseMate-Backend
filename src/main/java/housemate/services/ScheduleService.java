@@ -24,7 +24,7 @@ import java.util.Set;
 /**
  * @author hdang09
  */
-@org.springframework.stereotype.Service
+@org.springframework.stereotype.Service // Change to @Component or not?
 public class ScheduleService {
 
     private static final int OFFICE_HOURS_START = 6;
