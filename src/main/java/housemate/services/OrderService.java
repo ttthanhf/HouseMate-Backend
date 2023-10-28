@@ -104,6 +104,10 @@ public class OrderService {
             user.setAddress("");
         }
 
+        if (user.getPhoneNumber() == null) {
+            user.setPhoneNumber("");
+        }
+
         order.setUser(user);
         order.setDiscountPrice(order.getSubTotal() - order.getFinalPrice());
         order.setListOrderItem(listOrderItem);
@@ -126,19 +130,11 @@ public class OrderService {
             order = new Order();
             order.setUserId(userId);
             order.setComplete(false);
-            order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 
             order = orderRepository.save(order);
         }
 
-        order.setUser(user);
-        order.setPaymentMethod("");
-
-        //update newset time
         order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
-
-        //remove all order item
-        orderItemRepository.removeAllOrderItemByUserIdAndOrderId(order.getOrderId());
 
         //save all order item
         List<OrderItem> listOrderItem = new ArrayList<>();
@@ -157,26 +153,35 @@ public class OrderService {
             orderItem.setQuantity(cart.getQuantity());
             orderItem.setOrderId(order.getOrderId());
 
-            Period period = periodRepository.getPeriodByid(cart.getPeriodId());
-            orderItem.setPeriodName(period.getPeriodName());
+            Period period = periodRepository.getPeriodById(cart.getPeriodId());
+            orderItem.setCreateDate(LocalDateTime.now());
+            orderItem.setExpireDate(LocalDateTime.now().plusMonths(period.getPeriodValue()));
+            orderItem.setPeriodName(period.getPeriodValue() + " " + period.getPeriodName());
 
-            float percent = periodRepository.getPeriodByid(cart.getPeriodId()).getPercent();
             int quantity = cart.getQuantity();
 
-            int finalPriceService = serviceRepository.getFinalPriceByServiceId(cart.getServiceId());
-            int finalPriceCart = (int) (finalPriceService * percent);
+            int finalPriceCart = (int) (period.getFinalPrice());
             orderItem.setFinalPrice(finalPriceCart);
+
             finalPrice += finalPriceCart * quantity;
 
-            int originalPriceService = serviceRepository.getOriginalPriceByServiceId(cart.getServiceId());
-            int originalPriceCart = (int) (originalPriceService * percent);
+            int originalPriceCart = (int) (period.getOriginalPrice());
             orderItem.setOriginalPrice(originalPriceCart);
+
             subTotal += originalPriceCart * quantity;
+
+            if (finalPrice >= 1000000000 || finalPrice <= 10000) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Total price must higher 10,000 and lower 1,000,000,000");
+            }
 
             listOrderItem.add(orderItem);
         }
 
+        //remove all order item
+        orderItemRepository.removeAllOrderItemByOrderId(order.getOrderId());
         listOrderItem = orderItemRepository.saveAll(listOrderItem);
+
+        order.setUser(user);
 
         order.setFinalPrice(finalPrice);
         order.setSubTotal(subTotal);
