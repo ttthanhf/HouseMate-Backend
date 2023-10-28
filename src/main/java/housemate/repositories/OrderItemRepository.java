@@ -23,9 +23,11 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
     @Modifying
     @Transactional
     @Query("DELETE FROM OrderItem o WHERE o.orderId = :orderId")
-    void removeAllOrderItemByUserIdAndOrderId(@Param("orderId") int orderId);
+    void removeAllOrderItemByOrderId(@Param("orderId") int orderId);
 
     @Query("SELECT o FROM OrderItem o WHERE o.orderId = :orderId")
     List<OrderItem> getAllOrderItemByOrderId(@Param("orderId") int orderId);
+
+    OrderItem findById(int orderItem);
 
 }

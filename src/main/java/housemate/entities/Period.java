@@ -5,7 +5,10 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  *
@@ -13,6 +16,9 @@ import lombok.Data;
  */
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "period_service")
 public class Period {
 
@@ -21,15 +27,22 @@ public class Period {
     @Column(name = "period_id")
     private int periodId;
 
+    @Column(name = "service_id")
+    private int serviceId;
+
+    @Column(name = "period_value")
+    private int periodValue;
+
     @Column(name = "period_name")
     private String periodName;
 
+    @Column(name = "final_price")
+    private int finalPrice;
+    
+    @Column(name = "original_price")
+    private int originalPrice;
+    
     @Column(name = "percent")
     private float percent;
 
-    @Transient
-    private int finalPrice;
-
-    @Transient
-    private int originalPrice;
 }

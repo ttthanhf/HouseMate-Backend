@@ -9,6 +9,7 @@ import housemate.constants.RegexConstants;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
 import housemate.entities.PackageServiceItem;
+import housemate.entities.Period;
 import housemate.entities.Service;
 import housemate.entities.UserAccount;
 import housemate.entities.UserUsage;
@@ -18,6 +19,7 @@ import housemate.repositories.OrderItemRepository;
 import housemate.utils.EncryptUtil;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.PackageServiceItemRepository;
+import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.UserRepository;
 import housemate.repositories.UserUsageRepository;
@@ -103,9 +105,16 @@ public class PaymentService {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
 
-        //id address null => set new address
-        if (user.getAddress() == null) {
-            user.setAddress(userInfoOrderDTO.getAddress());
+        //if address null => set new address
+        String address = userInfoOrderDTO.getAddress();
+        if (user.getAddress() == null || user.getAddress().isBlank() || user.getAddress().isEmpty()) {
+            user.setAddress(address);
+        }
+
+        //if phone null => set new phone
+        if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank() || user.getPhoneNumber().isEmpty()) {
+            String phone = userInfoOrderDTO.getPhone();
+            user.setPhoneNumber(phone);
         }
 
         user = userRepository.save(user);
@@ -123,6 +132,7 @@ public class PaymentService {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Only supports vnpay at the present time !");
         }
 
+        order.setAddress(address);
         order.setPaymentMethod(paymentMethod);
         orderRepository.save(order);
 
@@ -290,11 +300,16 @@ public class PaymentService {
                 List<PackageServiceItem> listPackageServiceItem = packageServiceItemRepository.findAllSingleServiceIdByPackageServiceId(service.getServiceId());
                 for (PackageServiceItem packageServiceItem : listPackageServiceItem) {
                     UserUsage userUsage = new UserUsage();
+
                     userUsage.setUserId(userId);
                     userUsage.setServiceId(packageServiceItem.getSingleServiceId());
                     userUsage.setRemaining(packageServiceItem.getQuantity() * orderItem.getQuantity());
                     userUsage.setTotal(packageServiceItem.getQuantity() * orderItem.getQuantity());
-                    userUsage.setEndDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
+
+                    userUsage.setStartDate(order.getDate());
+                    userUsage.setEndDate(orderItem.getExpireDate());
+                    
+                    userUsage.setOrderItemId(orderItem.getOrderItemId());
                     userUsageRepository.save(userUsage);
                 }
 
@@ -304,7 +319,11 @@ public class PaymentService {
                 userUsage.setServiceId(service.getServiceId());
                 userUsage.setRemaining(orderItem.getQuantity());
                 userUsage.setTotal(orderItem.getQuantity());
-                userUsage.setEndDate(LocalDateTime.now().plusMonths(Long.parseLong(orderItem.getPeriodName().split(" ")[0])));
+                
+                userUsage.setStartDate(order.getDate());
+                userUsage.setEndDate(orderItem.getExpireDate());
+
+                userUsage.setOrderItemId(orderItem.getOrderItemId());
                 userUsageRepository.save(userUsage);
             }
         }
