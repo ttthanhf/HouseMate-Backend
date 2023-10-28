@@ -79,7 +79,7 @@ public class TheService {
 	ImageRepository imgRepo;
 	
 	@Autowired
-	PeriodPriceConfigRepository perPriceConfRepo;
+	PeriodPriceConfigRepository periodPriceConfRepo;
 	
 	@Autowired
     AuthorizationUtil authorizationUtil;
@@ -338,7 +338,7 @@ public class TheService {
 							.body("The package contains at least 2 single services !");
 				if (!serviceDTO.getUnitOfMeasure().equals("Gói"))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-							.body("The unit of measure of package must be Gói !");
+							.body("The unit of measure of package has been set default to Gói !");
 				for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
 					if (serviceRepo.findByServiceId(singleServiceId).isEmpty())
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -355,15 +355,15 @@ public class TheService {
 			if (cylcePriceListOfNewServ.size() != 4 || !cycleList.containsAll(cylcePriceListOfNewServ.keySet()))
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 						.body("Have to set price foreach 4 cycles : 3, 6, 9 ,12 of this service");
-			Function<Integer, PeriodPriceConfig> findByConfigValueAndConfigName = key -> perPriceConfRepo
+			Function<Integer, PeriodPriceConfig> findByConfigValueAndConfigName = key -> periodPriceConfRepo
 					.findByConfigValueAndConfigName(LocalDateTime.now(dateTimeZone), key, TimeUnit.MONTH);
 			for (Entry<Integer, Integer> period : cylcePriceListOfNewServ.entrySet()) {
-				PeriodPriceConfig periPriceConfig = findByConfigValueAndConfigName.apply(period.getKey());
-				if (periPriceConfig != null) {
-					float min = periPriceConfig.getMin();
-					float max = periPriceConfig.getMax();
+				PeriodPriceConfig periodPriceConfig = findByConfigValueAndConfigName.apply(period.getKey());
+				if (periodPriceConfig != null) {
+					float min = periodPriceConfig.getMin();
+					float max = periodPriceConfig.getMax();
 					float periodPrice = period.getValue();
-					float propor = periodPrice / serviceDTO.getOriginalPrice();
+					float propor = periodPrice / serviceDTO.getFinalPrice();
 					boolean validSetting = min <= propor && propor <= max;
 					if (!validSetting) {
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -423,16 +423,19 @@ public class TheService {
 			
 			// save the cycle price list
 			for (Integer cycleVaule : cylcePriceListOfNewServ.keySet()) {
-				Period newServicePeriod = Period.builder()
-						.serviceId(savedService.getServiceId())
-						.periodValue(cycleVaule)
-						.periodName(TimeUnit.MONTH.name())
+				float cyclePropor = 1;
+				if (cycleVaule != 1) {
+					cyclePropor = periodPriceConfRepo
+							.findByConfigValueAndConfigName(LocalDateTime.now(dateTimeZone), cycleVaule, TimeUnit.MONTH)
+							.getMax();
+				}
+				Period newServicePeriod = Period.builder().serviceId(savedService.getServiceId())
+						.periodValue(cycleVaule).periodName(TimeUnit.MONTH.name())
 						.finalPrice(cylcePriceListOfNewServ.get(cycleVaule))
-						.originalPrice(savedService.getOriginalPrice()*cycleVaule)
-						.build();
+						.originalPrice((int) Math.ceil(savedService.getOriginalPrice() * cyclePropor)).build();
 				periodRepo.save(newServicePeriod);
 			}
-			
+
 		} catch (Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			e.printStackTrace();
@@ -569,7 +572,7 @@ public class TheService {
 			if (cylcePriceListOfNewServ.size() != 4 || !cycleList.containsAll(cylcePriceListOfNewServ.keySet()))
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 						.body("Have to set price foreach 4 cycles : 3, 6, 9 ,12 of this service");
-			Function<Integer, PeriodPriceConfig> findByConfigValueAndConfigName = key -> perPriceConfRepo
+			Function<Integer, PeriodPriceConfig> findByConfigValueAndConfigName = key -> periodPriceConfRepo
 					.findByConfigValueAndConfigName(LocalDateTime.now(dateTimeZone), key, TimeUnit.MONTH);
 			for (Entry<Integer, Integer> period : cylcePriceListOfNewServ.entrySet()) {
 				PeriodPriceConfig periPriceConfig = findByConfigValueAndConfigName.apply(period.getKey());
@@ -577,7 +580,7 @@ public class TheService {
 					float min = periPriceConfig.getMin();
 					float max = periPriceConfig.getMax();
 					float periodPrice = period.getValue();
-					float propor = periodPrice / serviceDTO.getOriginalPrice();
+					float propor = periodPrice / serviceDTO.getFinalPrice();
 					boolean validSetting = min <= propor && propor <= max;
 					if (!validSetting) {
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -591,13 +594,19 @@ public class TheService {
 			cylcePriceListOfNewServ.put(1, serviceDTO.getFinalPrice()); // the cycle 1 into the service period price
 
 			for (Integer cycleVaule : cylcePriceListOfNewServ.keySet()) {
+				float cyclePropor = 1;
+				if (cycleVaule != 1) {
+					cyclePropor = periodPriceConfRepo
+							.findByConfigValueAndConfigName(LocalDateTime.now(dateTimeZone), cycleVaule, TimeUnit.MONTH)
+							.getMax();
+				}
 				periodRepo.save(Period.builder()
 						.periodId(periodRepo.findByServiceIdAndPeriodValue(oldService.getServiceId(),cycleVaule).getPeriodId())
 						.serviceId(oldService.getServiceId())
 						.periodValue(cycleVaule)
 						.periodName(TimeUnit.MONTH.name())
 						.finalPrice(cylcePriceListOfNewServ.get(cycleVaule))
-						.originalPrice(updatedService.getOriginalPrice()*cycleVaule)
+						.originalPrice((int) Math.ceil(updatedService.getOriginalPrice() * cyclePropor))
 						.build());
 			}
 

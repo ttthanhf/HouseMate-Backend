@@ -54,7 +54,7 @@ public class FeedbackController {
 		return feedbackDao.getOne(feedbackId);
 	}
 	
-	@GetMapping("/service/top-feedaback")
+	@GetMapping("/service/top-feedback")
 	@Operation(summary = "View top feedback")
 	public ResponseEntity<?> getTopFeedback(@RequestParam("rating") int rating) {
 		return feedbackDao.findTopFeedback(rating);
