@@ -1,6 +1,5 @@
 package housemate.responses;
 
-import housemate.constants.Enum.GroupType;
 import housemate.entities.ServiceType;
 import housemate.entities.UserUsage;
 import lombok.Data;
@@ -15,7 +14,7 @@ import java.util.Objects;
 public class PurchasedServiceRes {
     private int serviceId;
     private String titleName;
-    private GroupType groupType;
+    private String groupType;
     private List<ServiceType> type;
     private List<UserUsage> usages = new ArrayList<>();
 

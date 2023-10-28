@@ -22,12 +22,6 @@ public class Enum {
 		DESC
 	}
 
-	public static enum GroupType {
-		HOURLY_SERVICE,
-		RETURN_SERVICE,
-		DELIVERY_SERVICE,
-	}
-
 	public static enum SaleStatus {
 		AVAILABLE,
 		ONSALE,
