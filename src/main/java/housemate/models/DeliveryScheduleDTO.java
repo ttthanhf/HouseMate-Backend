@@ -6,6 +6,7 @@ package housemate.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import housemate.constants.Cycle;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ public class DeliveryScheduleDTO {
 
     @FutureOrPresent(message = "Date must be in the present or future")
     @JsonFormat(pattern = "dd/MM/yyyy")
+    @Schema(example = "03/11/2023")
     private LocalDate date;
 
     private String note;

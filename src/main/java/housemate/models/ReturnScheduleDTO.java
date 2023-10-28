@@ -32,10 +32,12 @@ public class ReturnScheduleDTO {
 
     @JsonFormat(pattern = "dd/MM/yyyy")
     @FutureOrPresent(message = "Pickup date must be in the present or future")
+    @Schema(example = "03/11/2023")
     private LocalDate pickUpDate;
 
     @JsonFormat(pattern = "dd/MM/yyyy")
     @FutureOrPresent(message = "Received date must be in the present or future")
+    @Schema(example = "05/11/2023")
     private LocalDate receiveDate;
 
     @DateTimeFormat(pattern = "HH:mm")
