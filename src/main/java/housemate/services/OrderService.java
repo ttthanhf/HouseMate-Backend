@@ -170,11 +170,11 @@ public class OrderService {
 
             subTotal += originalPriceCart * quantity;
 
-            if (finalPrice >= 1000000000 || finalPrice <= 10000) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Total price must higher 10,000 and lower 1,000,000,000");
-            }
-
             listOrderItem.add(orderItem);
+        }
+
+        if (finalPrice >= 1000000000 || finalPrice <= 10000) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Total price must higher 10,000 and lower 1,000,000,000");
         }
 
         //remove all order item
