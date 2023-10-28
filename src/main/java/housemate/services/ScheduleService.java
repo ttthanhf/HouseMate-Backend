@@ -1,11 +1,9 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
-import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
 import housemate.mappers.ScheduleMapper;
 import housemate.models.ScheduleDTO;
-import housemate.models.ScheduleUpdateDTO;
 import housemate.repositories.*;
 import housemate.responses.EventRes;
 import housemate.responses.PurchasedServiceRes;
@@ -145,33 +143,6 @@ public class ScheduleService {
         return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), schedule);
     }
 
-    public ResponseEntity<String> updateSchedule(
-            HttpServletRequest request, ScheduleUpdateDTO scheduleUpdateDTO, int scheduleId
-    ) {
-        if (isStatusInvalid(scheduleId))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
-        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
-    }
-
-    // Uncomment these code if hard code working
-//    public ResponseEntity<String> createHourlySchedule(HttpServletRequest request, HourlyScheduleDTO scheduleDTO) {
-//        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-//        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-//        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), GroupType.HOURLY_SERVICE, schedule, 1);
-//    }
-//
-//    public ResponseEntity<String> createReturnSchedule(HttpServletRequest request, ReturnScheduleDTO scheduleDTO) {
-//        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-//        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-//        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), GroupType.RETURN_SERVICE, schedule, MINIMUM_RETURN_HOURS);
-//    }
-//
-//    public ResponseEntity<String> createDeliverySchedule(HttpServletRequest request, DeliveryScheduleDTO scheduleDTO) {
-//        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-//        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-//        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), GroupType.RETURN_SERVICE, schedule, 0);
-//    }
-
     // ======================================== REUSABLE FUNCTIONS ========================================
 
     private List<EventRes> getEventsForStaff(int staffId) {
@@ -222,11 +193,6 @@ public class ScheduleService {
         if (service == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
         }
-
-//        // Check correct group type
-//        if (service.getGroupType() != groupType) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
-//        }
 
         // Check correct user usage ID
         UserUsage userUsage = userUsageRepository.findById(userUsageId).orElse(null);
@@ -281,7 +247,7 @@ public class ScheduleService {
         }
 
         // Get all service ID that user has purchased
-        Set<Integer> purchasedServiceIds = new HashSet<Integer>();
+        Set<Integer> purchasedServiceIds = new HashSet<>();
         List<UserUsage> usageList = userUsageRepository.getAllUserUsageByUserIdAndNotExpired(userId);
         for (UserUsage userUsage : usageList) {
             purchasedServiceIds.add(userUsage.getServiceId());
@@ -395,10 +361,5 @@ public class ScheduleService {
         }
 
         return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));
-    }
-
-    private boolean isStatusInvalid(int scheduleId) {
-        ScheduleStatus status = scheduleRepository.getByScheduleId(scheduleId).getStatus();
-        return status != ScheduleStatus.PROCESSING && status != ScheduleStatus.PENDING;
     }
 }
