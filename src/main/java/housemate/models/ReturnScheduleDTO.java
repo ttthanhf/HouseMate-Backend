@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import housemate.constants.Cycle;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -48,7 +49,9 @@ public class ReturnScheduleDTO {
     @Positive(message = "Service ID must be a positive number")
     private int serviceId;
 
-    @Positive(message = "Type ID must be a positive number")
+    @NotNull(message = "User usage ID must not be null")
+    private int userUsageId;
+
     private int typeId;
 
 }

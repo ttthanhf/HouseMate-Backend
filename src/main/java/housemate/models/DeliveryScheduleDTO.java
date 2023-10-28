@@ -34,6 +34,8 @@ public class DeliveryScheduleDTO {
 
     private LocalTime time;
 
-    @NotNull(message = "Type ID must not be null")
+    @NotNull(message = "User usage ID must not be null")
+    private int userUsageId;
+
     private int typeId;
 }
