@@ -24,4 +24,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 
     @Query("SELECT IFNULL(SUM(s.quantityRetrieve), 0) FROM Schedule s WHERE s.serviceId = :serviceId AND s.customerId = :customerId")
     int getSumOfQuantityRetrieve(@Param("serviceId") int serviceId, @Param("customerId") int customerId);
+    
+    @Query("SELECT IFNULL(SUM(s.quantityRetrieve), 0) FROM Schedule s WHERE s.serviceId = :serviceId AND s.customerId = :customerId AND s.status = PROCESSING")
+    int getSumOfQuantityRetrieveOnlyProcessingStatus(@Param("serviceId") int serviceId, @Param("customerId") int customerId);
 }

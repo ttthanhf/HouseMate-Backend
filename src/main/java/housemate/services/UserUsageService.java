@@ -9,11 +9,13 @@ import housemate.entities.OrderItem;
 import housemate.entities.PackageServiceItem;
 import housemate.entities.Service;
 import housemate.entities.UserUsage;
+import housemate.mappers.UserUsageMapper;
 import housemate.models.responses.MyPurchasedResponse;
 import housemate.models.responses.UserUsageResponse;
 import housemate.repositories.OrderItemRepository;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.PackageServiceItemRepository;
+import housemate.repositories.ScheduleRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.UserUsageRepository;
 import housemate.utils.AuthorizationUtil;
@@ -33,130 +35,147 @@ import org.springframework.http.ResponseEntity;
  */
 @org.springframework.stereotype.Service
 public class UserUsageService {
-
+    
     @Autowired
     private AuthorizationUtil authorizationUtil;
-
+    
     @Autowired
     private UserUsageRepository userUsageRepository;
-
+    
     @Autowired
     private ServiceRepository serviceRepository;
-
+    
     @Autowired
     private OrderItemRepository orderItemRepository;
-
+    
     @Autowired
     private PackageServiceItemRepository packageServiceItemRepository;
-
+    
     @Autowired
     private OrderRepository orderRepository;
-
+    
+    @Autowired
+    private UserUsageMapper userUsageMapper;
+    
+    @Autowired
+    private ScheduleRepository scheduleRepository;
+    
     public ResponseEntity<List<UserUsageResponse>> getAllUserUsageForSchedule(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-
+        
         Map<Integer, UserUsageResponse> mapUserUsageResponse = new HashMap<>();
-
+        
         List<UserUsage> listUserUsage = userUsageRepository.getAllUserUsageByUserIdAndNotExpired(userId);
         for (UserUsage userUsage : listUserUsage) {
-
+            
             if (userUsage.getEndDate().compareTo(LocalDateTime.now()) < 0) {
                 userUsage.setExpired(true);
                 userUsageRepository.save(userUsage);
                 continue;
             }
-
+            
             int serviceId = userUsage.getServiceId();
-
+            
             int orderItemId = userUsage.getOrderItemId();
             OrderItem orderItem = orderItemRepository.findById(orderItemId);
-
+            
             Service service = serviceRepository.getServiceByServiceId(serviceId);
-
+            
             UserUsageResponse userUsageResponse = mapUserUsageResponse.get(serviceId);
             if (userUsageResponse == null) {
                 userUsageResponse = new UserUsageResponse();
                 userUsageResponse.setService(service);
-                userUsageResponse.setListUserUsage(new ArrayList<>());
+                userUsageResponse.setListUserUsageResponse(new ArrayList<>());
                 mapUserUsageResponse.put(service.getServiceId(), userUsageResponse);
             }
-
+            
             int currentTotal = userUsageResponse.getTotal();
             userUsageResponse.setTotal(currentTotal + userUsage.getTotal());
-
+            
             int currentRemaining = userUsageResponse.getRemaining();
             userUsageResponse.setRemaining(currentRemaining + userUsage.getRemaining());
-
+            
             Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
-            userUsage.setService(serviceChild);
-            userUsageResponse.getListUserUsage().add(userUsage);
+            
+            UserUsageResponse userUsageResponseChild = userUsageMapper.maptoResponse(userUsage);
+            userUsageResponseChild.setService(serviceChild);
+            userUsageResponseChild.setInUse(scheduleRepository.getSumOfQuantityRetrieve(serviceChild.getServiceId(), userId));
+            
+            userUsageResponse.getListUserUsageResponse().add(userUsageResponseChild);
         }
-
+        
         List<UserUsageResponse> listUserUsageResponse = new ArrayList<>();
         for (UserUsageResponse value : mapUserUsageResponse.values()) {
             listUserUsageResponse.add(value);
         }
-
+        
         return ResponseEntity.status(HttpStatus.OK).body(listUserUsageResponse);
     }
-
+    
     public ResponseEntity<?> getUserUsageByOrderItemId(HttpServletRequest request, int orderItemId) {
-
+        
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         OrderItem orderItem = orderItemRepository.findById(orderItemId);
         if (orderItem == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Order Item not found");
         }
-
+        
         LocalDateTime startDate = null;
         int total = 0;
         int totalRemaining = 0;
-
+        
         UserUsageResponse userUsageResponse = new UserUsageResponse();
+        List<UserUsageResponse> listUserUsageResponse = new ArrayList<>();
         List<UserUsage> listUserUsage = userUsageRepository.getAllUserUsageByOrderItemIdAndUserIdAndNotExpired(orderItemId, userId);
         for (UserUsage userUsage : listUserUsage) {
             if (userUsage.getEndDate().compareTo(LocalDateTime.now()) < 0) {
                 userUsage.setExpired(true);
                 userUsageRepository.save(userUsage);
             }
-            Service service = serviceRepository.getServiceByServiceId(userUsage.getServiceId());
-            userUsage.setService(service);
-
+            
             startDate = userUsage.getStartDate();
             total += userUsage.getTotal();
             totalRemaining += userUsage.getRemaining();
-
+            
+            Service service = serviceRepository.getServiceByServiceId(userUsage.getServiceId());
+            
+            UserUsageResponse userUsageResponseChild = new UserUsageResponse();
+            userUsageResponseChild = userUsageMapper.maptoResponse(userUsage);
+            userUsageResponseChild.setService(service);
+            
+            listUserUsageResponse.add(userUsageResponseChild);
+            
         }
 
 //        listUserUsage = userUsageRepository.getAllUserUsageByOrderItemIdAndUserIdAndNotExpired(orderItemId, userId); //comment lại để xét logic
-        userUsageResponse.setListUserUsage(listUserUsage);
-
+        userUsageResponse.setListUserUsageResponse(listUserUsageResponse);
+        
         Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
         userUsageResponse.setService(service);
-
+        
         userUsageResponse.setStartDate(startDate);
         userUsageResponse.setEndDate(orderItem.getExpireDate());
         userUsageResponse.setTotal(total);
         userUsageResponse.setRemaining(totalRemaining);
-
+        
         return ResponseEntity.status(HttpStatus.OK).body(userUsageResponse);
     }
-
+    
     public ResponseEntity<List<MyPurchasedResponse>> getAllUserUsageForMyPurchased(HttpServletRequest request) {
-
+        
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-
+        
         List<MyPurchasedResponse> listMyPurchasedResponse = new ArrayList<>();
-
+        
         List<Order> listOrder = orderRepository.getAllOrderCompleteByUserId(userId);
         for (Order order : listOrder) {
             List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
             for (OrderItem orderItem : listOrderItem) {
-
+                
                 List<String> listSingleServiceName = new ArrayList<>();
-
+                
                 MyPurchasedResponse myPurchasedResponse = new MyPurchasedResponse();
-
+                
                 Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
                 if (service.isPackage()) {
                     List<PackageServiceItem> listPackageServiceItem = packageServiceItemRepository.findAllSingleServiceIdByPackageServiceId(service.getServiceId());
@@ -175,8 +194,8 @@ public class UserUsageService {
                 listMyPurchasedResponse.add(myPurchasedResponse);
             }
         }
-
+        
         return ResponseEntity.status(HttpStatus.OK).body(listMyPurchasedResponse);
-
+        
     }
 }
