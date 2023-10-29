@@ -4,17 +4,19 @@
  */
 package housemate.utils;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
+import java.util.Formatter;
 
 /**
- *
  * @author ThanhF
  */
 public class EncryptUtil {
+
+    private static final String HMAC_SHA256 = "HmacSHA256";
 
     public static String hmacSHA512(final String key, final String data) {
         try {
@@ -36,5 +38,26 @@ public class EncryptUtil {
         } catch (IllegalStateException | NullPointerException | InvalidKeyException | NoSuchAlgorithmException ex) {
             return "";
         }
+    }
+
+    public static String signHmacSHA256(String data, String secretKey) {
+        try {
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(), HMAC_SHA256);
+            Mac mac = Mac.getInstance(HMAC_SHA256);
+            mac.init(secretKeySpec);
+            byte[] rawHmac = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            return toHexString(rawHmac);
+        } catch (NoSuchAlgorithmException | InvalidKeyException ex) {
+            return "";
+        }
+    }
+
+    private static String toHexString(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        Formatter formatter = new Formatter(sb);
+        for (byte b : bytes) {
+            formatter.format("%02x", b);
+        }
+        return sb.toString();
     }
 }
