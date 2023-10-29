@@ -9,7 +9,6 @@ import housemate.constants.RegexConstants;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
 import housemate.entities.PackageServiceItem;
-import housemate.entities.Period;
 import housemate.entities.Service;
 import housemate.entities.UserAccount;
 import housemate.entities.UserUsage;
@@ -19,7 +18,6 @@ import housemate.repositories.OrderItemRepository;
 import housemate.utils.EncryptUtil;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.PackageServiceItemRepository;
-import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.UserRepository;
 import housemate.repositories.UserUsageRepository;
@@ -32,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -44,8 +43,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
 
 /**
  *
@@ -82,13 +81,14 @@ public class PaymentService {
     private final String vnp_IpAddr = "127.0.0.1";
     private final String bankCode = "";
 
+    // VN
     @Value("${vnp.version}")
     private String vnp_Version;
 
     @Value("${vnp.pay_url}")
     private String vnp_PayUrl;
 
-    @Value("${vnp.return_url}")
+    @Value("${payment.return_url}")
     private String vnp_ReturnUrl;
 
     @Value("${vnp.api_url}")
@@ -99,6 +99,28 @@ public class PaymentService {
 
     @Value("${vnp.secretKey}")
     private String secretKey;
+
+    // MoMo
+    @Value("${momo.partner-code}")
+    private String partnerCode;
+
+    @Value("${momo.access-key}")
+    private String accessKey;
+
+    @Value("${momo.secret-key}")
+    private String momoSecretKey;
+
+    @Value("${payment.return_url}")
+    private String redirectUrl;
+
+    @Value("${payment.return_url}")
+    private String ipnUrl;
+
+    @Value("${momo.request-type}")
+    private String requestType;
+
+    @Value("${momo.api-url}")
+    private String momoAPIUrl;
 
     public ResponseEntity<String> createVNPayPayment(HttpServletRequest request, UserInfoOrderDTO userInfoOrderDTO) throws UnsupportedEncodingException {
 
@@ -128,17 +150,28 @@ public class PaymentService {
 
         //check only support vnpay
         String paymentMethod = userInfoOrderDTO.getPaymentMethod().toLowerCase();
-        if (!"vnpay".equals(paymentMethod)) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Only supports vnpay at the present time !");
-        }
 
         order.setAddress(address);
         order.setPaymentMethod(paymentMethod);
         orderRepository.save(order);
 
         //much to plus 100 => vnpay api faq
-        long amount = order.getFinalPrice() * 100;
+        long amount = order.getFinalPrice();
 
+        // TODO: Add config to database later
+        if (paymentMethod.equals("vnpay")) {
+            return paymentWithVNPay(amount * 100);
+        }
+
+        if (paymentMethod.equals("momo")) {
+            return paymentWithMoMo(amount);
+        }
+
+        //check only support vnpay and momo
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Only supports VNPay and MoMo at the present time !");
+    }
+
+    private ResponseEntity<String> paymentWithVNPay(long amount) throws UnsupportedEncodingException {
         String vnp_TxnRef = RandomUtil.getRandomNumber(8);
         String vnp_Command = "pay";
 
@@ -202,6 +235,54 @@ public class PaymentService {
         String paymentUrl = vnp_PayUrl + "?" + queryUrl;
 
         return ResponseEntity.status(HttpStatus.OK).body(paymentUrl);
+    }
+
+    private ResponseEntity<String> paymentWithMoMo(long amount) {
+        // MoMo parameters
+        String orderInfo = "HouseMate - Pay with MoMo";
+        String extraData = "";
+        String orderId = partnerCode + System.currentTimeMillis();
+
+        // Create the raw data for the signature
+        String rawData = generateParams(accessKey, amount, extraData, ipnUrl, orderId, orderInfo, partnerCode, redirectUrl, orderId, requestType);
+
+        // Calculate the HMAC SHA-256 signature
+        String signature = EncryptUtil.signHmacSHA256(rawData, momoSecretKey);
+
+        // Create the request body
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("partnerCode", partnerCode);
+        requestBody.put("accessKey", accessKey);
+        requestBody.put("requestId", orderId);
+        requestBody.put("amount", amount);
+        requestBody.put("orderId", orderId);
+        requestBody.put("orderInfo", orderInfo);
+        requestBody.put("redirectUrl", redirectUrl);
+        requestBody.put("ipnUrl", ipnUrl);
+        requestBody.put("extraData", extraData);
+        requestBody.put("requestType", requestType);
+        requestBody.put("signature", signature);
+        requestBody.put("lang", "en");
+
+        System.out.println(requestBody.toString());
+
+        // Set headers for JSON content
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Create an HTTP entity for the request
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        // Use RestTemplate to send the POST request to MoMo
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response = restTemplate.postForEntity(momoAPIUrl, requestEntity, Map.class);
+
+        try {
+            String payUrl = (String) response.getBody().get("payUrl");
+            return ResponseEntity.status(HttpStatus.OK).body(payUrl);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong! Message: " + ex.getMessage());
+        }
     }
 
     public ResponseEntity<?> checkVNPayPayment(HttpServletRequest request, String vnp_TxnRef, String vnp_TransactionDate) throws IOException {
@@ -282,6 +363,31 @@ public class PaymentService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment fail");
         }
 
+        return processToDatabase(request, vnp_TxnRef, vnp_TransactionDate);
+    }
+
+    public ResponseEntity<?> checkMoMoPayment(HttpServletRequest request, String partnerCode, String orderId, String requestId, long amount, String orderInfo, String orderType, String extraData, String signature, int resultCode, long transId, long responseTime) {
+        // Create the raw data for the signature
+        String rawData = generateParams(accessKey, amount, extraData, ipnUrl, orderId, orderInfo, partnerCode, redirectUrl, orderId, requestType);
+
+        // Calculate the HMAC SHA-256 signature
+        String generatedSignature = EncryptUtil.signHmacSHA256(rawData, momoSecretKey);
+
+        // TODO: Handle later
+//        if (!generatedSignature.equals(signature)) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request invalid");
+//        }
+
+        if (resultCode != 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment fail");
+        }
+
+        String transactionDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date(responseTime));
+        return processToDatabase(request, String.valueOf(transId), transactionDate);
+    }
+
+
+    public ResponseEntity<?> processToDatabase(HttpServletRequest request, String transactionId, String transactionDate) {
         //remove all cart exist in order and set complete order to true
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
@@ -308,7 +414,7 @@ public class PaymentService {
 
                     userUsage.setStartDate(order.getDate());
                     userUsage.setEndDate(orderItem.getExpireDate());
-                    
+
                     userUsage.setOrderItemId(orderItem.getOrderItemId());
                     userUsageRepository.save(userUsage);
                 }
@@ -319,7 +425,7 @@ public class PaymentService {
                 userUsage.setServiceId(service.getServiceId());
                 userUsage.setRemaining(orderItem.getQuantity());
                 userUsage.setTotal(orderItem.getQuantity());
-                
+
                 userUsage.setStartDate(order.getDate());
                 userUsage.setEndDate(orderItem.getExpireDate());
 
@@ -331,8 +437,8 @@ public class PaymentService {
         //add all missing field in db
         order.setComplete(true);
         order.setDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
-        order.setTransactionId(vnp_TxnRef);
-        order.setTransactionDate(vnp_TransactionDate);
+        order.setTransactionId(transactionId);
+        order.setTransactionDate(transactionDate);
         orderRepository.save(order);
 
         //add all missing field in response view
@@ -341,5 +447,14 @@ public class PaymentService {
         order.setUser(user);
 
         return ResponseEntity.status(HttpStatus.OK).body(order);
+    }
+
+    public static String generateParams(String accessKey, long amount, String extraData, String ipnUrl,
+                                         String orderId, String orderInfo, String partnerCode,
+                                         String redirectUrl, String requestId, String requestType) {
+        return "accessKey=" + accessKey + "&amount=" + amount + "&extraData=" + extraData +
+                "&ipnUrl=" + ipnUrl + "&orderId=" + orderId + "&orderInfo=" + orderInfo +
+                "&partnerCode=" + partnerCode + "&redirectUrl=" + redirectUrl +
+                "&requestId=" + requestId + "&requestType=" + requestType;
     }
 }

@@ -37,9 +37,29 @@ public class PaymentController {
         return paymentService.createVNPayPayment(request, userInfoOrderDTO);
     }
 
-    @GetMapping("/check")
+    @GetMapping("/check/vnpay")
     @Operation(summary = "Check payment success or not")
     public ResponseEntity<?> checkPayment(HttpServletRequest request, @RequestParam String vnp_TxnRef, @RequestParam String vnp_PayDate) throws IOException {
         return paymentService.checkVNPayPayment(request, vnp_TxnRef, vnp_PayDate);
+    }
+
+    @GetMapping("/check/momo")
+    @Operation(summary = "Check MoMo payment success or not")
+    public ResponseEntity<?> checkMoMoPayment(
+            HttpServletRequest request,
+            @RequestParam String partnerCode,
+            @RequestParam String orderId,
+            @RequestParam String requestId,
+            @RequestParam long amount,
+            @RequestParam String orderInfo,
+            @RequestParam String orderType,
+            @RequestParam String extraData,
+            @RequestParam String signature,
+            @RequestParam int resultCode,
+            @RequestParam long transId,
+            @RequestParam long responseTime
+
+    ) throws IOException {
+        return paymentService.checkMoMoPayment(request, partnerCode, orderId, requestId, amount, orderInfo, orderType, extraData, signature, resultCode, transId, responseTime);
     }
 }
