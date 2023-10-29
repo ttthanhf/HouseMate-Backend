@@ -6,81 +6,57 @@ package housemate.services;
 
 import com.nimbusds.jose.shaded.gson.JsonObject;
 import housemate.constants.RegexConstants;
-import housemate.entities.Order;
-import housemate.entities.OrderItem;
-import housemate.entities.PackageServiceItem;
-import housemate.entities.Service;
-import housemate.entities.UserAccount;
-import housemate.entities.UserUsage;
+import housemate.entities.*;
 import housemate.models.UserInfoOrderDTO;
-import housemate.repositories.CartRepository;
-import housemate.repositories.OrderItemRepository;
-import housemate.utils.EncryptUtil;
-import housemate.repositories.OrderRepository;
-import housemate.repositories.PackageServiceItemRepository;
-import housemate.repositories.ServiceRepository;
-import housemate.repositories.UserRepository;
-import housemate.repositories.UserUsageRepository;
+import housemate.repositories.*;
 import housemate.utils.AuthorizationUtil;
+import housemate.utils.EncryptUtil;
 import housemate.utils.RandomUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
- *
  * @author ThanhF
  */
 @org.springframework.stereotype.Service
 public class PaymentService {
 
-    @Autowired
-    private AuthorizationUtil authorizationUtil;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private OrderItemRepository orderItemRepository;
-
-    @Autowired
-    private ServiceRepository serviceRepository;
-
-    @Autowired
-    private CartRepository cartRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PackageServiceItemRepository packageServiceItemRepository;
-
-    @Autowired
-    private UserUsageRepository userUsageRepository;
-
     private final String language = "en";
     private final String vnp_IpAddr = "127.0.0.1";
     private final String bankCode = "";
-
+    @Autowired
+    private AuthorizationUtil authorizationUtil;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+    @Autowired
+    private ServiceRepository serviceRepository;
+    @Autowired
+    private CartRepository cartRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private PackageServiceItemRepository packageServiceItemRepository;
+    @Autowired
+    private UserUsageRepository userUsageRepository;
     // VN
     @Value("${vnp.version}")
     private String vnp_Version;
@@ -122,7 +98,7 @@ public class PaymentService {
     @Value("${momo.api-url}")
     private String momoAPIUrl;
 
-    public ResponseEntity<String> createVNPayPayment(HttpServletRequest request, UserInfoOrderDTO userInfoOrderDTO) throws UnsupportedEncodingException {
+    public ResponseEntity<String> createPayment(HttpServletRequest request, UserInfoOrderDTO userInfoOrderDTO) throws UnsupportedEncodingException {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
@@ -148,19 +124,18 @@ public class PaymentService {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("This person does not have ordered before !");
         }
 
-        //check only support vnpay
+        // Get payment method
         String paymentMethod = userInfoOrderDTO.getPaymentMethod().toLowerCase();
 
         order.setAddress(address);
         order.setPaymentMethod(paymentMethod);
         orderRepository.save(order);
 
-        //much to plus 100 => vnpay api faq
         long amount = order.getFinalPrice();
 
         // TODO: Add config to database later
         if (paymentMethod.equals("vnpay")) {
-            return paymentWithVNPay(amount * 100);
+            return paymentWithVNPay(amount * 100);  //much to plus 100 => vnpay api faq
         }
 
         if (paymentMethod.equals("momo")) {
@@ -212,14 +187,14 @@ public class PaymentService {
         Iterator itr = fieldNames.iterator();
         while (itr.hasNext()) {
             String fieldName = (String) itr.next();
-            String fieldValue = (String) vnp_Params.get(fieldName);
+            String fieldValue = vnp_Params.get(fieldName);
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
                 hashData.append(fieldName);
                 hashData.append('=');
-                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
-                query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII));
                 query.append('=');
-                query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
                 if (itr.hasNext()) {
                     query.append('&');
                     hashData.append('&');
@@ -244,7 +219,7 @@ public class PaymentService {
         String orderId = partnerCode + System.currentTimeMillis();
 
         // Create the raw data for the signature
-        String rawData = generateParams(accessKey, amount, extraData, ipnUrl, orderId, orderInfo, partnerCode, redirectUrl, orderId, requestType);
+        String rawData = generateRawHash(accessKey, amount, extraData, ipnUrl, orderId, orderInfo, partnerCode, redirectUrl, orderId, requestType);
 
         // Calculate the HMAC SHA-256 signature
         String signature = EncryptUtil.signHmacSHA256(rawData, momoSecretKey);
@@ -263,8 +238,6 @@ public class PaymentService {
         requestBody.put("requestType", requestType);
         requestBody.put("signature", signature);
         requestBody.put("lang", "en");
-
-        System.out.println(requestBody.toString());
 
         // Set headers for JSON content
         HttpHeaders headers = new HttpHeaders();
@@ -366,26 +339,40 @@ public class PaymentService {
         return processToDatabase(request, vnp_TxnRef, vnp_TransactionDate);
     }
 
-    public ResponseEntity<?> checkMoMoPayment(HttpServletRequest request, String partnerCode, String orderId, String requestId, long amount, String orderInfo, String orderType, String extraData, String signature, int resultCode, long transId, long responseTime) {
+    public ResponseEntity<?> checkMoMoPayment(
+            HttpServletRequest request,
+            String partnerCode,
+            String orderId,
+            String requestId,
+            long amount,
+            String orderInfo,
+            String orderType,
+            String extraData,
+            String momoSignature,
+            String message,
+            String payType,
+            int resultCode,
+            long transId,
+            long responseTime
+    ) {
         // Create the raw data for the signature
-        String rawData = generateParams(accessKey, amount, extraData, ipnUrl, orderId, orderInfo, partnerCode, redirectUrl, orderId, requestType);
+        String rawData = generateRawHash(accessKey, amount, extraData, message, orderId, orderInfo, orderType, partnerCode, payType, requestId, responseTime, resultCode, transId);
 
-        // Calculate the HMAC SHA-256 signature
-        String generatedSignature = EncryptUtil.signHmacSHA256(rawData, momoSecretKey);
-
-        // TODO: Handle later
-//        if (!generatedSignature.equals(signature)) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request invalid");
-//        }
-
-        if (resultCode != 0) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment fail");
+        // Validate signature
+        String partnerSignature = EncryptUtil.signHmacSHA256(rawData, momoSecretKey);
+        if (!momoSignature.equals(partnerSignature)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request invalid, this transaction could be hacked!");
         }
 
+        // Payment fail
+        if (resultCode != 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment fail. Message: " + message);
+        }
+
+        // Payment success
         String transactionDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date(responseTime));
         return processToDatabase(request, String.valueOf(transId), transactionDate);
     }
-
 
     public ResponseEntity<?> processToDatabase(HttpServletRequest request, String transactionId, String transactionDate) {
         //remove all cart exist in order and set complete order to true
@@ -449,12 +436,31 @@ public class PaymentService {
         return ResponseEntity.status(HttpStatus.OK).body(order);
     }
 
-    public static String generateParams(String accessKey, long amount, String extraData, String ipnUrl,
-                                         String orderId, String orderInfo, String partnerCode,
-                                         String redirectUrl, String requestId, String requestType) {
+    public static String generateRawHash(String accessKey, long amount, String extraData, String ipnUrl,
+                                        String orderId, String orderInfo, String partnerCode,
+                                        String redirectUrl, String requestId, String requestType) {
         return "accessKey=" + accessKey + "&amount=" + amount + "&extraData=" + extraData +
                 "&ipnUrl=" + ipnUrl + "&orderId=" + orderId + "&orderInfo=" + orderInfo +
                 "&partnerCode=" + partnerCode + "&redirectUrl=" + redirectUrl +
                 "&requestId=" + requestId + "&requestType=" + requestType;
+    }
+
+    public String generateRawHash(String accessKey, long amount, String extraData, String message, String orderId,
+                                  String orderInfo, String orderType, String partnerCode, String payType,
+                                  String requestId, long responseTime, int resultCode, long transId) {
+
+        return "accessKey=" + accessKey +
+                "&amount=" + amount +
+                "&extraData=" + extraData +
+                "&message=" + message +
+                "&orderId=" + orderId +
+                "&orderInfo=" + orderInfo +
+                "&orderType=" + orderType +
+                "&partnerCode=" + partnerCode +
+                "&payType=" + payType +
+                "&requestId=" + requestId +
+                "&responseTime=" + responseTime +
+                "&resultCode=" + resultCode +
+                "&transId=" + transId;
     }
 }

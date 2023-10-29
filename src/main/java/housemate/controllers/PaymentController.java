@@ -32,13 +32,13 @@ public class PaymentController {
     PaymentService paymentService;
 
     @PostMapping("/create")
-    @Operation(summary = "Create payment and response url vnpay")
+    @Operation(summary = "Create payment and response url for VNPay and MôM")
     public ResponseEntity<String> createPayment(HttpServletRequest request, @Valid @RequestBody UserInfoOrderDTO userInfoOrderDTO) throws UnsupportedEncodingException {
-        return paymentService.createVNPayPayment(request, userInfoOrderDTO);
+        return paymentService.createPayment(request, userInfoOrderDTO);
     }
 
     @GetMapping("/check/vnpay")
-    @Operation(summary = "Check payment success or not")
+    @Operation(summary = "Check VNPay payment success or not")
     public ResponseEntity<?> checkPayment(HttpServletRequest request, @RequestParam String vnp_TxnRef, @RequestParam String vnp_PayDate) throws IOException {
         return paymentService.checkVNPayPayment(request, vnp_TxnRef, vnp_PayDate);
     }
@@ -56,10 +56,12 @@ public class PaymentController {
             @RequestParam String extraData,
             @RequestParam String signature,
             @RequestParam int resultCode,
+            @RequestParam String message,
+            @RequestParam String payType,
             @RequestParam long transId,
             @RequestParam long responseTime
 
     ) throws IOException {
-        return paymentService.checkMoMoPayment(request, partnerCode, orderId, requestId, amount, orderInfo, orderType, extraData, signature, resultCode, transId, responseTime);
+        return paymentService.checkMoMoPayment(request, partnerCode, orderId, requestId, amount, orderInfo, orderType, extraData, signature, message, payType, resultCode, transId, responseTime);
     }
 }
