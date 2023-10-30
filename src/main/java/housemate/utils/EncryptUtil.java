@@ -18,23 +18,23 @@ public class EncryptUtil {
     private static final String HMAC_SHA256 = "HmacSHA256";
     private static final String HMAC_SHA512 = "HmacSHA512";
 
-    public static String hmacSHA(String secretKey, String data, String algorithm) {
+    public static String hmacSHA(String key, String data, String algorithm) {
         try {
-            if (secretKey == null || data == null) {
+            if (key == null || data == null) {
                 throw new NullPointerException();
             }
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(), algorithm);
-            Mac mac = Mac.getInstance(algorithm);
-            mac.init(secretKeySpec);
+            final Mac mac = Mac.getInstance(algorithm);
+            byte[] hmacKeyBytes = key.getBytes();
+            final SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, algorithm);
+            mac.init(secretKey);
             byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
-            byte[] rawHmac = mac.doFinal(dataBytes);
-            int capacity = rawHmac.length * 2;
-            StringBuilder sb = new StringBuilder(capacity);
-            for (byte b : rawHmac) {
+            byte[] result = mac.doFinal(dataBytes);
+            StringBuilder sb = new StringBuilder(2 * result.length);
+            for (byte b : result) {
                 sb.append(String.format("%02x", b & 0xff));
             }
             return sb.toString();
-        } catch (NoSuchAlgorithmException | InvalidKeyException ex) {
+        } catch (IllegalStateException | NullPointerException | InvalidKeyException | NoSuchAlgorithmException ex) {
             return "";
         }
     }
