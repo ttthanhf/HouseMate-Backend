@@ -59,7 +59,7 @@ public class PaymentService {
     @Autowired
     private UserUsageRepository userUsageRepository;
 
-    // VN Pay
+    // VNPAY
     @Value("${vnp.version}")
     private String vnp_Version;
 
@@ -146,8 +146,8 @@ public class PaymentService {
             return paymentWithMoMo(amount);
         }
 
-        //check only support vnpay and momo
-        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Only supports VNPay and MoMo at the present time !");
+        //check only support VNPAY and MoMo
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Only supports VNPAY and MoMo at the present time !");
     }
 
     private ResponseEntity<String> paymentWithVNPay(long amount) throws UnsupportedEncodingException {
