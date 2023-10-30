@@ -101,8 +101,12 @@ public class ScheduleService {
 
         // Get all serviceID based on order ID
         for (UserUsage userUsage : usageList) {
+            int serviceId = userUsage.getServiceId();
+            Service service = serviceRepository.getServiceByServiceId(serviceId);
+            userUsage.setService(service);
+
             // Check exist purchase in purchases Set (Set<PurchasedServiceRes>)
-            PurchasedServiceRes existedPurchase = getPurchaseById(purchases, userUsage.getServiceId());
+            PurchasedServiceRes existedPurchase = getPurchaseById(purchases, serviceId);
             if (existedPurchase != null) {
                 existedPurchase.getUsages().add(userUsage);
                 purchases.add(existedPurchase);
@@ -112,7 +116,6 @@ public class ScheduleService {
             // Check expiration and run out of remaining
             if (userUsage.getRemaining() == 0 && userUsage.getEndDate().isAfter(LocalDateTime.now())) continue;
 
-            Service service = serviceRepository.getServiceByServiceId(userUsage.getServiceId());
             List<ServiceType> typeList = serviceTypeRepository.findAllByServiceId(service.getServiceId()).orElse(null);
 
             PurchasedServiceRes purchase = new PurchasedServiceRes();
