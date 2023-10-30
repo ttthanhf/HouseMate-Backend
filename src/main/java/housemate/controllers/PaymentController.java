@@ -32,7 +32,7 @@ public class PaymentController {
     PaymentService paymentService;
 
     @PostMapping("/create")
-    @Operation(summary = "Create payment and response url for VNPay and MoMo")
+    @Operation(summary = "Create payment and response URL for VNPay and MoMo")
     public ResponseEntity<String> createPayment(HttpServletRequest request, @Valid @RequestBody UserInfoOrderDTO userInfoOrderDTO) throws UnsupportedEncodingException {
         return paymentService.createPayment(request, userInfoOrderDTO);
     }

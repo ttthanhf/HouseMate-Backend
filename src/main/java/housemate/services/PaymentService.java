@@ -41,6 +41,7 @@ public class PaymentService {
 
     private final String language = "en";
     private final String bankCode = "";
+
     @Autowired
     private AuthorizationUtil authorizationUtil;
     @Autowired
@@ -57,7 +58,8 @@ public class PaymentService {
     private PackageServiceItemRepository packageServiceItemRepository;
     @Autowired
     private UserUsageRepository userUsageRepository;
-    // VN
+
+    // VN Pay
     @Value("${vnp.version}")
     private String vnp_Version;
 
@@ -414,10 +416,8 @@ public class PaymentService {
                 userUsage.setServiceId(service.getServiceId());
                 userUsage.setRemaining(orderItem.getQuantity());
                 userUsage.setTotal(orderItem.getQuantity());
-
                 userUsage.setStartDate(order.getDate());
                 userUsage.setEndDate(orderItem.getExpireDate());
-
                 userUsage.setOrderItemId(orderItem.getOrderItemId());
                 userUsageRepository.save(userUsage);
             }
