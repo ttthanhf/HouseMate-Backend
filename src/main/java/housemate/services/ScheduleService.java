@@ -39,6 +39,8 @@ public class ScheduleService {
     private final ServiceTypeRepository serviceTypeRepository;
     private final UserUsageRepository userUsageRepository;
     private final UserRepository userRepository;
+    private final OrderItemRepository orderItemRepository;
+
 
     @Autowired
     public ScheduleService(
@@ -48,7 +50,8 @@ public class ScheduleService {
             AuthorizationUtil authorizationUtil,
             ServiceTypeRepository serviceTypeRepository,
             UserUsageRepository userUsageRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            OrderItemRepository orderItemRepository
     ) {
         this.serviceRepository = serviceRepository;
         this.scheduleRepository = scheduleRepository;
@@ -57,6 +60,7 @@ public class ScheduleService {
         this.serviceTypeRepository = serviceTypeRepository;
         this.userUsageRepository = userUsageRepository;
         this.userRepository = userRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     public ResponseEntity<List<EventRes>> getScheduleForUser(HttpServletRequest request) {
@@ -101,11 +105,18 @@ public class ScheduleService {
 
         // Get all serviceID based on order ID
         for (UserUsage userUsage : usageList) {
-            int serviceId = userUsage.getServiceId();
-            Service service = serviceRepository.getServiceByServiceId(serviceId);
-            userUsage.setService(service);
+            // Check expiration and run out of remaining
+            if (userUsage.getRemaining() == 0 && userUsage.getEndDate().isAfter(LocalDateTime.now())) continue;
 
-            // Check exist purchase in purchases Set (Set<PurchasedServiceRes>)
+            // Query the relationship to get data in database
+            int serviceId = userUsage.getServiceId();
+            int orderItemId = userUsage.getOrderItemId();
+            OrderItem orderItem = orderItemRepository.findById(orderItemId);
+            Service service = serviceRepository.getServiceByServiceId(serviceId);
+            Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+            userUsage.setService(serviceChild);
+
+            // Add new UserUsage to the existedPurchase in purchases Set (Set<PurchasedServiceRes>)
             PurchasedServiceRes existedPurchase = getPurchaseById(purchases, serviceId);
             if (existedPurchase != null) {
                 existedPurchase.getUsages().add(userUsage);
@@ -113,11 +124,10 @@ public class ScheduleService {
                 continue;
             }
 
-            // Check expiration and run out of remaining
-            if (userUsage.getRemaining() == 0 && userUsage.getEndDate().isAfter(LocalDateTime.now())) continue;
-
+            // Type List
             List<ServiceType> typeList = serviceTypeRepository.findAllByServiceId(service.getServiceId()).orElse(null);
 
+            // Create new PurchasedServiceRes
             PurchasedServiceRes purchase = new PurchasedServiceRes();
             purchase.setServiceId(service.getServiceId());
             purchase.setTitleName(service.getTitleName());
@@ -125,6 +135,7 @@ public class ScheduleService {
             purchase.setGroupType(service.getGroupType());
             purchase.getUsages().add(userUsage);
 
+            // Add to Set<PurchasedServiceRes>
             purchases.add(purchase);
         }
 
