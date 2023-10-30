@@ -5,6 +5,7 @@
 package housemate.services;
 
 import com.nimbusds.jose.shaded.gson.JsonObject;
+import housemate.constants.PaymentMethod;
 import housemate.constants.RegexConstants;
 import housemate.entities.*;
 import housemate.models.UserInfoOrderDTO;
@@ -39,7 +40,6 @@ import java.util.regex.Pattern;
 public class PaymentService {
 
     private final String language = "en";
-    private final String vnp_IpAddr = "127.0.0.1";
     private final String bankCode = "";
     @Autowired
     private AuthorizationUtil authorizationUtil;
@@ -73,8 +73,11 @@ public class PaymentService {
     @Value("${vnp.TmnCode}")
     private String vnp_TmnCode;
 
+    @Value("${vnp_IpAddr}")
+    private String vnp_IpAddr;
+
     @Value("${vnp.secretKey}")
-    private String secretKey;
+    private String vnp_SecretKey;
 
     // MoMo
     @Value("${momo.partner-code}")
@@ -115,7 +118,7 @@ public class PaymentService {
             user.setPhoneNumber(phone);
         }
 
-        user = userRepository.save(user);
+        userRepository.save(user);
 
         Order order = orderRepository.getOrderNotCompleteByUserId(userId);
 
@@ -125,7 +128,7 @@ public class PaymentService {
         }
 
         // Get payment method
-        String paymentMethod = userInfoOrderDTO.getPaymentMethod().toLowerCase();
+        PaymentMethod paymentMethod = userInfoOrderDTO.getPaymentMethod();
 
         order.setAddress(address);
         order.setPaymentMethod(paymentMethod);
@@ -133,12 +136,11 @@ public class PaymentService {
 
         long amount = order.getFinalPrice();
 
-        // TODO: Add config to database later
-        if (paymentMethod.equals("vnpay")) {
+        if (paymentMethod.equals(PaymentMethod.VNPAY)) {
             return paymentWithVNPay(amount * 100);  //much to plus 100 => vnpay api faq
         }
 
-        if (paymentMethod.equals("momo")) {
+        if (paymentMethod.equals(PaymentMethod.MOMO)) {
             return paymentWithMoMo(amount);
         }
 
@@ -204,7 +206,7 @@ public class PaymentService {
         String queryUrl = query.toString();
 
         //create hash for checksum
-        String vnp_SecureHash = EncryptUtil.hmacSHA512(secretKey, hashData.toString());
+        String vnp_SecureHash = EncryptUtil.hmacSHA512(vnp_SecretKey, hashData.toString());
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
 
         String paymentUrl = vnp_PayUrl + "?" + queryUrl;
@@ -222,7 +224,7 @@ public class PaymentService {
         String rawData = generateRawHash(accessKey, amount, extraData, ipnUrl, orderId, orderInfo, partnerCode, redirectUrl, orderId, requestType);
 
         // Calculate the HMAC SHA-256 signature
-        String signature = EncryptUtil.signHmacSHA256(rawData, momoSecretKey);
+        String signature = EncryptUtil.hmacSHA256(momoSecretKey, rawData);
 
         // Create the request body
         Map<String, Object> requestBody = new HashMap<>();
@@ -283,7 +285,7 @@ public class PaymentService {
 
         //create hash for checksum
         String hash_Data = String.join("|", vnp_RequestId, vnp_Version, vnp_Command, vnp_TmnCode, vnp_TxnRef, vnp_TransactionDate, vnp_CreateDate, vnp_IpAddr, vnp_OrderInfo);
-        String vnp_SecureHash = EncryptUtil.hmacSHA512(secretKey, hash_Data);
+        String vnp_SecureHash = EncryptUtil.hmacSHA512(vnp_SecretKey, hash_Data);
 
         vnp_Params.addProperty("vnp_SecureHash", vnp_SecureHash);
 
@@ -359,7 +361,7 @@ public class PaymentService {
         String rawData = generateRawHash(accessKey, amount, extraData, message, orderId, orderInfo, orderType, partnerCode, payType, requestId, responseTime, resultCode, transId);
 
         // Validate signature
-        String partnerSignature = EncryptUtil.signHmacSHA256(rawData, momoSecretKey);
+        String partnerSignature = EncryptUtil.hmacSHA256(momoSecretKey, rawData);
         if (!momoSignature.equals(partnerSignature)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request invalid, this transaction could be hacked!");
         }
