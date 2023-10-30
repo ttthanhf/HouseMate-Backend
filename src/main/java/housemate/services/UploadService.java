@@ -108,16 +108,10 @@ public class UploadService {
             if (file.getSize() > 5 * 1024 * 1024) { // 5MB
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Image size must not exceed 5MB");
             }
-            String imageName = "";
-            try {
-            	 long currentTimeStamp = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
-                 String extensionImage = ".webp";
-                  imageName = uploadDTO.getEntityId() + "." + uploadDTO.getImageType() + "." + currentTimeStamp + extensionImage;
-            }catch(Exception e) {
-            	
-            	e.printStackTrace();
-            	return ResponseEntity.badRequest().body("FAILED THIET NHA");
-            }
+
+            long currentTimeStamp = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
+            String extensionImage = ".webp";
+            String imageName = uploadDTO.getEntityId() + "." + uploadDTO.getImageType() + "." + currentTimeStamp + "." + RandomUtil.getRandomNumber(3) + extensionImage;
 
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(bucket, imageName);
             InitiateMultipartUploadResult initResult = s3client.initiateMultipartUpload(initRequest);
