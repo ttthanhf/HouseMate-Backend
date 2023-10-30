@@ -66,7 +66,7 @@ public class ScheduleService {
         for (Schedule schedule : scheduleRepository.getByCustomerId(userId)) {
             Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
 
-            if (service.getGroupType() == GroupType.RETURN_SERVICE) {
+            if (service.getGroupType().equals(GroupType.RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
                 pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
                 setStaffInfo(events, schedule, pickupEvent);
@@ -148,7 +148,7 @@ public class ScheduleService {
         }
 
         // Check correct group type
-        if (service.getGroupType() != GroupType.HOURLY_SERVICE) {
+        if (!service.getGroupType().equals(GroupType.HOURLY_SERVICE.name())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 
@@ -209,7 +209,8 @@ public class ScheduleService {
         }
 
         // Check correct group type
-        if (service.getGroupType() != GroupType.RETURN_SERVICE) {
+        if (!service.getGroupType().equals(GroupType.RETURN_SERVICE.name())) {
+
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 
@@ -266,12 +267,13 @@ public class ScheduleService {
 
         // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
+
         if (service == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
         }
 
         // Check correct group type
-        if (service.getGroupType() != GroupType.DELIVERY_SERVICE) {
+        if (!service.getGroupType().equals(GroupType.DELIVERY_SERVICE.name())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 

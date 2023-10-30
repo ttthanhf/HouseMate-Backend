@@ -5,6 +5,10 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.Date;
 
 /**
@@ -13,6 +17,9 @@ import java.util.Date;
  */
 @Entity
 @Table(name = "Task")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Task {
 
     @Id
@@ -31,11 +38,4 @@ public class Task {
     @Column(name = "task_status")
     private String taskStatus;
 
-    public Task(int id, int serviceScheduleId, int customerId, Date postAt, String taskStatus) {
-        this.id = id;
-        this.serviceScheduleId = serviceScheduleId;
-        this.customerId = customerId;
-        this.postAt = postAt;
-        this.taskStatus = taskStatus;
-    }
 }
