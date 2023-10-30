@@ -1,10 +1,10 @@
 package housemate.services;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,80 +13,40 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
+
+import housemate.constants.ImageType;
 import housemate.constants.Enum.TaskStatus;
-import housemate.constants.ScheduleStatus;
-import housemate.entities.Schedule;
+import housemate.entities.Image;
+import housemate.entities.Staff;
 import housemate.entities.Task;
+import housemate.entities.UserAccount;
 import housemate.models.TaskViewDTO;
+import housemate.models.TaskViewDTO.Customer;
+import housemate.repositories.ImageRepository;
 import housemate.repositories.ScheduleRepository;
 import housemate.repositories.StaffRepository;
 import housemate.repositories.TaskReposiotory;
+import housemate.repositories.UserRepository;
 
 public class TaskService {
-
-	@Autowired
-	ScheduleRepository scheduleRepo;
 
 	@Autowired
 	TaskReposiotory taskRepo;
 	
 	@Autowired
+	TaskBuildupService taskService;
+	
+	@Autowired
+	ScheduleRepository scheduleRepo;
+
+	@Autowired
 	StaffRepository staffRepo;
 	
-	ModelMapper mapper = new ModelMapper();
-
-	private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
-
-	List<Task> taskList;
-
-	// create task
-	// update task
-	// remove task
-	// getAllTaskByStaff
-	// getAllTaskBySchedule
-	// taskEmployeeSelection
 
 
-	@Scheduled(cron = "0 0 23 * * *") //call this at every 23 PM
-	public void createTaskAutomaticByScheduleTime() {
-		// automatic scanning schedule at 12:00PM
-		// get all schedule and filter which schedule will coming up in next 7 day
-		try {
-			List<Schedule> schedules = this.upComingScheduleInNext7Days();
-			// generate task for these schedule
-			for (Schedule schedule : schedules)
-				this.createTaskForm(schedule);
-			// TODO: send notification of new task list
-		}catch (Exception e) {
-			e.printStackTrace();
-		}
-	
-	}
 
-	public List<Schedule> upComingScheduleInNext7Days() {
-		List<Schedule> schedules = scheduleRepo.findAllScheduleUpComing(7);
-		return schedules;
-	}
-
-	// create task form
-	public Task createTaskForm(Schedule schedule) {
-		// check if the task for this schedule have created befored by system
-		Task task = taskRepo.findByServiceScheduleId(schedule.getScheduleId());
-		if (task == null) {
-			task.setServiceScheduleId(schedule.getScheduleId());
-			task.setCreatedAt(LocalDate.now(dateTimeZone));
-			task.setTaskStatus(TaskStatus.PENDING_APPLICATION);
-			task.setStaffId(null);
-			task.setReceived_at(null);
-			scheduleRepo.findById(schedule.getScheduleId()).ifPresent(s -> s.setStatus(ScheduleStatus.PROCESSING));
-			taskRepo.save(task);
-			//TODO: trigger the task countdown
-		}
-		return task;
-	}
-	
-	public ResponseEntity<?> getAllTaskAvailable(Optional<Integer> page, Optional<Integer> size) {
+	// VIEW TASK PENDING APPLICATION
+	public ResponseEntity<?> getAllTaskInPendingApplication(Optional<Integer> page, Optional<Integer> size) {
 		int pageNo = page.orElse(0);
 		int pageSize = size.orElse(9);
 		if (pageNo < 0 || pageSize < 1)
@@ -98,26 +58,28 @@ public class TaskService {
 		sort = Sort.by(Sort.Direction.ASC, "createdAt");
 
 		Pageable pagableTaskList = pageNo == 0 ? PageRequest.of(0, pageSize, sort)
-				: PageRequest.of(pageNo - 1, pageSize, sort);
-
+											   : PageRequest.of(pageNo - 1, pageSize, sort);
 		Page<Task> taskList = taskRepo.findAllByTaskStatus(TaskStatus.PENDING_APPLICATION, pagableTaskList);
-		
+
 		Function<Task, TaskViewDTO> convertInToTaskViewDTO = task -> {
-			TaskViewDTO taskView = new TaskViewDTO();
-			taskView = mapper.map(task, TaskViewDTO.class);
-			taskView.setShedule(scheduleRepo.findById(task.getServiceScheduleId()).orElse(null));
-			taskView.setStaff(staffRepo.findById(task.getStaffId()).orElse(null));
-			return taskView;	
+			return taskService.convertIntoTaskViewDTOFrTask(task);
 		};
 		Page<TaskViewDTO> taskViewList = taskList.map(convertInToTaskViewDTO);
-		
+
 		return ResponseEntity.ok(taskList);
 	}
 	
-	//TODO
-	public void TaskTimeUpTrigger(Task task) {
+	//VIEW TASK UP COMING WORING BY STAFF
+	public ResponseEntity<?> getAllTaskUpComingDoing(int staffId){
+		Staff staff = staffRepo.findById(staffId).orElse(null);
+		if(staff == null) 
+			return ResponseEntity.badRequest().body("Staff not exists");
 		
+		
+		return null;
 	}
-	
+
+	// UPDATE TASK TO CHANGE THE TIME
+	// UPDATE TASK FOR NEW NOTE
 
 }

@@ -38,7 +38,8 @@ public class Enum {
 	@Getter
 	@AllArgsConstructor
 	public static enum ServiceField {
-		NAME("titleName"), PRICE("finalPrice"),
+		NAME("titleName"),
+		PRICE("finalPrice"),
 		NUMBER_OF_SOLD("numberOfSold");
 
 		private String fieldName;
@@ -58,6 +59,7 @@ public class Enum {
 	public enum TaskStatus {
 		PENDING_APPLICATION,
 		PENDING_WORKING,
+		NOT_FOUND_STAFF,
 		CANCELLED_BY_STAFF,
 		CANCELLED_BY_CUSTOMER,
 		ARRIVED_DOING,
