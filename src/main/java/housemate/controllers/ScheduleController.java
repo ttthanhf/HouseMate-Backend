@@ -41,7 +41,7 @@ public class ScheduleController {
         return service.getScheduleForStaff(request);
     }
 
-    @Operation(summary = "Get staff schedule by user ID")
+    @Operation(summary = "Get all schedule for the staff by staff ID (userId)")
     @GetMapping("/staff/{userId}")
     public ResponseEntity<List<EventRes>> getStaffScheduleByUserId(@PathVariable int userId) {
         return service.getStaffScheduleByUserId(userId);
