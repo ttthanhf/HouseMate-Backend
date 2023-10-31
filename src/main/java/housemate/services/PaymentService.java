@@ -58,6 +58,9 @@ public class PaymentService {
     private PackageServiceItemRepository packageServiceItemRepository;
     @Autowired
     private UserUsageRepository userUsageRepository;
+    
+    @Autowired
+    private ImageRepository imageRepository;
 
     // VNPAY
     @Value("${vnp.version}")
@@ -388,6 +391,10 @@ public class PaymentService {
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         for (OrderItem orderItem : listOrderItem) {
             Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+            
+            List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), housemate.constants.ImageType.SERVICE).orElse(Collections.EMPTY_LIST);
+            service.setImages(images);
+            
             orderItem.setService(service);
             serviceRepository.updateNumberOfSoldByServiceId(orderItem.getServiceId(), orderItem.getQuantity());
             cartRepository.deleteCartByUserIdAndServiceId(userId, orderItem.getServiceId());
