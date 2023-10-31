@@ -243,8 +243,10 @@ public class ScheduleService {
         schedule.setUserUsageId(userUsageId);
 
         // Validate quantity
-        if (schedule.getQuantityRetrieve() > userUsage.getRemaining()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage");
+        int forecastQuantity = getMaxQuantity(endDate, schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve());
+        int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(schedule.getUserUsageId());
+        if (forecastQuantity + totalUsed > userUsage.getRemaining()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage or decrease your quantity");
         }
 
         // Store to database
@@ -282,7 +284,7 @@ public class ScheduleService {
     }
 
     private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, int hours, String varName) {
-        // Check endTime in office hours
+        // Check endTime in office hours => NO NEED
         int endHour = endDate.getHour();
         if (endHour <= OFFICE_HOURS_START || endHour >= OFFICE_HOURS_END) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your " + varName + " in range from 7:00 to 18:00");
@@ -290,7 +292,7 @@ public class ScheduleService {
 
         // Check is valid working date
         LocalDateTime startWorkingDate = startDate.plusHours(hours);
-        if (endDate.isAfter(startWorkingDate)) return null;
+        if (!endDate.isBefore(startWorkingDate)) return null;
 
         // Check workingDate in office hours
         if (startWorkingDate.getHour() <= OFFICE_HOURS_START || startWorkingDate.getHour() >= OFFICE_HOURS_END) {
@@ -362,16 +364,16 @@ public class ScheduleService {
         }
     }
 
-    private int getMaxQuantity(LocalDateTime date, Cycle cycle, int remaining, int quantity) {
+    private int getMaxQuantity(LocalDateTime endDate, Cycle cycle, int remaining, int quantity) {
         int maxForCycle = 1; // Default for ONLY_ONE_TIME
         LocalDateTime now = LocalDateTime.now();
 
         if (cycle == Cycle.EVERY_WEEK) {
-            maxForCycle = (int) ChronoUnit.WEEKS.between(now, date);
+            maxForCycle = (int) ChronoUnit.WEEKS.between(now, endDate);
         }
 
         if (cycle == Cycle.EVERY_MONTH) {
-            maxForCycle = (int) ChronoUnit.MONTHS.between(now, date);
+            maxForCycle = (int) ChronoUnit.MONTHS.between(now, endDate);
         }
 
         return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));
