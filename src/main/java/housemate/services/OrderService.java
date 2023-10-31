@@ -24,6 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -73,7 +74,7 @@ public class OrderService {
             for (OrderItem orderItem : listOrderItem) {
                 Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
 
-                List<Image> images = imageRepository.findAllByEntityIdAndImageTypeWithoutOptional(service.getServiceId(), housemate.constants.ImageType.SERVICE);
+                List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), housemate.constants.ImageType.SERVICE).orElse(Collections.EMPTY_LIST);
                 service.setImages(images);
 
                 orderItem.setService(service);
@@ -105,7 +106,7 @@ public class OrderService {
         for (OrderItem orderItem : listOrderItem) {
             Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
 
-            List<Image> images = imageRepository.findAllByEntityIdAndImageTypeWithoutOptional(service.getServiceId(), housemate.constants.ImageType.SERVICE);
+            List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), housemate.constants.ImageType.SERVICE).orElse(Collections.EMPTY_LIST);
             service.setImages(images);
 
             orderItem.setService(service);
