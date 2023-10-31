@@ -2,10 +2,8 @@ package housemate.controllers;
 
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -98,8 +96,17 @@ public class ServicesController {
 	@GetMapping(path = "/service/all-kind")
 	@Operation(summary = "get the list of all kind of service")
 	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<?> getAllKind(HttpServletRequest request) {
-		return servDao.getAllKind(request);
+	public ResponseEntity<?> searchAllKind(
+			HttpServletRequest request,
+			@RequestParam(required = false) Optional<String> keyword,
+			@RequestParam(required = false) Optional<ServiceCategory> category,
+			@RequestParam(required = false) Optional<SaleStatus> saleStatus,
+			@RequestParam(required = false) Optional<Integer> rating,
+			@RequestParam(required = false) Optional<ServiceField> sortBy,
+			@RequestParam(required = false) Optional<SortRequired> orderBy,
+			@RequestParam(required = false) Optional<Integer> page,
+			@RequestParam(required = false) Optional<Integer> size) {
+		return servDao.searchFilterAllKind(request, keyword, category, saleStatus, rating, sortBy, orderBy, page, size);
 	}
 	
 	//TODO delete service
