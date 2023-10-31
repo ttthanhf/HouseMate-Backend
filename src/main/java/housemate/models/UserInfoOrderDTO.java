@@ -4,7 +4,10 @@
  */
 package housemate.models;
 
+import housemate.constants.PaymentMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -23,7 +26,8 @@ public class UserInfoOrderDTO {
     @Schema(example = "0909990099", description = "Phone")
     private String phone;
 
-    @Schema(example = "vnpay", description = "Payment Method")
-    private String paymentMethod;
+    @Schema(example = "VNPAY", description = "Payment Method")
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod;
 
 }
