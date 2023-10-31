@@ -36,6 +36,7 @@ public class UploadController {
     @Autowired
     UploadService s3Service;
 
+
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<String> uploadImage(HttpServletRequest request, @RequestPart("file") MultipartFile[] files, @Valid @ModelAttribute UploadDTO uploadDTO) {
         return s3Service.uploadImage(request, files, uploadDTO);

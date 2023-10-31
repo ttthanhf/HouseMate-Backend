@@ -39,6 +39,8 @@ public class ScheduleService {
     private final ServiceTypeRepository serviceTypeRepository;
     private final UserUsageRepository userUsageRepository;
     private final UserRepository userRepository;
+    private final OrderItemRepository orderItemRepository;
+
 
     @Autowired
     public ScheduleService(
@@ -48,7 +50,8 @@ public class ScheduleService {
             AuthorizationUtil authorizationUtil,
             ServiceTypeRepository serviceTypeRepository,
             UserUsageRepository userUsageRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            OrderItemRepository orderItemRepository
     ) {
         this.serviceRepository = serviceRepository;
         this.scheduleRepository = scheduleRepository;
@@ -57,6 +60,7 @@ public class ScheduleService {
         this.serviceTypeRepository = serviceTypeRepository;
         this.userUsageRepository = userUsageRepository;
         this.userRepository = userRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     public ResponseEntity<List<EventRes>> getScheduleForUser(HttpServletRequest request) {
@@ -66,7 +70,7 @@ public class ScheduleService {
         for (Schedule schedule : scheduleRepository.getByCustomerId(userId)) {
             Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
 
-            if (service.getGroupType() == GroupType.RETURN_SERVICE) {
+            if (service.getGroupType().equals(GroupType.RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
                 pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
                 setStaffInfo(events, schedule, pickupEvent);
@@ -97,40 +101,75 @@ public class ScheduleService {
     public ResponseEntity<Set<PurchasedServiceRes>> getAllPurchased(HttpServletRequest request) {
         Set<PurchasedServiceRes> purchases = new HashSet<>();
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        List<UserUsage> usageList = userUsageRepository.getByUserId(userId);
+        List<UserUsage> usageList = userUsageRepository.getAllUserUsageByUserIdAndNotExpired(userId);
 
         // Get all serviceID based on order ID
         for (UserUsage userUsage : usageList) {
             // Check expiration and run out of remaining
             if (userUsage.getRemaining() == 0 && userUsage.getEndDate().isAfter(LocalDateTime.now())) continue;
 
-            Service service = serviceRepository.getServiceByServiceId(userUsage.getServiceId());
+            // Query the relationship to get data in database
+            int serviceId = userUsage.getServiceId();
+            int orderItemId = userUsage.getOrderItemId();
+            OrderItem orderItem = orderItemRepository.findById(orderItemId);
+            Service service = serviceRepository.getServiceByServiceId(serviceId);
+            Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+            userUsage.setService(serviceChild);
+
+            // Add new UserUsage to the existedPurchase in purchases Set (Set<PurchasedServiceRes>)
+            PurchasedServiceRes existedPurchase = getPurchaseById(purchases, serviceId);
+            if (existedPurchase != null) {
+                existedPurchase.getUsages().add(userUsage);
+                purchases.add(existedPurchase);
+                continue;
+            }
+
+            // Type List
             List<ServiceType> typeList = serviceTypeRepository.findAllByServiceId(service.getServiceId()).orElse(null);
 
+            // Create new PurchasedServiceRes
             PurchasedServiceRes purchase = new PurchasedServiceRes();
             purchase.setServiceId(service.getServiceId());
             purchase.setTitleName(service.getTitleName());
             purchase.setType(typeList);
             purchase.setGroupType(service.getGroupType());
+            purchase.getUsages().add(userUsage);
 
+            // Add to Set<PurchasedServiceRes>
             purchases.add(purchase);
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(purchases);
     }
 
+    public PurchasedServiceRes getPurchaseById(Set<PurchasedServiceRes> serviceSet, int serviceId) {
+        return serviceSet.stream()
+                .filter(service -> service.getServiceId() == serviceId)
+                .findFirst()
+                .orElse(null);
+    }
+
     public ResponseEntity<String> createHourlySchedule(HttpServletRequest request, HourlyScheduleDTO scheduleDTO) {
-        // Check correct group type
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+
+        // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
-        if (service.getGroupType() != GroupType.HOURLY_SERVICE) {
+        if (service == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
+        }
+
+        // Check correct group type
+        if (!service.getGroupType().equals(GroupType.HOURLY_SERVICE.name())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 
-        // Validate quantity and expired service
-        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        UserUsage userUsage = userUsageRepository.getSoonerSchedule(scheduleDTO.getServiceId(), userId).orElse(null);
+        // Check correct user usage ID
+        UserUsage userUsage = userUsageRepository.findById(scheduleDTO.getUserUsageId()).orElse(null);
         if (userUsage == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Your purchased service is expired. Please go to shop and buy more!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please input correct userUsageID");
+        }
+        if (userUsage.getServiceId() != scheduleDTO.getServiceId()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User usage ID is not correct from service ID");
         }
 
         // Validate service ID
@@ -153,9 +192,17 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
         }
 
-        // Store to database
+        // Map to entity
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
+        schedule.setUserUsageId(scheduleDTO.getUserUsageId());
+
+        // Validate quantity
+        if (schedule.getQuantityRetrieve() > userUsage.getRemaining()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage");
+        }
+
+        // Store to database
         storeToDatabase(schedule);
 
         // TODO: Send notification to staff
@@ -164,17 +211,27 @@ public class ScheduleService {
     }
 
     public ResponseEntity<String> createReturnSchedule(HttpServletRequest request, ReturnScheduleDTO scheduleDTO) {
-        // Check correct group type
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+
+        // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
-        if (service.getGroupType() != GroupType.RETURN_SERVICE) {
+        if (service == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
+        }
+
+        // Check correct group type
+        if (!service.getGroupType().equals(GroupType.RETURN_SERVICE.name())) {
+
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 
-        // Validate quantity and expired service
-        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        UserUsage userUsage = userUsageRepository.getSoonerSchedule(scheduleDTO.getServiceId(), userId).orElse(null);
+        // Check correct user usage ID
+        UserUsage userUsage = userUsageRepository.findById(scheduleDTO.getUserUsageId()).orElse(null);
         if (userUsage == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Your purchased service is expired. Please go to shop and buy more!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please input correct userUsageID");
+        }
+        if (userUsage.getServiceId() != scheduleDTO.getServiceId()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User usage ID is not correct from service ID");
         }
 
         // Validate service ID
@@ -198,9 +255,17 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
         }
 
-        // Store to database
+        // Map to entity
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
+        schedule.setUserUsageId(scheduleDTO.getUserUsageId());
+
+        // Validate quantity
+        if (schedule.getQuantityRetrieve() > userUsage.getRemaining()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage");
+        }
+
+        // Store to database
         storeToDatabase(schedule);
 
         // TODO: Send notification to staff
@@ -209,17 +274,27 @@ public class ScheduleService {
     }
 
     public ResponseEntity<String> createDeliverySchedule(HttpServletRequest request, DeliveryScheduleDTO scheduleDTO) {
-        // Check correct group type
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+
+        // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
-        if (service.getGroupType() != GroupType.DELIVERY_SERVICE) {
+
+        if (service == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
+        }
+
+        // Check correct group type
+        if (!service.getGroupType().equals(GroupType.DELIVERY_SERVICE.name())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 
-        // Validate quantity and expired service
-        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        UserUsage userUsage = userUsageRepository.getSoonerSchedule(scheduleDTO.getServiceId(), userId).orElse(null);
+        // Check correct user usage ID
+        UserUsage userUsage = userUsageRepository.findById(scheduleDTO.getUserUsageId()).orElse(null);
         if (userUsage == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Your purchased service is expired. Please go to shop and buy more!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please input correct userUsageID");
+        }
+        if (userUsage.getServiceId() != scheduleDTO.getServiceId()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User usage ID is not correct from service ID");
         }
 
         // Validate service ID
@@ -237,9 +312,17 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
         }
 
-        // Store to database
+        // Map to entity
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
+        schedule.setUserUsageId(scheduleDTO.getUserUsageId());
+
+        // Validate quantity
+        if (schedule.getQuantityRetrieve() > userUsage.getRemaining()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage");
+        }
+
+        // Store to database
         storeToDatabase(schedule);
 
         // TODO: Send notification to staff
@@ -298,16 +381,11 @@ public class ScheduleService {
         int parentScheduleId = 0;
 
         // Usage of user
-        UserUsage userUsage = userUsageRepository.getSoonerSchedule(schedule.getServiceId(), customerId).orElse(null);
+        UserUsage userUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
         if (userUsage == null) return;
 
         // Get max quantity
         int maxQuantity = getMaxQuantity(userUsage.getEndDate(), cycle, userUsage.getRemaining(), schedule.getQuantityRetrieve());
-
-        // Minus quantity to user usage
-        int remaining = userUsage.getRemaining() - maxQuantity * schedule.getQuantityRetrieve();
-        userUsage.setRemaining(Math.max(remaining, 0));
-        userUsageRepository.save(userUsage);
 
         // Store to database (ONLY_ONE_TIME)
         if (cycle == Cycle.ONLY_ONE_TIME) {
