@@ -20,7 +20,5 @@ public interface ImageRepository extends JpaRepository<Image, Integer> {
 
     Optional<List<Image>> findAllByEntityIdAndImageType(int entityId, ImageType imgType);
 
-    List<Image> findAllByEntityIdAndImageTypeWithoutOptional(int entityId, ImageType imgType);
-
     Optional<Image> findFirstByEntityIdAndImageType(int entityId, ImageType imgType);
 }

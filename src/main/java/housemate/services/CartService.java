@@ -16,6 +16,7 @@ import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,10 +54,10 @@ public class CartService {
         for (Cart cart : listCart) {
 
             Service service = serviceRepository.getServiceByServiceId(cart.getServiceId());
-            
-            List<Image> images = imageRepository.findAllByEntityIdAndImageTypeWithoutOptional(service.getServiceId(), ImageType.SERVICE);
+
+            List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST);
             service.setImages(images);
-            
+
             cart.setService(service);
             List<Period> listPeriod = periodRepository.getAllPeriodByServiceId(cart.getServiceId());
             cart.setListPeriod(listPeriod);
