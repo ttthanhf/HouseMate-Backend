@@ -4,16 +4,20 @@
  */
 package housemate.services;
 
+import housemate.constants.ImageType;
 import housemate.entities.Cart;
+import housemate.entities.Image;
 import housemate.entities.Period;
 import housemate.entities.Service;
 import housemate.models.CartDTO;
 import housemate.repositories.CartRepository;
+import housemate.repositories.ImageRepository;
 import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +41,9 @@ public class CartService {
     @Autowired
     private AuthorizationUtil authorizationUtil;
 
+    @Autowired
+    private ImageRepository imageRepository;
+
     public ResponseEntity<List<Cart>> getCart(HttpServletRequest request) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
@@ -46,6 +53,10 @@ public class CartService {
         for (Cart cart : listCart) {
 
             Service service = serviceRepository.getServiceByServiceId(cart.getServiceId());
+            
+            List<Image> images = imageRepository.findAllByEntityIdAndImageTypeWithoutOptional(service.getServiceId(), ImageType.SERVICE);
+            service.setImages(images);
+            
             cart.setService(service);
             List<Period> listPeriod = periodRepository.getAllPeriodByServiceId(cart.getServiceId());
             cart.setListPeriod(listPeriod);
