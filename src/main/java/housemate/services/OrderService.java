@@ -5,6 +5,7 @@
 package housemate.services;
 
 import housemate.entities.Cart;
+import housemate.entities.Image;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
 import housemate.entities.Period;
@@ -12,6 +13,7 @@ import housemate.entities.Service;
 import housemate.entities.UserAccount;
 import housemate.models.CheckoutCreateDTO;
 import housemate.repositories.CartRepository;
+import housemate.repositories.ImageRepository;
 import housemate.repositories.OrderItemRepository;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.PeriodRepository;
@@ -55,6 +57,9 @@ public class OrderService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ImageRepository imageRepository;
+
     public ResponseEntity<List<Order>> getAllOrderComplete(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         UserAccount user = userRepository.findByUserId(userId);
@@ -67,6 +72,10 @@ public class OrderService {
             List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
             for (OrderItem orderItem : listOrderItem) {
                 Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+
+                List<Image> images = imageRepository.findAllByEntityIdAndImageTypeWithoutOptional(service.getServiceId(), housemate.constants.ImageType.SERVICE);
+                service.setImages(images);
+
                 orderItem.setService(service);
                 orderItem.setDiscountPrice(orderItem.getOriginalPrice() - orderItem.getFinalPrice());
             }
@@ -95,6 +104,10 @@ public class OrderService {
         List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
         for (OrderItem orderItem : listOrderItem) {
             Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+
+            List<Image> images = imageRepository.findAllByEntityIdAndImageTypeWithoutOptional(service.getServiceId(), housemate.constants.ImageType.SERVICE);
+            service.setImages(images);
+
             orderItem.setService(service);
             orderItem.setDiscountPrice(orderItem.getOriginalPrice() - orderItem.getFinalPrice());
         }
