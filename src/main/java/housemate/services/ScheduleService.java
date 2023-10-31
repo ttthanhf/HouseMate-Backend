@@ -39,6 +39,8 @@ public class ScheduleService {
     private final ServiceTypeRepository serviceTypeRepository;
     private final UserUsageRepository userUsageRepository;
     private final UserRepository userRepository;
+    private final OrderItemRepository orderItemRepository;
+
 
     @Autowired
     public ScheduleService(
@@ -48,7 +50,8 @@ public class ScheduleService {
             AuthorizationUtil authorizationUtil,
             ServiceTypeRepository serviceTypeRepository,
             UserUsageRepository userUsageRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            OrderItemRepository orderItemRepository
     ) {
         this.serviceRepository = serviceRepository;
         this.scheduleRepository = scheduleRepository;
@@ -57,6 +60,7 @@ public class ScheduleService {
         this.serviceTypeRepository = serviceTypeRepository;
         this.userUsageRepository = userUsageRepository;
         this.userRepository = userRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     public ResponseEntity<List<EventRes>> getScheduleForUser(HttpServletRequest request) {
@@ -66,7 +70,7 @@ public class ScheduleService {
         for (Schedule schedule : scheduleRepository.getByCustomerId(userId)) {
             Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
 
-            if (service.getGroupType() == GroupType.RETURN_SERVICE) {
+            if (service.getGroupType().equals(GroupType.RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
                 pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
                 setStaffInfo(events, schedule, pickupEvent);
@@ -101,20 +105,29 @@ public class ScheduleService {
 
         // Get all serviceID based on order ID
         for (UserUsage userUsage : usageList) {
-            // Check exist purchase in purchases Set (Set<PurchasedServiceRes>)
-            PurchasedServiceRes existedPurchase = getPurchaseById(purchases, userUsage.getServiceId());
+            // Check expiration and run out of remaining
+            if (userUsage.getRemaining() == 0 && userUsage.getEndDate().isAfter(LocalDateTime.now())) continue;
+
+            // Query the relationship to get data in database
+            int serviceId = userUsage.getServiceId();
+            int orderItemId = userUsage.getOrderItemId();
+            OrderItem orderItem = orderItemRepository.findById(orderItemId);
+            Service service = serviceRepository.getServiceByServiceId(serviceId);
+            Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+            userUsage.setService(serviceChild);
+
+            // Add new UserUsage to the existedPurchase in purchases Set (Set<PurchasedServiceRes>)
+            PurchasedServiceRes existedPurchase = getPurchaseById(purchases, serviceId);
             if (existedPurchase != null) {
                 existedPurchase.getUsages().add(userUsage);
                 purchases.add(existedPurchase);
                 continue;
             }
 
-            // Check expiration and run out of remaining
-            if (userUsage.getRemaining() == 0 && userUsage.getEndDate().isAfter(LocalDateTime.now())) continue;
-
-            Service service = serviceRepository.getServiceByServiceId(userUsage.getServiceId());
+            // Type List
             List<ServiceType> typeList = serviceTypeRepository.findAllByServiceId(service.getServiceId()).orElse(null);
 
+            // Create new PurchasedServiceRes
             PurchasedServiceRes purchase = new PurchasedServiceRes();
             purchase.setServiceId(service.getServiceId());
             purchase.setTitleName(service.getTitleName());
@@ -122,6 +135,7 @@ public class ScheduleService {
             purchase.setGroupType(service.getGroupType());
             purchase.getUsages().add(userUsage);
 
+            // Add to Set<PurchasedServiceRes>
             purchases.add(purchase);
         }
 
@@ -145,7 +159,7 @@ public class ScheduleService {
         }
 
         // Check correct group type
-        if (service.getGroupType() != GroupType.HOURLY_SERVICE) {
+        if (!service.getGroupType().equals(GroupType.HOURLY_SERVICE.name())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 
@@ -206,7 +220,8 @@ public class ScheduleService {
         }
 
         // Check correct group type
-        if (service.getGroupType() != GroupType.RETURN_SERVICE) {
+        if (!service.getGroupType().equals(GroupType.RETURN_SERVICE.name())) {
+
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 
@@ -263,12 +278,13 @@ public class ScheduleService {
 
         // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(scheduleDTO.getServiceId());
+
         if (service == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
         }
 
         // Check correct group type
-        if (service.getGroupType() != GroupType.DELIVERY_SERVICE) {
+        if (!service.getGroupType().equals(GroupType.DELIVERY_SERVICE.name())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
         }
 

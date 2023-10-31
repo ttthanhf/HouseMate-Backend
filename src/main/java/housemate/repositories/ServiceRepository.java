@@ -51,6 +51,18 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 			Pageable page);
 	
 	@Query("SELECT s FROM Service s WHERE "
+			+ "(:saleStatus IS NULL OR s.saleStatus = :saleStatus) "
+			+ "AND (:keyword IS NULL OR LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')))  "
+			+ "AND s.avgRating >= :ratingFrom "
+			+ "AND (:isPackage IS NULL OR s.isPackage = :isPackage) ")
+	Page<Service> searchFilterAllKind(
+			@Param("saleStatus") SaleStatus saleStatus,
+			@Param("keyword") String keyword,
+			@Param("ratingFrom") int ratingFrom,
+			@Param("isPackage") Boolean isPackage,
+			Pageable page);
+	
+	@Query("SELECT s FROM Service s WHERE "
 			+ "s.saleStatus = 'ONSALE' "
 			+ "ORDER BY s.numberOfSold DESC "
 			+ "LIMIT 4 ")
