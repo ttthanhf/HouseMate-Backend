@@ -83,10 +83,11 @@ public class CartService {
 
         int cartLength = cartRepository.getCartLength(userId);
 
+        int periodId = cartDTO.getPeriodId();
+
         //if have item in cart -> update quantity and price only
         if (cart != null) {
 
-            int periodId = cartDTO.getPeriodId();
             if (periodId != 0) {
                 Period period = periodRepository.getPeriodByPeriodIdAndServiceId(periodId, serviceId);
                 if (period == null) {
@@ -109,8 +110,16 @@ public class CartService {
             return ResponseEntity.status(HttpStatus.OK).body(cartLength + ""); // ko toString được
         }
 
-        Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
-        int periodId = periodFirst.getPeriodId();
+        if (periodId != 0) {
+            Period period = periodRepository.getPeriodByPeriodIdAndServiceId(periodId, serviceId);
+            if (period == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id for this service not found !");
+            }
+        } else {
+            Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
+            periodId = periodFirst.getPeriodId();
+        }
+
         //if dont have item in cart -> create new item in cart
         cart = new Cart();
         cart.setUserId(userId);
