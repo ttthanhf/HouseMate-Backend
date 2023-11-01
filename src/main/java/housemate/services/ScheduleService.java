@@ -1,6 +1,7 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
+import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
 import housemate.mappers.ScheduleMapper;
 import housemate.models.ScheduleDTO;
@@ -28,7 +29,7 @@ import java.util.Set;
 public class ScheduleService {
 
     private static final int OFFICE_HOURS_START = 6;
-    private static final int OFFICE_HOURS_END = 18;
+    private static final int OFFICE_HOURS_END = 19;
     private static final int FIND_STAFF_HOURS = 3;
     private static final int MINIMUM_RETURN_HOURS = 4;
     private static final String RETURN_SERVICE = "RETURN_SERVICE"; // Hard code (This is special service => create 2 schedule)
@@ -69,8 +70,15 @@ public class ScheduleService {
         List<Schedule> schedules = scheduleRepository.getByCustomerId(userId);
 
         for (Schedule schedule : schedules) {
-            Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
+            // Check if schedule is before current date
+            boolean isBeforeCurrentDate = schedule.getEndDate().isBefore(LocalDateTime.now());
+            if (isBeforeCurrentDate) {
+                // TODO: Notification to customer that staff haven't applied
+                schedule.setStatus(ScheduleStatus.CANCEL);
+                scheduleRepository.save(schedule);
+            }
 
+            Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
             if (service.getGroupType().equals(RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
                 pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
@@ -106,9 +114,14 @@ public class ScheduleService {
         List<UserUsage> usageList = userUsageRepository.getAllUserUsageByUserIdAndNotExpired(userId);
 
         // Get all serviceID based on order ID
-        for (UserUsage userUsage : usageList) {
+        for (UserUsage uu : usageList) {
+            // Create new instance for user usage (clone)
+            UserUsage userUsage = uu.clone();
+
             // Check expiration and run out of remaining
-            if (userUsage.getRemaining() == 0 && userUsage.getEndDate().isAfter(LocalDateTime.now())) continue;
+            int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(userUsage.getUserUsageId());
+            int remaining = userUsage.getRemaining() - totalUsed;
+            if (remaining == 0 || userUsage.getEndDate().isBefore(LocalDateTime.now())) continue;
 
             // Query the relationship to get data in database
             int serviceId = userUsage.getServiceId();
@@ -117,6 +130,7 @@ public class ScheduleService {
             Service service = serviceRepository.getServiceByServiceId(serviceId);
             Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
             userUsage.setService(serviceChild);
+            userUsage.setRemaining(remaining);
 
             // Add new UserUsage to the existedPurchase in purchases Set (Set<PurchasedServiceRes>)
             PurchasedServiceRes existedPurchase = getPurchaseById(purchases, serviceId);
@@ -221,16 +235,11 @@ public class ScheduleService {
         ResponseEntity<String> serviceIdValidation = validateServiceId(serviceId, userId);
         if (serviceIdValidation != null) return serviceIdValidation;
 
-        // Validate start date
+        // Validate date
         LocalDateTime startDate = schedule.getStartDate();
-        ResponseEntity<String> startDateValidation = validateDate(LocalDateTime.now(), startDate, FIND_STAFF_HOURS, "start time");
-        if (startDateValidation != null) return startDateValidation;
-
-        // Validate end date
         LocalDateTime endDate = schedule.getEndDate();
-        String groupType = serviceRepository.getServiceByServiceId(serviceId).getGroupType();
-        ResponseEntity<String> endDateValidation = validateDate(startDate, endDate, groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_HOURS : 1, "end time");
-        if (endDateValidation != null) return endDateValidation;
+        ResponseEntity<String> dateValidation = validateDate(startDate, endDate, service.getGroupType());
+        if (dateValidation != null) return dateValidation;
 
         // Validate out range of cycle
         if (endDate.isAfter(userUsage.getEndDate())) {
@@ -243,9 +252,9 @@ public class ScheduleService {
         schedule.setUserUsageId(userUsageId);
 
         // Validate quantity
-        int forecastQuantity = getMaxQuantity(endDate, schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve());
+        int forecastQuantity = getMaxQuantity(startDate, userUsage.getEndDate(), schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve());
         int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(schedule.getUserUsageId());
-        if (forecastQuantity + totalUsed > userUsage.getRemaining()) {
+        if (forecastQuantity == 0 || forecastQuantity * schedule.getQuantityRetrieve() + totalUsed > userUsage.getRemaining()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage or decrease your quantity");
         }
 
@@ -283,26 +292,46 @@ public class ScheduleService {
         return serviceIds.stream().noneMatch(p -> p == serviceId);
     }
 
-    private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, int hours, String varName) {
-        // Check endTime in office hours => NO NEED
-        int endHour = endDate.getHour();
-        if (endHour <= OFFICE_HOURS_START || endHour >= OFFICE_HOURS_END) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your " + varName + " in range from 7:00 to 18:00");
+    private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, String groupType) {
+        // Check startDate < endDate
+        if (!startDate.isBefore(endDate)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your start date is before end date");
         }
 
-        // Check is valid working date
-        LocalDateTime startWorkingDate = startDate.plusHours(hours);
-        if (!endDate.isBefore(startWorkingDate)) return null;
-
-        // Check workingDate in office hours
-        if (startWorkingDate.getHour() <= OFFICE_HOURS_START || startWorkingDate.getHour() >= OFFICE_HOURS_END) {
-            String formattedDate = startWorkingDate.plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your " + varName + " after 7:00:00 " + formattedDate);
+        // Validate startDate in office hours
+        if (isOutsideOfficeHours(startDate)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your start date in range from 7:00 to 18:00");
+        }
+        
+        // Validate endDate in office hours
+        if (isOutsideOfficeHours(endDate)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your end date in range from 7:00 to 18:00");
         }
 
-        // Validate endDate > startDate + n hours
-        String formattedDate = startWorkingDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your " + varName + " after " + formattedDate);
+        // Check if endDate is outside office hours => startDate in new day
+        int differenceHours = groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_HOURS : 1;
+        LocalDateTime minimumEndDate = LocalDateTime.now().plusHours(FIND_STAFF_HOURS + differenceHours);
+        if (isOutsideOfficeHours(minimumEndDate)) {
+            LocalDateTime newDate = minimumEndDate.plusDays(1).withHour(7).withMinute(0).withSecond(0);
+
+            if (newDate.isAfter(startDate)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your start date after " + formatDateTime((newDate)));
+            }
+        }
+
+        // Validate startDate >= now + FIND_STAFF_HOURS
+        LocalDateTime startWorkingDate = LocalDateTime.now().plusHours(FIND_STAFF_HOURS);
+        if (startDate.isBefore(startWorkingDate)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your start date after " + formatDateTime(startWorkingDate));
+        }
+
+        // Validate startDate >= now + differenceHours
+        LocalDateTime endWorkingDate = startDate.plusHours(differenceHours);
+        if (endDate.isBefore(endWorkingDate)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your end date after " + formatDateTime(endWorkingDate));
+        }
+
+        return null;
     }
 
     private void storeToDatabase(Schedule schedule) {
@@ -315,7 +344,7 @@ public class ScheduleService {
         if (userUsage == null) return;
 
         // Get max quantity
-        int maxQuantity = getMaxQuantity(userUsage.getEndDate(), cycle, userUsage.getRemaining(), schedule.getQuantityRetrieve());
+        int maxQuantity = getMaxQuantity(schedule.getStartDate(), userUsage.getEndDate(), cycle, userUsage.getRemaining(), schedule.getQuantityRetrieve());
 
         // Store to database (ONLY_ONE_TIME)
         if (cycle == Cycle.ONLY_ONE_TIME) {
@@ -364,18 +393,29 @@ public class ScheduleService {
         }
     }
 
-    private int getMaxQuantity(LocalDateTime endDate, Cycle cycle, int remaining, int quantity) {
+    private int getMaxQuantity(LocalDateTime startDate, LocalDateTime endDate, Cycle cycle, int remaining, int quantity) {
         int maxForCycle = 1; // Default for ONLY_ONE_TIME
         LocalDateTime now = LocalDateTime.now();
 
         if (cycle == Cycle.EVERY_WEEK) {
-            maxForCycle = (int) ChronoUnit.WEEKS.between(now, endDate);
+            maxForCycle = (int) ChronoUnit.WEEKS.between(startDate, endDate) + 1;
+//            if (!startDate.isAfter(endDate) && maxForCycle == 0) maxForCycle = 1;
         }
 
         if (cycle == Cycle.EVERY_MONTH) {
-            maxForCycle = (int) ChronoUnit.MONTHS.between(now, endDate);
+            maxForCycle = (int) ChronoUnit.MONTHS.between(startDate, endDate);
+//            if (!startDate.isAfter(endDate) && maxForCycle == 0) maxForCycle = 1;
         }
 
         return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));
+    }
+
+    private boolean isOutsideOfficeHours(LocalDateTime date) {
+        int hour = date.getHour();
+        return hour <= OFFICE_HOURS_START || hour >= OFFICE_HOURS_END;
+    }
+
+    private String formatDateTime(LocalDateTime dateTime) {
+        return dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
     }
 }
