@@ -27,12 +27,12 @@ public class ScheduleDTO {
     private int quantityRetrieve = 1;
 
     @FutureOrPresent(message = "Start date must be in the present or future")
-    @JsonFormat(pattern = "dd/MM/yyyy HH:mm") // TODO: Change format base on front-end
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     @Schema(example = "03/11/2023 12:30")
     private LocalDateTime startDate;
 
     @FutureOrPresent(message = "End date must be in the present or future")
-    @JsonFormat(pattern = "dd/MM/yyyy HH:mm") // TODO: Change format base on front-end
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     @Schema(example = "03/11/2023 15:30")
     private LocalDateTime endDate;
 

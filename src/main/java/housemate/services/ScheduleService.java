@@ -1,6 +1,7 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
+import housemate.constants.Enum.ServiceConfiguration;
 import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
 import housemate.mappers.ScheduleMapper;
@@ -25,14 +26,14 @@ import java.util.Set;
 /**
  * @author hdang09
  */
-@org.springframework.stereotype.Service // Change to @Component or not?
+@org.springframework.stereotype.Service
 public class ScheduleService {
 
-    private static final int OFFICE_HOURS_START = 6;
-    private static final int OFFICE_HOURS_END = 19;
-    private static final int FIND_STAFF_HOURS = 3;
-    private static final int MINIMUM_RETURN_HOURS = 4;
-    private static final String RETURN_SERVICE = "RETURN_SERVICE"; // Hard code (This is special service => create 2 schedule)
+    private  int OFFICE_HOURS_START;
+    private  int OFFICE_HOURS_END;
+    private  int FIND_STAFF_HOURS;
+    private  int MINIMUM_RETURN_HOURS;
+    private static final String RETURN_SERVICE = "RETURN_SERVICE"; // This is special service => create 2 schedule
     private final ServiceRepository serviceRepository;
     private final ScheduleRepository scheduleRepository;
     private final ScheduleMapper scheduleMapper;
@@ -41,6 +42,7 @@ public class ScheduleService {
     private final UserUsageRepository userUsageRepository;
     private final UserRepository userRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ServiceConfigRepository serviceConfigRepository;
 
 
     @Autowired
@@ -52,7 +54,8 @@ public class ScheduleService {
             ServiceTypeRepository serviceTypeRepository,
             UserUsageRepository userUsageRepository,
             UserRepository userRepository,
-            OrderItemRepository orderItemRepository
+            OrderItemRepository orderItemRepository,
+            ServiceConfigRepository serviceConfigRepository
     ) {
         this.serviceRepository = serviceRepository;
         this.scheduleRepository = scheduleRepository;
@@ -62,6 +65,11 @@ public class ScheduleService {
         this.userUsageRepository = userUsageRepository;
         this.userRepository = userRepository;
         this.orderItemRepository = orderItemRepository;
+        this.serviceConfigRepository = serviceConfigRepository;
+        this.OFFICE_HOURS_START = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_START).getConfigValue());
+        this.OFFICE_HOURS_END = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_END).getConfigValue());
+        this.FIND_STAFF_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.FIND_STAFF_HOURS).getConfigValue());
+        this.MINIMUM_RETURN_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.MINIMUM_RETURN_HOURS).getConfigValue());
     }
 
     public ResponseEntity<List<EventRes>> getScheduleForCustomer(HttpServletRequest request) {
@@ -399,12 +407,10 @@ public class ScheduleService {
 
         if (cycle == Cycle.EVERY_WEEK) {
             maxForCycle = (int) ChronoUnit.WEEKS.between(startDate, endDate) + 1;
-//            if (!startDate.isAfter(endDate) && maxForCycle == 0) maxForCycle = 1;
         }
 
         if (cycle == Cycle.EVERY_MONTH) {
             maxForCycle = (int) ChronoUnit.MONTHS.between(startDate, endDate);
-//            if (!startDate.isAfter(endDate) && maxForCycle == 0) maxForCycle = 1;
         }
 
         return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));

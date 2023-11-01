@@ -39,7 +39,11 @@ public class Enum {
 	
 	public enum ServiceConfiguration {
 		SERVICE_GROUPS,
-		SERVICE_UNITS;
+		SERVICE_UNITS,
+		OFFICE_HOURS_START,
+		OFFICE_HOURS_END,
+		FIND_STAFF_HOURS,
+		MINIMUM_RETURN_HOURS
 	}
 	
 }
