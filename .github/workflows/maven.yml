@@ -57,7 +57,8 @@ jobs:
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "
         timeout 30s bash -c '
           while true; do 
-            response=$(curl -s localhost:8080)
+            response=$(curl -m 10 -s localhost:8080)
+            echo $(curl -s localhost:8080)
             wait
             if [ ! -z "$response" && "$response" == *"Token empty"*]; then
               break
