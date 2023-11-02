@@ -17,7 +17,6 @@ public class TaskRes<T> {
 	private T object;
 	private TaskMessType messType;
 	private String message;
-	private Integer userIdResponseTo;
 
 	TaskRes(@Nullable T object, TaskMessType messType, String message) {
 		this.object = object;

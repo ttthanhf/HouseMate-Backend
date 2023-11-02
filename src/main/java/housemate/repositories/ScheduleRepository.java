@@ -5,12 +5,16 @@
 package housemate.repositories;
 
 import housemate.constants.ScheduleStatus;
+import housemate.constants.Enum.TaskStatus;
 import housemate.entities.Schedule;
+import housemate.entities.Task;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -42,5 +46,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 			@Param("duration") int duration,
 			@Param("parentScheduleId") int parentScheduleId);
 	
+
 	
 }

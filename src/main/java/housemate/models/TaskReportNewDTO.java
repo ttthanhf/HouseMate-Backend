@@ -10,9 +10,6 @@ import lombok.Data;
 @Data
 public class TaskReportNewDTO {
 
-	@Positive
-    private int taskId;
-
 	@NotNull
     private TaskReportType taskStatus;
 

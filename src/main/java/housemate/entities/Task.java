@@ -58,7 +58,5 @@ public class Task {
 	@JoinColumn(name = "staff_id", referencedColumnName = "user_id", updatable = false, insertable = false)
 	private Staff staff;
 	
-	@OneToMany(mappedBy = "task")
-	List<TaskReport> taskReportList ;
 
 }

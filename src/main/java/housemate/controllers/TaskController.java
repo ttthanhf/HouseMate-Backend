@@ -20,6 +20,7 @@ import housemate.constants.Enum.TaskStatus;
 import housemate.entities.Schedule;
 import housemate.models.TaskReportNewDTO;
 import housemate.services.TaskService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +36,7 @@ public class TaskController {
 	TaskService taskServiceDao;
 	
 	@GetMapping("/tasks-pending-application")
+	@Operation(summary = "Get all tasks are opening  task form application")
 	public ResponseEntity<?> getAllTaskInPendingApplication(
 			@RequestParam(required = false) Optional<Sort.Direction> directionSort,
 			@RequestParam(required = false) Optional<Integer> page,
@@ -43,12 +45,13 @@ public class TaskController {
 	}
 	
 	@GetMapping("/staff")
+	@Operation(summary = "Filter the task status based on the current staff")
 	public ResponseEntity<?> getaAllKindOfTaskForStaffByTaskStatus(
 			HttpServletRequest request,
 			@RequestParam(required = false)TaskStatus taskStatus,
 			@RequestParam(required = false) Optional<Integer> page,
 			@RequestParam(required = false) Optional<Integer> size) {
-		return taskServiceDao.getaAllKindOfTaskForStaffByTaskStatus(request, taskStatus, page, size);
+		return taskServiceDao.getaAllKindOfTaskStatusForStaffByTaskStatus(request, taskStatus, page, size);
 	}
 	
 	@GetMapping("/{id}")
@@ -92,7 +95,7 @@ public class TaskController {
 		return taskServiceDao.approveStaff(request, taskId);
 	}
 
-	@PostMapping("{id}/staff/report")
+	@PostMapping("{id}/staff/reports")
 	public ResponseEntity<?> reportTaskByStaff(
 			HttpServletRequest request,
 			@PathVariable("id") int taskId,
@@ -101,7 +104,7 @@ public class TaskController {
 		return taskServiceDao.reportTaskByStaff(request, taskId, taskReportType, reportnewDTO);
 	}
 	
-	@PostMapping("{id}/report")
+	@GetMapping("{id}/reports")
 	public ResponseEntity<?> reportTaskByStaff(
 			@PathVariable("id") int taskId) {
 		return taskServiceDao.getTaskReportListByTask(taskId);
