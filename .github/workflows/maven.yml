@@ -58,7 +58,7 @@ jobs:
         timeout 20s bash -c '
           while true; do 
             response=$(curl -s localhost:8080)
-            if [[ -n "$response" && "$response" == *"Token empty"* ]]; then
+            if [ ! -z "$response" && "$response" == *"Token empty"*]; then
               break
             fi
             sleep 1s
