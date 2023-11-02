@@ -43,7 +43,7 @@ jobs:
       run: mvn -B package --file pom.xml
 
     - name: Debug secrets
-      run: echo "${{ secrets.TEST }}""
+      run: echo "${{ secrets.TEST }}"
       
     - name: Deloy to server
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp ./target/${{ secrets.FILE_JAR }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
