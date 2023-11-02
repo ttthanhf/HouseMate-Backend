@@ -37,6 +37,9 @@ public class Staff {
 	@Enumerated(EnumType.STRING)
 	private StaffWorkingStatus workingStatus;
 	
+	@Column(name = "is_banned")
+	private boolean isBanned;
+	
 	@OneToOne
 	@JoinColumn(name = "user_id", referencedColumnName = "user_id", updatable = false, insertable = false)
 	private UserAccount staffInfo;

@@ -9,7 +9,9 @@ public class TaskRes<T> {
 	public static enum TaskMessType {
 		OK,
 		REJECT_UPDATE_TASK,
-		UPDATE_FAILED
+		REJECT_CANCELLED,
+		REJECT_APPROVE_STAFF,
+		REJECT_REPORT_TASK
 	}
 
 	private T object;

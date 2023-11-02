@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import housemate.constants.Enum.TaskStatus;
+import java.util.List;
 
 /**
  *
@@ -54,7 +55,10 @@ public class Task {
 	private Schedule schedule;
 	
 	@OneToOne
-	@JoinColumn(name = "user_id", referencedColumnName = "staff_id", updatable = false, insertable = false)
+	@JoinColumn(name = "staff_id", referencedColumnName = "user_id", updatable = false, insertable = false)
 	private Staff staff;
+	
+	@OneToMany(mappedBy = "task")
+	List<TaskReport> taskReportList ;
 
 }

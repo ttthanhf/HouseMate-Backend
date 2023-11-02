@@ -57,13 +57,26 @@ public class Enum {
 	}
 	
 	public enum TaskStatus {
-		PENDING_APPLICATION,
-		PENDING_WORKING,
-		NOT_FOUND_STAFF,
+		PENDING_APPLICATION, //waiting for staff apply apply for job
+		PENDING_WORKING,//found staff - waiting for staff coming
+		INCOMING,//staff coming in around 4 5 6 12 hour
+		CANCELLED_CAUSE_NOT_FOUND_STAFF,
 		CANCELLED_BY_STAFF,
 		CANCELLED_BY_CUSTOMER,
-		ARRIVED_DOING,
-		DONE;
+		ARRIVED,//staff arrived - start doing
+		DOING,
+		DONE;//staff finish task
+	}
+	
+	public enum TaskReportType {
+		ARRIVED(1),
+		DOING(2),
+		DONE(3);
+		private int orderReport;
+		private TaskReportType(int orderReport) {
+			this.orderReport = orderReport;
+		}
+
 	}
 	
 	

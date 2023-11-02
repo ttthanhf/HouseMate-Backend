@@ -36,9 +36,11 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 	@Query("SELECT s FROM Schedule s WHERE " 
 			+ "datediff(s.startDate, NOW()) BETWEEN 0 AND :duration "
 			+ "AND s.status = :status "
-			+ "ADN s.parentScheduleId = :parentScheduleId ")
+			+ "AND s.parentScheduleId = :parentScheduleId ")
 	List<Schedule> findAllByParentScheduleAndInUpComing(
 			@Param("status") ScheduleStatus status,
 			@Param("duration") int duration,
 			@Param("parentScheduleId") int parentScheduleId);
+	
+	
 }
