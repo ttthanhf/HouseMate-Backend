@@ -42,11 +42,6 @@ jobs:
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-
-    - name: Debug secrets
-      run: | 
-        echo "SECRETS: ${{ secrets.TEST }}"
-        echo "VARS: ${{ vars.TEST }}"
       
     - name: Deloy to server
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -r -o StrictHostKeyChecking=no ./target/${{ secrets.FILE_JAR }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
@@ -55,4 +50,4 @@ jobs:
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "sudo kill -9 $(ps aux | grep "java -jar ${{ secrets.FILE_JAR }}"| head -n 1 | awk '{print $2}')" || true
 
     - name: Run file in server
-      run: timeout 10s sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "cd ${{ secrets.SERVER_PATH }} && nohup java -jar ${{ secrets.FILE_JAR }}"
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "cd ${{ secrets.SERVER_PATH }} && java -jar ${{ secrets.FILE_JAR }} & exit"
