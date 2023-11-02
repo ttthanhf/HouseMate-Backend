@@ -40,15 +40,12 @@ jobs:
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-
-    - name: Test with Maven
-      run: mvn test
       
-    # - name: Deloy to server
-    #   run: sshpass -p "${{HOUSEMATE_BE_SECRETS.SERVER_PASSWORD}}" scp ./target/${{HOUSEMATE_BE_SECRETS.FILE_JAR}} &{{HOUSEMATE_BE_SECRETS.SERVER_USERNAME}}@&{{HOUSEMATE_BE_SECRETS.SERVER_IP}}:${{HOUSEMATE_BE_SECRETS.SERVER_PATH}}
+    - name: Deloy to server
+      run: sshpass -p "${{HOUSEMATE_BE_SECRETS.SERVER_PASSWORD}}" scp ./target/${{HOUSEMATE_BE_SECRETS.FILE_JAR}} &{{HOUSEMATE_BE_SECRETS.SERVER_USERNAME}}@&{{HOUSEMATE_BE_SECRETS.SERVER_IP}}:${{HOUSEMATE_BE_SECRETS.SERVER_PATH}}
 
-    # - name: Destroy running file
-    #   run: ssh ${{HOUSEMATE_BE_SECRETS.SERVER_IP}} "kill -9 $(ps aux | grep "java -jar ${{HOUSEMATE_BE_SECRETS.FILE_JAR}}"| head -n 1 | awk '{print $2}')"
+    - name: Destroy running file
+      run: ssh ${{HOUSEMATE_BE_SECRETS.SERVER_IP}} "kill -9 $(ps aux | grep "java -jar ${{HOUSEMATE_BE_SECRETS.FILE_JAR}}"| head -n 1 | awk '{print $2}')"
 
-    # - name: Run file in server
-    #   run: ssh ${{HOUSEMATE_BE_SECRETS.SERVER_IP}} "cd ${{HOUSEMATE_BE_SECRETS.SERVER_PATH}} && java -jar ${{HOUSEMATE_BE_SECRETS.FILE_JAR}}"
+    - name: Run file in server
+      run: ssh ${{HOUSEMATE_BE_SECRETS.SERVER_IP}} "cd ${{HOUSEMATE_BE_SECRETS.SERVER_PATH}} && java -jar ${{HOUSEMATE_BE_SECRETS.FILE_JAR}}"
