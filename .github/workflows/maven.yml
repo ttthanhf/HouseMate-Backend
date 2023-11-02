@@ -47,7 +47,7 @@ jobs:
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -r -o StrictHostKeyChecking=no ./target/${{ secrets.FILE_JAR }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
 
     - name: Destroy running file
-      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "sudo kill -9 $(ps aux | grep "java -jar ${{ secrets.FILE_JAR }}"| head -n 1 | awk '{print $2}')" || true
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -f ${{ secrets.FILE_JAR }}" || true
 
     - name: Run file in server
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "cd ${{ secrets.SERVER_PATH }} && java -jar ${{ secrets.FILE_JAR }} & exit"
