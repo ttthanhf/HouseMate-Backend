@@ -36,12 +36,15 @@ jobs:
           ${{ runner.os }}-maven-
 
     - name: Add application.properties
-      run: echo "${{ SECRETS.APPLICATION_PROPERTIES }}" >> ./src/main/resources/application.properties
+      run: echo "${{ HOUSEMATE_BE_SECRETS.APPLICATION_PROPERTIES }}" >> ./src/main/resources/application.properties
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
 
     - name: Test with Maven
       run: mvn test
+
+    # - name: Push to server
+    #   run: sshpass -p "${{HOUSEMATE_BE_SECRETS.SERVER_PASSWORD}}" scp ./target/${{HOUSEMATE_BE_SECRETS.FILE_JAR}} &{{HOUSEMATE_BE_SECRETS.SERVER_USERNAME}}@&{{HOUSEMATE_BE_SECRETS.PASSWORD}}:${{HOUSEMATE_BE_SECRETS}}
 
 
