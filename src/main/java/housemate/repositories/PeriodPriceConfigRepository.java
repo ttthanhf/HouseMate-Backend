@@ -18,7 +18,7 @@ public interface PeriodPriceConfigRepository extends JpaRepository<PeriodPriceCo
 	List<PeriodPriceConfig> findAllInUsed(@Param("datetimeNow") LocalDateTime dateTimeNow);
 	
 	@Query("SELECT p FROM PeriodPriceConfig p WHERE :datetimeNow BETWEEN p.dateStart AND p.dateEnd ")
-	List<PeriodPriceConfig> findByConfigValue(@Param("datetimeNow") LocalDateTime dateTimeNow);
+	List<PeriodPriceConfig> findAllByConfigValue(@Param("datetimeNow") LocalDateTime dateTimeNow);
 	
 	@Query("SELECT p FROM PeriodPriceConfig p "
 			+ "WHERE :datetimeNow BETWEEN p.dateStart AND p.dateEnd "

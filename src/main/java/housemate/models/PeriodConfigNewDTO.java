@@ -18,16 +18,16 @@ public class PeriodConfigNewDTO {
 	@Min(value = 2, message = "Config cycle value in range 2-12")
 	@Max(value = 12, message = "Config cycle value in range 2-12")
 	@Schema(example = "3", description = "Set the cycle value for the cuycle month in range 2-12]")
-	int configValue;
+	private int configValue;
 
 	@NotNull
-	TimeUnit configName;
+	private TimeUnit configName;
 
 	@PositiveOrZero(message = "Set the min proportion against the original price/per mont for this cycle")
 	@Schema(example = "1.0", description = "Set the min proportion against the original price/per mont for this cycle")
-	float min;
+	private float min;
 
 	@PositiveOrZero(message = "Set the max proportion against the original price/per mont for this cycle")
-	float max;
+	private float max;
 
 }

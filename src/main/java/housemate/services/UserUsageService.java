@@ -169,7 +169,7 @@ public class UserUsageService {
                 }
                 myPurchasedResponse.setOrderItemId(orderItem.getOrderItemId());
                 myPurchasedResponse.setEndDate(orderItem.getExpireDate());
-                myPurchasedResponse.setStartDate(orderItem.getExpireDate());
+                myPurchasedResponse.setStartDate(orderItem.getCreateDate());
                 myPurchasedResponse.setSingleServiceName(listSingleServiceName);
                 myPurchasedResponse.setService(service);
                 listMyPurchasedResponse.add(myPurchasedResponse);

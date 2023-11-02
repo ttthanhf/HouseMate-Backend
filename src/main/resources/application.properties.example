@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> d90b5ecf9dc7f0c9b829e1a9c904d5aa53f4a289
 #Port
 server.port=
 
@@ -37,23 +33,4 @@ spring.security.oauth2.client.registration.google.scope=
 
 #Others
 application.setting.google.redirect-uri=
-<<<<<<< HEAD
 url.client=
-=======
-
-#Port
-server.port=
-
-#Database
-spring.datasource.url= jdbc:mysql://
-spring.datasource.username= 
-spring.datasource.password= 
-spring.datasource.driver-class-name= com.mysql.cj.jdbc.Driver
-
-#Security
-spring.security.user.name=
-spring.security.user.password=
->>>>>>> parent of 8b23159 (ADD - Add login, register, forgot password, reset new password request)
-=======
-url.client=
->>>>>>> d90b5ecf9dc7f0c9b829e1a9c904d5aa53f4a289
