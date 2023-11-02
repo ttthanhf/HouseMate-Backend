@@ -44,7 +44,8 @@ jobs:
     - name: Test with Maven
       run: mvn test
 
-    # - name: Push to server
-    #   run: sshpass -p "${{HOUSEMATE_BE_SECRETS.SERVER_PASSWORD}}" scp ./target/${{HOUSEMATE_BE_SECRETS.FILE_JAR}} &{{HOUSEMATE_BE_SECRETS.SERVER_USERNAME}}@&{{HOUSEMATE_BE_SECRETS.PASSWORD}}:${{HOUSEMATE_BE_SECRETS}}
+    # - name: Deloy to server
+    #   run: sshpass -p "${{HOUSEMATE_BE_SECRETS.SERVER_PASSWORD}}" scp ./target/${{HOUSEMATE_BE_SECRETS.FILE_JAR}} &{{HOUSEMATE_BE_SECRETS.SERVER_USERNAME}}@&{{HOUSEMATE_BE_SECRETS.SERVER_IP}}:${{HOUSEMATE_BE_SECRETS.SERVER_PATH}}
 
-
+    # - name: Run file in server
+    #   run: ssh ${{HOUSEMATE_BE_SECRETS.SERVER_IP}} "cd ${{HOUSEMATE_BE_SECRETS.SERVER_PATH}} && java -jar ${{HOUSEMATE_BE_SECRETS.FILE_JAR}}"
