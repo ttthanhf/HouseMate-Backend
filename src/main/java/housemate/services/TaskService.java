@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -105,7 +107,7 @@ public class TaskService {
 	}
 	
 	//VIEW TASK UP COMING WORING BY STAFF
-	public ResponseEntity<?> getaAllKindOfTaskForStaffByTaskStatus(
+	public ResponseEntity<?> getaAllKindOfTaskStatusForStaffByTaskStatus(
 			HttpServletRequest request,
 			@Nullable TaskStatus taskStatus,
 			Optional<Integer> page,
@@ -129,12 +131,8 @@ public class TaskService {
 		Pageable pagableTaskList = pageNo == 0 ? PageRequest.of(0, pageSize, sort)
 										       : PageRequest.of(pageNo - 1, pageSize, sort);
 		
-		if(taskStatus.equals(taskStatus.INCOMING)) {
-			//CALL THE FUNCTION TO SET TASK STATUS INTO INCOMING
-			taskRepo.updateTaskStatusIntoIncoming();
-		}
-		Page<Task> taskListForStaff = taskRepo.findAllByTaskStatusAndStaffId(staffId, taskStatus, pagableTaskList);
-				
+		
+		Page<Task> taskListForStaff = taskRepo.findAllByTaskStatusAndStaffId(staffId, taskStatus, pagableTaskList);	
 		Page<TaskViewDTO> taskViewListForStaff = Page.empty(pagableTaskList);
 		if (!taskListForStaff.isEmpty()) {
 			Function<Task, TaskViewDTO> convertInToTaskViewDTO = task -> {
@@ -142,7 +140,7 @@ public class TaskService {
 			};
 			taskViewListForStaff = taskListForStaff.map(convertInToTaskViewDTO);
 		} else {
-			return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No tasks assigned !");
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Empty List !");
 		}
 		return ResponseEntity.ok(taskViewListForStaff);
 	}
@@ -184,20 +182,23 @@ public class TaskService {
 	public ResponseEntity<?> createNewTask(HttpServletRequest request, int scheduleId){
 		Schedule schedule = scheduleRepo.findById(scheduleId).orElse(null);
 		if(schedule == null)
-			return ResponseEntity.badRequest().body("Schedule not exists to cancel !");
+			return ResponseEntity.badRequest().body("Schedule not exists to create !");
+		if(schedule.getStatus().equals(ScheduleStatus.CANCEL)) 
+			return ResponseEntity.badRequest().body("Can not create task for the schedule has been cancelled !");
 		
 		int customerIdRequestCreate = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 		if(customerIdRequestCreate != schedule.getCustomerId())
 			return ResponseEntity.badRequest().body("You are not the owner of this schedule !");
 		
+		if(taskRepo.findExistingTaskForSchedule(scheduleId) != null)
+			return ResponseEntity.ok().body("This task has already created  !");
+
 		List<Task> task = taskService.createTaskOnUpComingSchedule(schedule);
-		
-		if(task.isEmpty()) {
-			return ResponseEntity.status(HttpStatus.ACCEPTED).body(
-					"The schedule on calendar is far away from now. The task will be created when the chedule is upcoming !");
-		}
-		
-		return ResponseEntity.ok().body(task);
+		if(task == null || task.isEmpty()) 
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).
+					body("No task is created cause the schedule on calendar is far away from now.\n The task will be created when the chedule is upcoming by the system !");
+		List<TaskViewDTO> taskViewDtoList = task.stream().map(x -> taskService.convertIntoTaskViewDtoFrTask(x)).collect(Collectors.toList());
+		return ResponseEntity.ok().body(taskViewDtoList);
 	}
 	
 	//CANCEL TASK
@@ -215,13 +216,13 @@ public class TaskService {
 		
 		
 		TaskRes taskRes = null;
-		Task taskToBeCancelled = null;
+		Task taskToBeCancelled = taskRepo.findExistingTaskForSchedule(scheduleId);
 		Role role = userCancel.getRole();
 		LocalDateTime timeStartOfScheduleToBeCancel = scheduleToBeCancelled.getStartDate();
 		LocalDateTime timeNow = LocalDateTime.now(dateTimeZone);
 		long hours = ChronoUnit.HOURS.between(timeNow, timeStartOfScheduleToBeCancel);
 		
-		if(role.equals(Role.CUSTOMER)) {
+		if(role.equals(Role.CUSTOMER) || role.equals(Role.ADMIN)) {
 			if(userIdRequestCancel != scheduleToBeCancelled.getCustomerId()) 
 				return ResponseEntity.badRequest().body("You are not allow to cancel task of this schedule !");
 			taskToBeCancelled = taskService.cancelTaskByRole(Role.CUSTOMER, scheduleToBeCancelled, "The customer has cancelled the task !");
@@ -284,7 +285,9 @@ public class TaskService {
 	public ResponseEntity<?> approveStaff(HttpServletRequest request, int taskId) {
 		String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
 		if (!role.equals(Role.STAFF.name()))
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied - Only staff can apply");
+		
+		
 
 		int staffId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 		Staff staff = staffRepo.findById(staffId).orElse(null);
@@ -295,8 +298,14 @@ public class TaskService {
 
 		Task task = taskRepo.findById(taskId).orElse(null);
 		if (task == null)
-			return ResponseEntity.badRequest().body("Task not exists to be approved");
+			return ResponseEntity.badRequest().body("Task not exists to be applied");
 
+		if(task.getStaffId() != null && task.getStaffId() != staffId)
+			return ResponseEntity.badRequest().body("Sorry, The task has already applied by another staff !");
+		
+		if(task.getStaffId() != null && task.getStaffId() == staffId)
+			return ResponseEntity.ok().body("You has applied this task successfully !");
+		
 		TaskRes taskRes = taskService.approveQualifiedStaff(staff, task);
 		if (taskRes.getMessType().name().contains("REJECT"))
 			return ResponseEntity.badRequest().body(taskRes.getMessage());
@@ -308,8 +317,7 @@ public class TaskService {
 	}
 
 	// REPORT TASK
-	public ResponseEntity<?> reportTaskByStaff(HttpServletRequest request, int taskId, TaskReportType taskReportType,
-			TaskReportNewDTO reportnewDTO) {
+	public ResponseEntity<?> reportTaskByStaff(HttpServletRequest request, int taskId, TaskReportType taskReportType, TaskReportNewDTO reportnewDTO) {
 		int userReport = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 		Role userReportRole = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
 		Task taskToBeReported = taskRepo.findById(taskId).orElse(null);
@@ -343,8 +351,10 @@ public class TaskService {
 		if (taskReport.isEmpty())
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Have not any report for this task !");
 		
+		List<TaskReport> taskReports = taskReportRepo.findAllByTaskId(task.getTaskId());
+
 		if (!taskReport.isEmpty()) {
-			task.getTaskReportList().forEach(x -> {
+			taskReports.forEach(x -> {
 				List<Image> reportTaskImgs = imgRepo
 						.findAllByEntityIdAndImageType(x.getTaskReportId(), ImageType.WORKING)
 						.orElse(List.of());
@@ -353,6 +363,8 @@ public class TaskService {
 		}
 		return ResponseEntity.ok().body(taskReport);
 	}
+	
+	
 
 
 }

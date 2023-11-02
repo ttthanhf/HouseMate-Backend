@@ -11,14 +11,19 @@ import housemate.entities.Image;
 import housemate.entities.Schedule;
 import housemate.entities.ServiceType;
 import housemate.entities.Staff;
+import housemate.entities.TaskReport;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TaskViewDTO {
 
 	private int taskId;
 
-	private Schedule shedule;
+	private Schedule schedule;
 	
 	private LocalDateTime createdAt;
 	
@@ -34,11 +39,15 @@ public class TaskViewDTO {
 	
 	private TaskStatus taskStatus;
 	
+	private List<TaskReport> taskReportList ;
+	
 	@JsonInclude(content = Include.NON_NULL)
 	private String taskNote;
 	
 	@Data
-	public class CustomerViewOnTask {
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class CustomerViewOnTask {
 		private int userId;
 		private String fullName;
 		private String phoneNumber;
@@ -47,7 +56,9 @@ public class TaskViewDTO {
 	}
 	
 	@Data
-	public class ServiceViewOnTask {
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class ServiceViewOnTask {
 		private int serviceId;
 		private String titleName;
 		private String unitOfMeasure;

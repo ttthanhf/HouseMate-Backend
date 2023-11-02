@@ -5,11 +5,11 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
-
 import housemate.constants.Enum.TaskStatus;
 
 /**
@@ -19,6 +19,8 @@ import housemate.constants.Enum.TaskStatus;
 @Entity
 @Table(name = "Task_Report")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TaskReport {
 
     @Id
@@ -29,7 +31,8 @@ public class TaskReport {
     @Column(name = "task_id")
     private int taskId;
 
-    @Column(name = "task_status")
+    @Column(name = "report_status_name")
+    @Enumerated(EnumType.STRING)
     private TaskStatus taskStatus;
 
     @Column(name = "report_at")

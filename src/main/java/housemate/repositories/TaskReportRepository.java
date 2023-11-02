@@ -12,4 +12,5 @@ public interface TaskReportRepository extends JpaRepository<TaskReport, Integer>
 	TaskReport findByTaskIdAndTaskStatus(int taskId, TaskStatus taskStatus);
 	
 	List<TaskReport> findAllByTaskId(int taskId);
+	
 }
