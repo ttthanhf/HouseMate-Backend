@@ -54,13 +54,14 @@ jobs:
 
     - name: Verify app
       run: |
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}
-        "
-        timeout 20s
-        while true; do 
-          response=$(curl -s localhost:8080)
-          if [[ "$response" == *"Token empty"* ]]; then
-            done
-          fi
-          sleep 1s
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "
+        timeout 20s bash -c '
+          while true; do 
+            response=$(curl -s localhost:8080)
+            if [[ -n "$response" && "$response" == *"Token empty"* ]]; then
+              break
+            fi
+            sleep 1s
+          done
+          '
         "
