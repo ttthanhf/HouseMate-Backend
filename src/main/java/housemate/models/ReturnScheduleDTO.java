@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import housemate.constants.Cycle;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,10 +32,12 @@ public class ReturnScheduleDTO {
 
     @JsonFormat(pattern = "dd/MM/yyyy")
     @FutureOrPresent(message = "Pickup date must be in the present or future")
+    @Schema(example = "03/11/2023")
     private LocalDate pickUpDate;
 
     @JsonFormat(pattern = "dd/MM/yyyy")
     @FutureOrPresent(message = "Received date must be in the present or future")
+    @Schema(example = "05/11/2023")
     private LocalDate receiveDate;
 
     @DateTimeFormat(pattern = "HH:mm")
@@ -48,7 +51,9 @@ public class ReturnScheduleDTO {
     @Positive(message = "Service ID must be a positive number")
     private int serviceId;
 
-    @Positive(message = "Type ID must be a positive number")
+    @NotNull(message = "User usage ID must not be null")
+    private int userUsageId;
+
     private int typeId;
 
 }

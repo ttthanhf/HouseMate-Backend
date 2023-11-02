@@ -69,15 +69,8 @@ public class Enum {
 	}
 	
 	public enum TaskReportType {
-		ARRIVED(1),
-		DOING(2),
-		DONE(3);
-		private int orderReport;
-		private TaskReportType(int orderReport) {
-			this.orderReport = orderReport;
-		}
-
+		ARRIVED,
+		DOING,
+		DONE;
 	}
-	
-	
 }
