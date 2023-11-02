@@ -38,13 +38,10 @@ jobs:
     - name: Add application.properties
       run: echo "${{ SECRETS.APPLICATION_PROPERTIES }}" >> ./src/main/resources/application.properties
 
-    - name: List Files
-      run: ls -R
-        
-    # - name: Build with Maven
-    #   run: mvn -B package --file pom.xml
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
 
-    # - name: Test with Maven
-    #   run: mvn test
+    - name: Test with Maven
+      run: mvn test
 
 
