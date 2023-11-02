@@ -1,0 +1,51 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Java CI
+
+on:
+  push:
+    branches: [ "dev" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        cache: maven
+
+    - name: Cache Maven Dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    - name: Add application.properties
+      run: echo "${{ HOUSEMATE_BE_SECRETS.APPLICATION_PROPERTIES }}" >> ./src/main/resources/application.properties
+
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
+      
+    - name: Deloy to server
+      run: sshpass -p "${{HOUSEMATE_BE_SECRETS.SERVER_PASSWORD}}" scp ./target/${{HOUSEMATE_BE_SECRETS.FILE_JAR}} &{{HOUSEMATE_BE_SECRETS.SERVER_USERNAME}}@&{{HOUSEMATE_BE_SECRETS.SERVER_IP}}:${{HOUSEMATE_BE_SECRETS.SERVER_PATH}}
+
+    - name: Destroy running file
+      run: ssh ${{HOUSEMATE_BE_SECRETS.SERVER_IP}} "kill -9 $(ps aux | grep "java -jar ${{HOUSEMATE_BE_SECRETS.FILE_JAR}}"| head -n 1 | awk '{print $2}')"
+
+    - name: Run file in server
+      run: ssh ${{HOUSEMATE_BE_SECRETS.SERVER_IP}} "cd ${{HOUSEMATE_BE_SECRETS.SERVER_PATH}} && java -jar ${{HOUSEMATE_BE_SECRETS.FILE_JAR}}"
