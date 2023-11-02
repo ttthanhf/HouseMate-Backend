@@ -4,56 +4,82 @@
  */
 package housemate.entities;
 
+import java.util.Collections;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import housemate.constants.Enum.SaleStatus;
 import jakarta.persistence.*;
+import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  *
- * @author ThanhF
+ * @author Anh
  */
 @Entity
-@Table(name = "Service")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Table(name = "service")
 public class Service {
 
-    @Id
-    @Column(name = "service_id")
-    private int id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "service_id")
+	private int serviceId;
 
-    @Column(name = "title_name", unique = true)
-    private String titleName;
+	@Column(name = "title_name", unique = true, nullable = false)
+	private String titleName;
 
-    @Column(name = "unit_of_measure")
-    private String unitOfMeasure;
+	@Column(name = "original_price", nullable = false)
+	private int originalPrice;
 
-    @Column(name = "sale_price")
-    private int salePrice;
+	@Column(name = "final_price", nullable = false)
+	private int finalPrice;
 
-    @Column(name = "description", length = 5000)
-    private String description;
+	@Column(name = "unit_of_measure", nullable = false)
+	private String unitOfMeasure;
 
-    @Column(name = "sale_status")
-    private String saleStatus;
+	@Column(name = "description", nullable = false)
+	private String description;
 
-    @Column(name = "rating")
-    private float rating;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "sale_status", nullable = false)
+	private SaleStatus saleStatus;
 
-    @Column(name = "creator_id")
-    private int creatorId;
+	@Column(name = "group_type", nullable = false)
+	private String groupType;
 
-    @Column(name = "created_at")
-    private int createdAt;
+	@Column(name = "avg_rating", columnDefinition = "float default 0")
+	private float avgRating;
 
-    public Service(int id, String titleName, String unitOfMeasure, int salePrice, String description, String saleStatus, float rating, int creatorId, int createdAt) {
-        this.id = id;
-        this.titleName = titleName;
-        this.unitOfMeasure = unitOfMeasure;
-        this.salePrice = salePrice;
-        this.description = description;
-        this.saleStatus = saleStatus;
-        this.rating = rating;
-        this.creatorId = creatorId;
-        this.createdAt = createdAt;
-    }
+	@Column(name = "number_of_sold", columnDefinition = "integer default 0")
+	private int numberOfSold;
 
-    
+	@Column(name = "isPackage", nullable = false)
+	private boolean isPackage;
+	
+	@Column(name = "min_usage")
+	private int min;
+	
+	@Column(name = "max_usage")
+	private int max;
+
+	@Transient
+	private List<Image> images = Collections.EMPTY_LIST;
+	
+	@JsonInclude(value = Include.NON_NULL)
+	@Transient
+	private Integer numberOfReview;
+
+	@JsonInclude(value = Include.NON_NULL)
+	@Transient
+	private Integer numberOfComment;
+
 }
-
