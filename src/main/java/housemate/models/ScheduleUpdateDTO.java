@@ -15,6 +15,8 @@ public class ScheduleUpdateDTO {
 
     private String note;
 
+    private int typeId;
+
     @Min(value = 1, message = "Quantity must be larger than 0")
     @Max(value = 10, message = "Quantity must be less than 10")
     private int quantityRetrieve = 1;

@@ -145,14 +145,6 @@ public class ScheduleService {
         return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), schedule);
     }
 
-    public ResponseEntity<String> updateSchedule(
-            HttpServletRequest request, ScheduleUpdateDTO scheduleUpdateDTO, int scheduleId
-    ) {
-        if (isStatusInvalid(scheduleId))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
-        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
-    }
-
     // Uncomment these code if hard code working
 //    public ResponseEntity<String> createHourlySchedule(HttpServletRequest request, HourlyScheduleDTO scheduleDTO) {
 //        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
@@ -395,6 +387,38 @@ public class ScheduleService {
         }
 
         return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));
+    }
+
+
+
+    public ResponseEntity<String> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO scheduleUpdateDTO, int scheduleId) {
+        if (isStatusInvalid(scheduleId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
+        }
+
+        // TODO: validateAndProcessSchedule (Waiting hotfix/hardcode-create-schedule)
+
+        // I. Update only one time
+        if (scheduleUpdateDTO.getCycle().equals(Cycle.ONLY_ONE_TIME)) {
+            Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
+            if (schedule == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not find this service with service ID + " + scheduleId);
+            }
+
+            // 1. Update on the parent (the first schedule)
+
+            // 2. Update on the child (from the second after)
+            scheduleRepository.save(schedule);
+
+        }
+
+        // II. Update every week/ every month
+        // 1. Update on the parent (the first schedule)
+
+        // 2. Update on the child (from the second after)
+
+
+        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
     }
 
     private boolean isStatusInvalid(int scheduleId) {
