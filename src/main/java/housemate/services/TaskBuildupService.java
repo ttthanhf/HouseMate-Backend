@@ -123,10 +123,10 @@ public class TaskBuildupService {
 		return taskList;
 	}
 	
-	@Scheduled(fixedRate = 6000)
-    public void reportCurrntTime() {
-        log.info("TIMENOW {}", dateFormat.format(new Date()));
-    }
+//	@Scheduled(fixedRate = 6000)
+//    public void reportCurrntTime() {
+//        log.info("TIMENOW {}", dateFormat.format(new Date()));
+//    }
 
 	public List<Task> createTaskOnUpComingSchedule(Schedule newSchedule) {
 		List<Schedule> schedules = scheduleRepo.findAllByParentScheduleAndInUpComing(ScheduleStatus.PROCESSING, 1, newSchedule.getScheduleId());

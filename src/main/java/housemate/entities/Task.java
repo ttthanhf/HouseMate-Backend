@@ -40,7 +40,7 @@ public class Task {
 	@Column(name = "staff_id")
 	private Integer staffId;
 
-	@Column(name = "post_at")
+	@Column(name = "received_at")
 	private LocalDateTime receivedAt;
 
 	@Column(name = "task_status")

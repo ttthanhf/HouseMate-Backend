@@ -45,7 +45,7 @@ public class TaskController {
 	@GetMapping("/staff")
 	public ResponseEntity<?> getaAllKindOfTaskForStaffByTaskStatus(
 			HttpServletRequest request,
-			TaskStatus taskStatus,
+			@RequestParam(required = false)TaskStatus taskStatus,
 			@RequestParam(required = false) Optional<Integer> page,
 			@RequestParam(required = false) Optional<Integer> size) {
 		return taskServiceDao.getaAllKindOfTaskForStaffByTaskStatus(request, taskStatus, page, size);
