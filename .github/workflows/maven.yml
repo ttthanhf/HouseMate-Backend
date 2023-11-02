@@ -50,14 +50,17 @@ jobs:
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -f ${{ secrets.FILE_JAR }}" || true
 
     - name: Run app
-      run: timeout 10 sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "cd ${{ secrets.SERVER_PATH }} && nohup java -jar ${{ secrets.FILE_JAR }}" &
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "cd ${{ secrets.SERVER_PATH }} && java -jar ${{ secrets.FILE_JAR }}" &
 
     - name: Verify app
       run: |
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}
-          "timeout 20 tail -f ${{ secrets.SERVER_PATH }}nohup.out | while read LOGLINE
-          do
-            [[ "${LOGLINE}" == *"Running default command line with"* ]] && kill ${TAILPID} 
-          done &
-          TAILPID=$!
-          wait $TAILPID"
+        "
+        timeout 20s
+        while true; do 
+          response=$(curl -s localhost:8080)
+          if [[ "$response" == *"Token empty"* ]]; then
+            done
+          fi
+          sleep 1s
+        "
