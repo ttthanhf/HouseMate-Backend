@@ -4,10 +4,10 @@ import housemate.constants.ScheduleStatus;
 import housemate.entities.Schedule;
 import housemate.entities.Service;
 import housemate.models.ScheduleDTO;
+import housemate.models.ScheduleUpdateDTO;
 import housemate.responses.EventRes;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Component
@@ -99,4 +99,17 @@ public class ScheduleMapper {
         return event;
     }
 
+    public Schedule updateSchedule(Schedule currentSchedule, ScheduleUpdateDTO newSchedule) {
+        String note = newSchedule.getNote();
+
+        // Cycle?
+        currentSchedule.setNote(note == null ? "" : note.trim());
+        // quantity retrieve
+        currentSchedule.setServiceTypeId(newSchedule.getTypeId());
+        currentSchedule.setStartDate(newSchedule.getStartDate());
+        currentSchedule.setEndDate(newSchedule.getEndDate());
+        // userUsageId
+
+        return currentSchedule;
+    }
 }
