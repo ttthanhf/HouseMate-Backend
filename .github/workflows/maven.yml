@@ -55,9 +55,10 @@ jobs:
     - name: Verify app
       run: |
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "
-        timeout 20s bash -c '
+        timeout 30s bash -c '
           while true; do 
             response=$(curl -s localhost:8080)
+            echo "$response"
             if [ ! -z "$response" && "$response" == *"Token empty"*]; then
               break
             fi
