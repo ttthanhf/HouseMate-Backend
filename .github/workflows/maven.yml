@@ -43,7 +43,7 @@ jobs:
       run: mvn -B package --file pom.xml
       
     - name: Deloy to server
-      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp ./target/${{ secrets.FILE_JAR }} &{{ secrets.SERVER_USERNAME }}@&{{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp ./target/${{ secrets.FILE_JAR }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
 
     - name: Destroy running file
       run: ssh ${{ secrets.SERVER_IP }} "kill -9 $(ps aux | grep "java -jar ${{ secrets.FILE_JAR }}"| head -n 1 | awk '{print $2}')"
