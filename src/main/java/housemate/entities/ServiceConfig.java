@@ -1,7 +1,6 @@
 package housemate.entities;
 
 import housemate.constants.Enum.ServiceConfiguration;
-import jakarta.annotation.Generated;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
