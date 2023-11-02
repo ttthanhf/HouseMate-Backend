@@ -16,6 +16,7 @@ jobs:
   build-and-deploy:
 
     runs-on: ubuntu-latest
+    environment: HOUSEMATE_BE_SECRETS
 
     steps:
     - name: Checkout repository
