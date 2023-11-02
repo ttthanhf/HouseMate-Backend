@@ -36,16 +36,16 @@ jobs:
           ${{ runner.os }}-maven-
 
     - name: Add application.properties
-      run: echo "${{ HOUSEMATE_BE_SECRETS.APPLICATION_PROPERTIES }}" >> ./src/main/resources/application.properties
+      run: echo "${{ secrets.APPLICATION_PROPERTIES }}" >> ./src/main/resources/application.properties
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
       
     - name: Deloy to server
-      run: sshpass -p "${{HOUSEMATE_BE_SECRETS.SERVER_PASSWORD}}" scp ./target/${{HOUSEMATE_BE_SECRETS.FILE_JAR}} &{{HOUSEMATE_BE_SECRETS.SERVER_USERNAME}}@&{{HOUSEMATE_BE_SECRETS.SERVER_IP}}:${{HOUSEMATE_BE_SECRETS.SERVER_PATH}}
+      run: sshpass -p "${{secrets.SERVER_PASSWORD}}" scp ./target/${{secrets.FILE_JAR}} &{{secrets.SERVER_USERNAME}}@&{{secrets.SERVER_IP}}:${{secrets.SERVER_PATH}}
 
     - name: Destroy running file
-      run: ssh ${{HOUSEMATE_BE_SECRETS.SERVER_IP}} "kill -9 $(ps aux | grep "java -jar ${{HOUSEMATE_BE_SECRETS.FILE_JAR}}"| head -n 1 | awk '{print $2}')"
+      run: ssh ${{secrets.SERVER_IP}} "kill -9 $(ps aux | grep "java -jar ${{secrets.FILE_JAR}}"| head -n 1 | awk '{print $2}')"
 
     - name: Run file in server
-      run: ssh ${{HOUSEMATE_BE_SECRETS.SERVER_IP}} "cd ${{HOUSEMATE_BE_SECRETS.SERVER_PATH}} && java -jar ${{HOUSEMATE_BE_SECRETS.FILE_JAR}}"
+      run: ssh ${{secrets.SERVER_IP}} "cd ${{secrets.SERVER_PATH}} && java -jar ${{secrets.FILE_JAR}}"
