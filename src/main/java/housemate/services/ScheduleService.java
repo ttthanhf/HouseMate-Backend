@@ -129,7 +129,7 @@ public class ScheduleService {
             // Check expiration and run out of remaining
             int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(userUsage.getUserUsageId());
             int remaining = userUsage.getRemaining() - totalUsed;
-            if (remaining == 0 || userUsage.getEndDate().isBefore(LocalDateTime.now())) continue;
+            if (remaining <= 0 || userUsage.getEndDate().isBefore(LocalDateTime.now())) continue;
 
             // Query the relationship to get data in database
             int serviceId = userUsage.getServiceId();
@@ -262,6 +262,7 @@ public class ScheduleService {
         // Validate quantity
         int forecastQuantity = getMaxQuantity(startDate, userUsage.getEndDate(), schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve());
         int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(schedule.getUserUsageId());
+        System.out.println(forecastQuantity + " - " + totalUsed);
         if (forecastQuantity == 0 || forecastQuantity * schedule.getQuantityRetrieve() + totalUsed > userUsage.getRemaining()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage or decrease your quantity");
         }
