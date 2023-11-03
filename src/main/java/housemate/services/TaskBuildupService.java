@@ -42,6 +42,7 @@ import housemate.models.TaskViewDTO;
 import housemate.models.TaskViewDTO.CustomerViewOnTask;
 import housemate.models.TaskViewDTO.ServiceViewOnTask;
 import housemate.repositories.ImageRepository;
+import housemate.repositories.OrderItemRepository;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.ScheduleRepository;
 import housemate.repositories.ServiceRepository;
@@ -88,6 +89,8 @@ public class TaskBuildupService {
 	@Autowired
 	UserUsageRepository userUsageRepo;
 	
+	@Autowired
+	OrderItemRepository orderItemRepo;
 	
 	ModelMapper mapper = new ModelMapper();
 	
@@ -103,7 +106,7 @@ public class TaskBuildupService {
 	private static final Map<Integer, ScheduledFuture<?>> eventNotiList = new HashMap<>();
 
 	
-//======CREATE TASK======
+	//======CREATE TASK======
 	@Scheduled(cron = "0 0 0 * * *", zone = "Asia/Ho_Chi_Minh") // call this at every 24:00 PM
 	public List<Task> createTasksOnUpcomingSchedulesAutoByFixedRate() {
 		List<Task> taskList = new ArrayList<>();
@@ -115,7 +118,7 @@ public class TaskBuildupService {
 				for (Schedule schedule : schedules)
 					taskList.add(this.createTask(schedule));
 				TaskBuildupService.createAndSendNotification("NEW TASK COMING !", "UPCOMING TASK",
-						List.of(staffRepo.findAll().stream().map(x -> x.getUserId())));
+						List.of(staffRepo.findAll().stream().map(x -> x.getStaffId())));
 			} else
 				taskList = List.of();
 		} catch (Exception e) {
@@ -123,11 +126,6 @@ public class TaskBuildupService {
 		}
 		return taskList;
 	}
-	
-//	@Scheduled(fixedRate = 6000)
-//    public void reportCurrntTime() {
-//        log.info("TIMENOW {}", dateFormat.format(new Date()));
-//    }
 
 	public List<Task> createTaskOnUpComingSchedule(Schedule newSchedule) {
 		List<Schedule> schedules = scheduleRepo.findAllByParentScheduleAndInUpComing(ScheduleStatus.PROCESSING, 1, newSchedule.getScheduleId());
@@ -143,11 +141,11 @@ public class TaskBuildupService {
 					taskList.add(taskRepo.findExistingTaskForSchedule(theSchedule.getScheduleId()));
 			}
 			TaskBuildupService.createAndSendNotification("NEW TASK COMING !", "UPCOMING TASK",
-					List.of(staffRepo.findAll().stream().map(x -> x.getUserId())));
+					List.of(staffRepo.findAll().stream().map(x -> x.getStaffId())));
 		}
-		else {
+		else 
 			taskList = List.of();
-		}
+		
 		return taskList;
 	}
 
@@ -161,7 +159,6 @@ public class TaskBuildupService {
 			if (task == null) {
 				task = new Task();
 				task.setScheduleId(schedule.getScheduleId());
-				task.setParentScheduleId(schedule.getParentScheduleId());
 				task.setCreatedAt(LocalDateTime.now(dateTimeZone));
 				task.setTaskStatus(TaskStatus.PENDING_APPLICATION);
 				task.setStaffId(null);
@@ -184,15 +181,9 @@ public class TaskBuildupService {
 	}
 	
 	//======VIEW TASK IN DETAILS======
-	public TaskViewDTO convertIntoTaskViewDtoFrTask(Task task) {
+	public TaskViewDTO convertIntoTaskViewDtoFromTask(Task task) {
 		TaskViewDTO taskView = new TaskViewDTO();
-		try {
-			if (task.getStaff() != null) {
-				List<Image> staffAvatar = imgRepo.findAllByEntityIdAndImageType(task.getStaffId(),ImageType.AVATAR)
-						.orElse(List.of());
-				task.getStaff().setAvatars(staffAvatar);
-			}
-			
+		try {			
 			List<TaskReport> taskReports = taskReportRepo.findAllByTaskId(task.getTaskId());
 			if (taskReports != null) {
 				taskReports.forEach(x -> {
@@ -211,8 +202,12 @@ public class TaskBuildupService {
 			CustomerViewOnTask customerViewOnTask = mapper.map(customerInfoFrAcc, CustomerViewOnTask.class);
 			customerViewOnTask.setAvatar(customerAvatar);
 			
-			Order order = orderRepo.findById(schedule.getUserUsageId()).orElse(null);
-			String addressWorking = order == null ? "no address exist" : order.getAddress();
+			//TODO: Consider Delete
+			Order order = orderRepo.findById(orderItemRepo
+					.findById(userUsageRepo.findById(schedule.getUserUsageId()).get().getOrderItemId()).getOrderId())
+					.orElse(null);
+			String addressWorking = order == null ? "No address exist" : order.getAddress();
+			//String addressWorking =  orderRepo.findById(schedule.getUserUsageId()).get().getAddress();
 			Service serviceInfoFrServ = servRepo.findByServiceId(schedule.getServiceId()).orElse(null);
 			ServiceType serviceType = servTypeRepo.findById(schedule.getServiceTypeId()).orElse(null);
 			ServiceViewOnTask service = mapper.map(serviceInfoFrServ, ServiceViewOnTask.class);
@@ -366,12 +361,12 @@ public class TaskBuildupService {
 		}
 		if (staff.getProfiencyScore() >= 30 || (staff.getProfiencyScore() < 30 && hoursDiff <= 3 && hoursDiff > 0)) {
 			try {
-				task.setStaffId(staff.getUserId());
+				task.setStaffId(staff.getStaffId());
 				task.setReceivedAt(LocalDateTime.now(dateTimeZone));
 				task.setStaff(staff);
 				task.setTaskStatus(TaskStatus.PENDING_WORKING);
 				task.getSchedule().setStatus(ScheduleStatus.PENDING);
-				task.getSchedule().setStaffId(staff.getUserId());
+				task.getSchedule().setStaffId(staff.getStaffId());
 				taskRes = TaskRes.build(task, TaskMessType.OK, "Approved staff Successfully !");
 
 				// SEND NOTI FOUND STAFF FOR CUSTOMER
@@ -395,10 +390,11 @@ public class TaskBuildupService {
 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 					"The kind of service not exist to report task of this service");
 		}
-		TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(), TaskStatus.valueOf(taskReport.name()));
+		TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
+				TaskStatus.valueOf(taskReport.name()));
 		if (checkReportExists != null)
 			return TaskRes.build(checkReportExists, TaskMessType.OK, "You have already report task for this status !");
-		
+
 		try {
 			taskReportResult.setTaskId(task.getTaskId());
 			taskReportResult.setReportAt(LocalDateTime.now());
@@ -407,7 +403,7 @@ public class TaskBuildupService {
 			case ARRIVED: {
 				// Set up
 				task.setTaskStatus(TaskStatus.ARRIVED);
-				task.getSchedule().setStatus(ScheduleStatus.DOING);
+				task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 				taskReportResult.setTaskStatus(task.getTaskStatus());
 				// Send notification
 				TaskBuildupService.createAndSendNotification(
@@ -425,7 +421,7 @@ public class TaskBuildupService {
 				// Check for return service type
 				boolean isReturnService = serviceInUsed.getGroupType().equals("RETURN_SERVICE");
 				if (isReturnService) {
-					Integer quantity = reportNewDTO.getQuantityInPutForReturnServiceType();
+					Integer quantity = reportNewDTO.getQtyOfGroupReturn();
 					if (quantity != null)
 						return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 								"Please fill the quantity for the service in type \"Return service\"");
@@ -442,7 +438,7 @@ public class TaskBuildupService {
 				}
 				// Set up
 				task.setTaskStatus(TaskStatus.DOING);
-				task.getSchedule().setStatus(ScheduleStatus.DOING);
+				task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 				taskReportResult.setTaskStatus(task.getTaskStatus());
 				// Send notification
 				TaskBuildupService.createAndSendNotification(
@@ -467,7 +463,7 @@ public class TaskBuildupService {
 				taskReportResult.setTaskStatus(task.getTaskStatus());
 				int newQuantityRemaining = userUsage.getRemaining() - task.getSchedule().getQuantityRetrieve();
 				userUsage.setRemaining(newQuantityRemaining);
-				
+
 				// Send notification
 				TaskBuildupService.createAndSendNotification(
 						"Your task has been done by our staff. Let enjoy the result !", "DONE TASK PROGRESSION",
@@ -479,18 +475,12 @@ public class TaskBuildupService {
 			}
 			taskRepo.save(task);
 			TaskReport reportedTask = taskReportRepo.save(taskReportResult);
-			if (reportedTask == null) {
-				return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-						"Something error. Report failed ");
-			}
-
 		} catch (Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			e.printStackTrace();
 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 					"Something Errors. Report failed !");
 		}
-
 		return TaskRes.build(taskReportResult, TaskMessType.OK, "Report task successfully !");
 	}
 	
@@ -509,21 +499,25 @@ public class TaskBuildupService {
 			public void run() {
 				if (task.getStaffId() == null) {
 					task.setTaskStatus(TaskStatus.CANCELLED_CAUSE_NOT_FOUND_STAFF);
-					task.getSchedule().setStatus(ScheduleStatus.CANCEL);
+					Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
+					schedule.setStatus(ScheduleStatus.CANCEL);
+					scheduleRepo.save(schedule);
 					TaskBuildupService.createAndSendNotification(
 							"Sorry, time is coming but staff is during peak hours, there is no staff to serve you at this time !",
 							"NOT FOUND STAFF", List.of(task.getSchedule().getCustomerId()));
+					log.info("TASK {} CLOSED AT {} STAFF IS NULL", task.getTaskId(), dateFormat.format(new Date()));
 				}
 				if (task.getStaffId() != null) {
 					TaskBuildupService.createAndSendNotification("Let go to welcome your staff coming to your home ! !",
 							"STAFF COMING", List.of(task.getSchedule().getCustomerId()));
+					log.info("TASK {} CLOSED AT {} STAFF NOT NULL", task.getTaskId(), dateFormat.format(new Date()));
+
 				}
 			}
 		};
 		ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
 		eventNotiList.put(task.getTaskId(), taskEvent);
 		taskScheduler.scheduleAtFixedRate(() -> {
-			log.info("TIMENOW EVENT 1 {}", dateFormat.format(new Date()));
 		}, Instant.now(), Duration.ofSeconds(3));
 		log.info("======createEventSendNotiUpcomingTask======");
 	}
@@ -540,6 +534,7 @@ public class TaskBuildupService {
 					TaskBuildupService.createAndSendNotification(
 							"We are trying to find the staff for your task, please waiting for staff apply !",
 							"NOT FOUND STAFF", List.of(task.getSchedule().getCustomerId()));
+					log.info("TASK {} UPCOMING NOTI SEND - STAFF IS NULL - SENT AT {}", task.getTaskId(), dateFormat.format(new Date()));
 				}
 				if (task.getStaff() != null) {
 					task.getSchedule().setStatus(ScheduleStatus.INCOMING);
@@ -550,7 +545,9 @@ public class TaskBuildupService {
 					TaskBuildupService.createAndSendNotification("You have the task today at "
 							+ userRepo.findByUserId(task.getSchedule().getCustomerId()).getFullName() + "'s house !",
 							"INCOMING ", List.of(task.getStaffId()));
+					log.info("TASK {} UPCOMING NOTI SEND - STAFF NOT NULL - SENT AT {}", task.getTaskId(), dateFormat.format(new Date()));
 				}
+
 			}
 		};
 		ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
