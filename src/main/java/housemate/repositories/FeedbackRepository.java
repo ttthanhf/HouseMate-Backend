@@ -18,6 +18,12 @@ public interface FeedbackRepository extends JpaRepository<ServiceFeedback, Integ
 				 + "AND f.rating = :ratingLevel "
 			     + "ORDER BY f.rating DESC, f.createdAt DESC")
 	List<ServiceFeedback> findAllByRating(@Param("serviceId") int serviceId, @Param("ratingLevel") int ratingLevel);
+	
+	@Query(value = "SELECT f FROM ServiceFeedback f WHERE " 
+					+ "f.rating = :ratingLevel "
+					+ "ORDER BY f.rating DESC, f.createdAt DESC " 
+					+ "LIMIT 10")
+	List<ServiceFeedback> findTopFeedback(@Param("ratingLevel") int ratingLevel);
 
 	@Query(value = "SELECT COALESCE(AVG(f.rating),0) FROM ServiceFeedback f WHERE f.serviceId = :serviceId ")
 	float getFeedbackAvgRating(@Param("serviceId") int serviceId);

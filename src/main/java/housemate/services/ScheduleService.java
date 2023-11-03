@@ -1,6 +1,7 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
+import housemate.constants.Enum.ServiceConfiguration;
 import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
 import housemate.mappers.ScheduleMapper;
@@ -29,11 +30,11 @@ import java.util.Set;
 @org.springframework.stereotype.Service
 public class ScheduleService {
 
-    private static final int OFFICE_HOURS_START = 6;
-    private static final int OFFICE_HOURS_END = 18;
-    private static final int FIND_STAFF_HOURS = 3;
-    private static final int MINIMUM_RETURN_HOURS = 4;
-    private static final String RETURN_SERVICE = "RETURN_SERVICE"; // Hard code (This is special service => create 2 schedule)
+    private  int OFFICE_HOURS_START;
+    private  int OFFICE_HOURS_END;
+    private  int FIND_STAFF_HOURS;
+    private  int MINIMUM_RETURN_HOURS;
+    private static final String RETURN_SERVICE = "RETURN_SERVICE"; // This is special service => create 2 schedule
     private final ServiceRepository serviceRepository;
     private final ScheduleRepository scheduleRepository;
     private final ScheduleMapper scheduleMapper;
@@ -41,6 +42,9 @@ public class ScheduleService {
     private final ServiceTypeRepository serviceTypeRepository;
     private final UserUsageRepository userUsageRepository;
     private final UserRepository userRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final ServiceConfigRepository serviceConfigRepository;
+
 
     @Autowired
     public ScheduleService(
@@ -50,7 +54,9 @@ public class ScheduleService {
             AuthorizationUtil authorizationUtil,
             ServiceTypeRepository serviceTypeRepository,
             UserUsageRepository userUsageRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            OrderItemRepository orderItemRepository,
+            ServiceConfigRepository serviceConfigRepository
     ) {
         this.serviceRepository = serviceRepository;
         this.scheduleRepository = scheduleRepository;
@@ -59,6 +65,12 @@ public class ScheduleService {
         this.serviceTypeRepository = serviceTypeRepository;
         this.userUsageRepository = userUsageRepository;
         this.userRepository = userRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.serviceConfigRepository = serviceConfigRepository;
+        this.OFFICE_HOURS_START = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_START).getConfigValue());
+        this.OFFICE_HOURS_END = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_END).getConfigValue());
+        this.FIND_STAFF_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.FIND_STAFF_HOURS).getConfigValue());
+        this.MINIMUM_RETURN_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.MINIMUM_RETURN_HOURS).getConfigValue());
     }
 
     public ResponseEntity<List<EventRes>> getScheduleForCustomer(HttpServletRequest request) {
@@ -67,8 +79,15 @@ public class ScheduleService {
         List<Schedule> schedules = scheduleRepository.getByCustomerId(userId);
 
         for (Schedule schedule : schedules) {
-            Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
+            // Check if schedule is before current date
+            boolean isBeforeCurrentDate = schedule.getEndDate().isBefore(LocalDateTime.now());
+            if (isBeforeCurrentDate) {
+                // TODO: Notification to customer that staff haven't applied
+                schedule.setStatus(ScheduleStatus.CANCEL);
+                scheduleRepository.save(schedule);
+            }
 
+            Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
             if (service.getGroupType().equals(RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
                 pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
@@ -104,21 +123,36 @@ public class ScheduleService {
         List<UserUsage> usageList = userUsageRepository.getAllUserUsageByUserIdAndNotExpired(userId);
 
         // Get all serviceID based on order ID
-        for (UserUsage userUsage : usageList) {
-            // Check exist purchase in purchases Set (Set<PurchasedServiceRes>)
-            PurchasedServiceRes existedPurchase = getPurchaseById(purchases, userUsage.getServiceId());
+        for (UserUsage uu : usageList) {
+            // Create new instance for user usage (clone)
+            UserUsage userUsage = uu.clone();
+
+            // Check expiration and run out of remaining
+            int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(userUsage.getUserUsageId());
+            int remaining = userUsage.getRemaining() - totalUsed;
+            if (remaining == 0 || userUsage.getEndDate().isBefore(LocalDateTime.now())) continue;
+
+            // Query the relationship to get data in database
+            int serviceId = userUsage.getServiceId();
+            int orderItemId = userUsage.getOrderItemId();
+            OrderItem orderItem = orderItemRepository.findById(orderItemId);
+            Service service = serviceRepository.getServiceByServiceId(serviceId);
+            Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+            userUsage.setService(serviceChild);
+            userUsage.setRemaining(remaining);
+
+            // Add new UserUsage to the existedPurchase in purchases Set (Set<PurchasedServiceRes>)
+            PurchasedServiceRes existedPurchase = getPurchaseById(purchases, serviceId);
             if (existedPurchase != null) {
                 existedPurchase.getUsages().add(userUsage);
                 purchases.add(existedPurchase);
                 continue;
             }
 
-            // Check expiration and run out of remaining
-            if (userUsage.getRemaining() == 0 && userUsage.getEndDate().isAfter(LocalDateTime.now())) continue;
-
-            Service service = serviceRepository.getServiceByServiceId(userUsage.getServiceId());
+            // Type List
             List<ServiceType> typeList = serviceTypeRepository.findAllByServiceId(service.getServiceId()).orElse(null);
 
+            // Create new PurchasedServiceRes
             PurchasedServiceRes purchase = new PurchasedServiceRes();
             purchase.setServiceId(service.getServiceId());
             purchase.setTitleName(service.getTitleName());
@@ -126,6 +160,7 @@ public class ScheduleService {
             purchase.setGroupType(service.getGroupType());
             purchase.getUsages().add(userUsage);
 
+            // Add to Set<PurchasedServiceRes>
             purchases.add(purchase);
         }
 
@@ -142,27 +177,43 @@ public class ScheduleService {
     public ResponseEntity<String> createSchedule(HttpServletRequest request, ScheduleDTO scheduleDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), schedule);
+        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), schedule, true);
     }
 
-    // Uncomment these code if hard code working
-//    public ResponseEntity<String> createHourlySchedule(HttpServletRequest request, HourlyScheduleDTO scheduleDTO) {
-//        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-//        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-//        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), GroupType.HOURLY_SERVICE, schedule, 1);
-//    }
-//
-//    public ResponseEntity<String> createReturnSchedule(HttpServletRequest request, ReturnScheduleDTO scheduleDTO) {
-//        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-//        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-//        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), GroupType.RETURN_SERVICE, schedule, MINIMUM_RETURN_HOURS);
-//    }
-//
-//    public ResponseEntity<String> createDeliverySchedule(HttpServletRequest request, DeliveryScheduleDTO scheduleDTO) {
-//        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-//        Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-//        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), GroupType.RETURN_SERVICE, schedule, 0);
-//    }
+    public ResponseEntity<String> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO updateSchedule, int scheduleId) {
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        Schedule currentSchedule = scheduleRepository.findById(scheduleId).orElse(null);
+
+        // Check if service ID not exist
+        if (currentSchedule == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not find this schedule with schedule ID + " + scheduleId);
+        }
+
+        if (isStatusInvalid(scheduleId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
+        }
+
+        validateAndProcessSchedule(userId, currentSchedule.getServiceId(), currentSchedule.getUserUsageId(), currentSchedule, false);
+
+        // I. Update only one time
+        if (updateSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME)) {
+            // 1. Update on the parent (the first schedule)
+
+            // 2. Update on the child (from the second after)
+            Schedule newSchedule = scheduleMapper.updateSchedule(currentSchedule, updateSchedule);
+            scheduleRepository.save(newSchedule);
+
+            return ResponseEntity.status(HttpStatus.OK).body("Update successfully!");
+        }
+
+        // II. Update every week/ every month
+        // 1. Update on the parent (the first schedule)
+
+        // 2. Update on the child (from the second after)
+
+
+        return ResponseEntity.status(HttpStatus.OK).body("Update successfully!");
+    }
 
     // ======================================== REUSABLE FUNCTIONS ========================================
 
@@ -208,17 +259,12 @@ public class ScheduleService {
         events.add(event);
     }
 
-    private ResponseEntity<String> validateAndProcessSchedule(int userId, int serviceId, int userUsageId, Schedule schedule) {
+    private ResponseEntity<String> validateAndProcessSchedule(int userId, int serviceId, int userUsageId, Schedule schedule, boolean isCreateSchedule) {
         // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
         }
-
-//        // Check correct group type
-//        if (service.getGroupType() != groupType) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect group type. Service ID " + service.getServiceId() + " belongs to group " + service.getGroupType());
-//        }
 
         // Check correct user usage ID
         UserUsage userUsage = userUsageRepository.findById(userUsageId).orElse(null);
@@ -233,16 +279,11 @@ public class ScheduleService {
         ResponseEntity<String> serviceIdValidation = validateServiceId(serviceId, userId);
         if (serviceIdValidation != null) return serviceIdValidation;
 
-        // Validate start date
+        // Validate date
         LocalDateTime startDate = schedule.getStartDate();
-        ResponseEntity<String> startDateValidation = validateDate(LocalDateTime.now(), startDate, FIND_STAFF_HOURS, "start time");
-        if (startDateValidation != null) return startDateValidation;
-
-        // Validate end date
         LocalDateTime endDate = schedule.getEndDate();
-        String groupType = serviceRepository.getServiceByServiceId(serviceId).getGroupType();
-        ResponseEntity<String> endDateValidation = validateDate(startDate, endDate, groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_HOURS : 1, "end time");
-        if (endDateValidation != null) return endDateValidation;
+        ResponseEntity<String> dateValidation = validateDate(startDate, endDate, service.getGroupType());
+        if (dateValidation != null) return dateValidation;
 
         // Validate out range of cycle
         if (endDate.isAfter(userUsage.getEndDate())) {
@@ -255,12 +296,16 @@ public class ScheduleService {
         schedule.setUserUsageId(userUsageId);
 
         // Validate quantity
-        if (schedule.getQuantityRetrieve() > userUsage.getRemaining()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage");
+        int forecastQuantity = getMaxQuantity(startDate, userUsage.getEndDate(), schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve());
+        int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(schedule.getUserUsageId());
+        if (forecastQuantity == 0 || forecastQuantity * schedule.getQuantityRetrieve() + totalUsed > userUsage.getRemaining()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage or decrease your quantity");
         }
 
         // Store to database
-        storeToDatabase(schedule);
+        if (isCreateSchedule) {
+            storeToDatabase(schedule);
+        }
 
         return ResponseEntity.status(HttpStatus.OK).body("Set schedule successfully! Please wait for our staff to apply this job!");
     }
@@ -273,7 +318,7 @@ public class ScheduleService {
         }
 
         // Get all service ID that user has purchased
-        Set<Integer> purchasedServiceIds = new HashSet<Integer>();
+        Set<Integer> purchasedServiceIds = new HashSet<>();
         List<UserUsage> usageList = userUsageRepository.getAllUserUsageByUserIdAndNotExpired(userId);
         for (UserUsage userUsage : usageList) {
             purchasedServiceIds.add(userUsage.getServiceId());
@@ -293,26 +338,46 @@ public class ScheduleService {
         return serviceIds.stream().noneMatch(p -> p == serviceId);
     }
 
-    private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, int hours, String varName) {
-        // Check endTime in office hours
-        int endHour = endDate.getHour();
-        if (endHour <= OFFICE_HOURS_START || endHour >= OFFICE_HOURS_END) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your " + varName + " in range from 7:00 to 18:00");
+    private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, String groupType) {
+        // Check startDate < endDate
+        if (!startDate.isBefore(endDate)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your start date is before end date");
         }
 
-        // Check is valid working date
-        LocalDateTime startWorkingDate = startDate.plusHours(hours);
-        if (endDate.isAfter(startWorkingDate)) return null;
-
-        // Check workingDate in office hours
-        if (startWorkingDate.getHour() <= OFFICE_HOURS_START || startWorkingDate.getHour() >= OFFICE_HOURS_END) {
-            String formattedDate = startWorkingDate.plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your " + varName + " after 7:00:00 " + formattedDate);
+        // Validate startDate in office hours
+        if (isOutsideOfficeHours(startDate)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your start date in range from 7:00 to 18:00");
+        }
+        
+        // Validate endDate in office hours
+        if (isOutsideOfficeHours(endDate)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your end date in range from 7:00 to 18:00");
         }
 
-        // Validate endDate > startDate + n hours
-        String formattedDate = startWorkingDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your " + varName + " after " + formattedDate);
+        // Check if endDate is outside office hours => startDate in new day
+        int differenceHours = groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_HOURS : 1;
+        LocalDateTime minimumEndDate = LocalDateTime.now().plusHours(FIND_STAFF_HOURS + differenceHours);
+        if (isOutsideOfficeHours(minimumEndDate)) {
+            LocalDateTime newDate = minimumEndDate.plusDays(1).withHour(7).withMinute(0).withSecond(0);
+
+            if (newDate.isAfter(startDate)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your start date after " + formatDateTime((newDate)));
+            }
+        }
+
+        // Validate startDate >= now + FIND_STAFF_HOURS
+        LocalDateTime startWorkingDate = LocalDateTime.now().plusHours(FIND_STAFF_HOURS);
+        if (startDate.isBefore(startWorkingDate)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your start date after " + formatDateTime(startWorkingDate));
+        }
+
+        // Validate startDate >= now + differenceHours
+        LocalDateTime endWorkingDate = startDate.plusHours(differenceHours);
+        if (endDate.isBefore(endWorkingDate)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your end date after " + formatDateTime(endWorkingDate));
+        }
+
+        return null;
     }
 
     private void storeToDatabase(Schedule schedule) {
@@ -325,7 +390,7 @@ public class ScheduleService {
         if (userUsage == null) return;
 
         // Get max quantity
-        int maxQuantity = getMaxQuantity(userUsage.getEndDate(), cycle, userUsage.getRemaining(), schedule.getQuantityRetrieve());
+        int maxQuantity = getMaxQuantity(schedule.getStartDate(), userUsage.getEndDate(), cycle, userUsage.getRemaining(), schedule.getQuantityRetrieve());
 
         // Store to database (ONLY_ONE_TIME)
         if (cycle == Cycle.ONLY_ONE_TIME) {
@@ -341,15 +406,17 @@ public class ScheduleService {
         // Store to database (EVERY_WEEK)
         if (cycle == Cycle.EVERY_WEEK) {
             for (int week = 0; week < maxQuantity; week++) {
+                System.out.println("Current schedule: " + schedule.getScheduleId());
                 // Create new instance for schedule
                 Schedule newSchedule = schedule.clone();
+                System.out.println("New schedule: " + newSchedule.getScheduleId());
 
                 newSchedule.setCustomerId(customerId);
                 newSchedule.setStartDate(newSchedule.getStartDate().plusWeeks(week));
                 newSchedule.setEndDate(newSchedule.getEndDate().plusWeeks(week));
 
                 // Store parent schedule ID
-                Schedule scheduleDb = scheduleRepository.save(newSchedule);
+                Schedule scheduleDb =  newSchedule.getScheduleId() == 0 ? scheduleRepository.save(newSchedule) : newSchedule;
                 parentScheduleId = week == 0 ? scheduleDb.getScheduleId() : parentScheduleId;
                 scheduleDb.setParentScheduleId(parentScheduleId);
                 scheduleRepository.save(scheduleDb);
@@ -368,61 +435,38 @@ public class ScheduleService {
 
             // Store parent schedule ID
             Schedule scheduleDb = scheduleRepository.save(newSchedule);
-            parentScheduleId = month == 0 ? scheduleDb.getParentScheduleId() : parentScheduleId;
-            scheduleDb.setParentScheduleId(month == 0 ? scheduleDb.getParentScheduleId() : parentScheduleId);
+            parentScheduleId = month == 0 ? scheduleDb.getScheduleId() : parentScheduleId;
+            scheduleDb.setParentScheduleId(parentScheduleId);
             scheduleRepository.save(scheduleDb);
         }
     }
 
-    private int getMaxQuantity(LocalDateTime date, Cycle cycle, int remaining, int quantity) {
+    private int getMaxQuantity(LocalDateTime startDate, LocalDateTime endDate, Cycle cycle, int remaining, int quantity) {
         int maxForCycle = 1; // Default for ONLY_ONE_TIME
         LocalDateTime now = LocalDateTime.now();
 
         if (cycle == Cycle.EVERY_WEEK) {
-            maxForCycle = (int) ChronoUnit.WEEKS.between(now, date);
+            maxForCycle = (int) ChronoUnit.WEEKS.between(startDate, endDate) + 1;
         }
 
         if (cycle == Cycle.EVERY_MONTH) {
-            maxForCycle = (int) ChronoUnit.MONTHS.between(now, date);
+            maxForCycle = (int) ChronoUnit.MONTHS.between(startDate, endDate) + 1;
         }
 
         return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));
     }
 
-
-
-    public ResponseEntity<String> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO scheduleUpdateDTO, int scheduleId) {
-        if (isStatusInvalid(scheduleId)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
-        }
-
-        // TODO: validateAndProcessSchedule (Waiting hotfix/hardcode-create-schedule)
-
-        // I. Update only one time
-        if (scheduleUpdateDTO.getCycle().equals(Cycle.ONLY_ONE_TIME)) {
-            Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
-            if (schedule == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not find this service with service ID + " + scheduleId);
-            }
-
-            // 1. Update on the parent (the first schedule)
-
-            // 2. Update on the child (from the second after)
-            scheduleRepository.save(schedule);
-
-        }
-
-        // II. Update every week/ every month
-        // 1. Update on the parent (the first schedule)
-
-        // 2. Update on the child (from the second after)
-
-
-        return ResponseEntity.status(HttpStatus.OK).body("Doing...");
-    }
-
     private boolean isStatusInvalid(int scheduleId) {
         ScheduleStatus status = scheduleRepository.getByScheduleId(scheduleId).getStatus();
         return status != ScheduleStatus.PROCESSING && status != ScheduleStatus.PENDING;
+    }
+
+    private boolean isOutsideOfficeHours(LocalDateTime date) {
+        int hour = date.getHour();
+        return hour <= OFFICE_HOURS_START || hour >= OFFICE_HOURS_END;
+    }
+
+    private String formatDateTime(LocalDateTime dateTime) {
+        return dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
     }
 }

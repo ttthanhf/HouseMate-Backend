@@ -9,9 +9,9 @@ import housemate.entities.PackageServiceItem;
 @Repository
 public interface PackageServiceItemRepository extends JpaRepository<PackageServiceItem, Integer[]> {
 
-    Optional<List<PackageServiceItem>> findAllByPackageServiceId(int packageServiceId);
+	Optional<List<PackageServiceItem>> findAllByPackageServiceId(int packageServiceId);
 
-    Optional<PackageServiceItem> findByPackageServiceIdAndSingleServiceId(int packageServiceId, int singleServiceId);
+	Optional<PackageServiceItem> findByPackageServiceIdAndSingleServiceId(int packageServiceId, int singleServiceId);
 
-    List<PackageServiceItem> findAllSingleServiceIdByPackageServiceId(int packageServiceId);
+	List<PackageServiceItem> findAllSingleServiceIdByPackageServiceId(int packageServiceId);
 }

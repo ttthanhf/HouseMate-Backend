@@ -1,0 +1,74 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Java CI
+
+on:
+  push:
+    branches: [ "dev" ]
+
+jobs:
+  build-and-deploy:
+
+    runs-on: ubuntu-latest
+    environment: HOUSEMATE_BE_SECRETS
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Cache Maven Dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    - name: Add application.properties
+      run: echo "${{ secrets.APPLICATION_PROPERTIES }}" >> ./src/main/resources/application.properties
+
+    - name: Clean app
+      run: mvn clean
+
+    - name: Build app
+      run: mvn -B package --file pom.xml
+      
+    - name: Deloy app to server
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -r -o StrictHostKeyChecking=no ./target/${{ secrets.FILE_JAR }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
+
+    - name: Destroy running app
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -f ${{ secrets.FILE_JAR }}" || true
+
+    - name: Run app
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "cd ${{ secrets.SERVER_PATH }} && java -jar ${{ secrets.FILE_JAR }}" &
+
+    - name: Wait for app to start
+      run: sleep 20s
+
+    # - name: Verify app
+    #   run: |
+    #     sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "
+    #     cd ${{ secrets.SERVER_PATH }} &&
+    #     timeout 30s bash -c '
+    #       while true; do 
+    #         echo "$(sudo tail -n 1 nohup.out)"
+    #         if sudo tail -n 1 nohup.out | grep -q "Running default command line with"; then
+    #           break
+    #         fi
+    #         sleep 1s
+    #       done
+    #       '
+    #     "

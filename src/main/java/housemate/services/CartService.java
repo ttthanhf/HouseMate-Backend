@@ -4,15 +4,19 @@
  */
 package housemate.services;
 
+import housemate.constants.ImageType;
 import housemate.entities.Cart;
+import housemate.entities.Image;
 import housemate.entities.Period;
 import housemate.entities.Service;
 import housemate.models.CartDTO;
 import housemate.repositories.CartRepository;
+import housemate.repositories.ImageRepository;
 import housemate.repositories.PeriodRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,6 +41,9 @@ public class CartService {
     @Autowired
     private AuthorizationUtil authorizationUtil;
 
+    @Autowired
+    private ImageRepository imageRepository;
+
     public ResponseEntity<List<Cart>> getCart(HttpServletRequest request) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
@@ -46,6 +53,10 @@ public class CartService {
         for (Cart cart : listCart) {
 
             Service service = serviceRepository.getServiceByServiceId(cart.getServiceId());
+
+            List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST);
+            service.setImages(images);
+
             cart.setService(service);
             List<Period> listPeriod = periodRepository.getAllPeriodByServiceId(cart.getServiceId());
             cart.setListPeriod(listPeriod);
@@ -72,10 +83,11 @@ public class CartService {
 
         int cartLength = cartRepository.getCartLength(userId);
 
+        int periodId = cartDTO.getPeriodId();
+
         //if have item in cart -> update quantity and price only
         if (cart != null) {
 
-            int periodId = cartDTO.getPeriodId();
             if (periodId != 0) {
                 Period period = periodRepository.getPeriodByPeriodIdAndServiceId(periodId, serviceId);
                 if (period == null) {
@@ -98,8 +110,16 @@ public class CartService {
             return ResponseEntity.status(HttpStatus.OK).body(cartLength + ""); // ko toString được
         }
 
-        Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
-        int periodId = periodFirst.getPeriodId();
+        if (periodId != 0) {
+            Period period = periodRepository.getPeriodByPeriodIdAndServiceId(periodId, serviceId);
+            if (period == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Period id for this service not found !");
+            }
+        } else {
+            Period periodFirst = periodRepository.getPeriodByServiceIdAndGetFirstPeriodWithPeriodValue(serviceId);
+            periodId = periodFirst.getPeriodId();
+        }
+
         //if dont have item in cart -> create new item in cart
         cart = new Cart();
         cart.setUserId(userId);
