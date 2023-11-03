@@ -11,12 +11,12 @@ import lombok.Data;
 public class TaskReportNewDTO {
 
 	@NotNull
-    private TaskReportType taskStatus;
+	private TaskReportType taskStatus;
 
-    private String note;
+	private String note;
 
-    @Positive
-    @Nullable
-    private Integer quantityInPutForReturnServiceType;
-    
+	@Positive
+	@Nullable
+	private Integer qtyOfGroupReturn;
+
 }

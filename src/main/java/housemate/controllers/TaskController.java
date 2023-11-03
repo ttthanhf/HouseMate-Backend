@@ -36,7 +36,7 @@ public class TaskController {
 	TaskService taskServiceDao;
 	
 	@GetMapping("/tasks-pending-application")
-	@Operation(summary = "Get all tasks are opening  task form application")
+	@Operation(summary = "Get all tasks are opening for application")
 	public ResponseEntity<?> getAllTaskInPendingApplication(
 			@RequestParam(required = false) Optional<Sort.Direction> directionSort,
 			@RequestParam(required = false) Optional<Integer> page,
@@ -45,28 +45,31 @@ public class TaskController {
 	}
 	
 	@GetMapping("/staff")
-	@Operation(summary = "Filter the task status based on the current staff")
-	public ResponseEntity<?> getaAllKindOfTaskForStaffByTaskStatus(
+	@Operation(summary = "Filter the task status based on the current staff - Role: current STAFF only")
+	public ResponseEntity<?> getAllTaskForStaffByTaskStatus(
 			HttpServletRequest request,
 			@RequestParam(required = false)TaskStatus taskStatus,
 			@RequestParam(required = false) Optional<Integer> page,
 			@RequestParam(required = false) Optional<Integer> size) {
-		return taskServiceDao.getaAllKindOfTaskStatusForStaffByTaskStatus(request, taskStatus, page, size);
+		return taskServiceDao.getAllTaskForStaffByTaskStatus(request, taskStatus, page, size);
 	}
 	
 	@GetMapping("/{id}")
+	@Operation(summary = "View the specific task in details")
 	public ResponseEntity<?> getTaskInDetails(@PathVariable("id") int taskId) {
 		return taskServiceDao.getTaskInDetails(taskId);
 	}
 	
 	@GetMapping("/schedule/{id}")
-	public ResponseEntity<?> getTaskInDetailsByScheduleForCustomerView(
+	@Operation(summary = "View the task in details of specific schedule - Role: current CUSTOMER + ADMIN")
+	public ResponseEntity<?> getTaskViewInDetailsForCustomerByScheduleId(
 			HttpServletRequest request,
 			@PathVariable("id") int scheduleId) {
-		return taskServiceDao.getTaskInDetailsByScheduleForCustomerView(request, scheduleId);
+		return taskServiceDao.getTaskViewInDetailsForCustomerByScheduleId(request, scheduleId);
 	}
 	
 	@PostMapping("/new/schedule/{id}")
+	@Operation(summary = "View the task in details of specific schedule - Role: CUSTOMER - owner of the schedule")
 	public ResponseEntity<?> createNewTask(
 			HttpServletRequest request,
 			@PathVariable("id") int scheduleId) {
@@ -74,6 +77,7 @@ public class TaskController {
 	}
 	
 	@DeleteMapping("/cancel/schedule/{id}")
+	@Operation(summary = "Cancel the task of specific schedule - Role: CUSTOMER - owner of the schedule + STAFF - reponsible for doing the task of this schedule")
 	public ResponseEntity<?> cancelTask(
 			HttpServletRequest request,
 			@PathVariable("id") int scheduleId) {
@@ -81,7 +85,8 @@ public class TaskController {
 	}
 	
 	@PutMapping("/new-time/schedule")
-	public ResponseEntity<?> cancelTask(
+	@Operation(summary = "Update the task timeworking based on specific schedule - Role: CUSTOMER - owner of the schedule")
+	public ResponseEntity<?> updateTaskTimeWorking(
 			HttpServletRequest request,
 			Schedule oldSchedule,
 			Schedule newSchedule) {
@@ -89,6 +94,7 @@ public class TaskController {
 	}
 	
 	@PostMapping("{id}/staff/application")
+	@Operation(summary = "Apply for doing specific task - Role: STAFF only")
 	public ResponseEntity<?> approveStaff(
 			HttpServletRequest request,
 			@PathVariable("id") int taskId) {
@@ -96,6 +102,7 @@ public class TaskController {
 	}
 
 	@PostMapping("{id}/staff/reports")
+	@Operation(summary = "Report task progression of specific task - Role: STAFF responsible for this task")
 	public ResponseEntity<?> reportTaskByStaff(
 			HttpServletRequest request,
 			@PathVariable("id") int taskId,
@@ -105,9 +112,15 @@ public class TaskController {
 	}
 	
 	@GetMapping("{id}/reports")
-	public ResponseEntity<?> reportTaskByStaff(
+	@Operation(summary = "View task progressions of specific task")
+	public ResponseEntity<?> getTaskReportListByTask(
 			@PathVariable("id") int taskId) {
 		return taskServiceDao.getTaskReportListByTask(taskId);
+	}
+	
+	@GetMapping("/staffs")
+	public ResponseEntity<?> getAllStaffs() {
+		return taskServiceDao.getAllStaff();
 	}
 	
 	

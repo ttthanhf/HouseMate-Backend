@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import housemate.constants.Enum.TaskStatus;
-import java.util.List;
 
 /**
  *
@@ -31,9 +30,6 @@ public class Task {
 	@Column(name = "service_schedule_id")
 	private int scheduleId;
 	
-	@Column(name = "parent_schedule_id")
-	private int parentScheduleId;
-
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
 

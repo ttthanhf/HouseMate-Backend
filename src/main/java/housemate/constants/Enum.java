@@ -50,14 +50,14 @@ public class Enum {
 		SERVICE_UNITS;
 	}
 	
-	public enum StaffWorkingStatus {
+	public enum AccountStatus {
 		ACTIVE,
 		INACTIVE,
 		BANNED;
 	}
 	
 	public enum TaskStatus {
-		PENDING_APPLICATION, //waiting for staff apply apply for job
+		PENDING_APPLICATION,//waiting for staff apply apply for job
 		PENDING_WORKING,//found staff - waiting for staff coming
 		INCOMING,//staff coming in around 4 5 6 12 hour
 		CANCELLED_CAUSE_NOT_FOUND_STAFF,
