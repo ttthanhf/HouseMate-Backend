@@ -57,9 +57,9 @@ jobs:
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "
         timeout 30s bash -c '
           while true; do 
-            if [ \"$(curl -s http://localhost:8080)\" == \"Token empty\" ]; then
+            echo $(sudo curl -s http://localhost:8080)
+            if [ \"$(sudo curl -s http://localhost:8080)\" == \"Token empty\" ]; then
               break
-            else echo $(curl -s localhost:8080)
             fi
             sleep 1s
           done
