@@ -410,7 +410,7 @@ public class ScheduleService {
         }
 
         if (cycle == Cycle.EVERY_MONTH) {
-            maxForCycle = (int) ChronoUnit.MONTHS.between(startDate, endDate);
+            maxForCycle = (int) ChronoUnit.MONTHS.between(startDate, endDate) + 1;
         }
 
         return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));
