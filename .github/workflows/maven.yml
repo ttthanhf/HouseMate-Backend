@@ -40,10 +40,13 @@ jobs:
     - name: Add application.properties
       run: echo "${{ secrets.APPLICATION_PROPERTIES }}" >> ./src/main/resources/application.properties
 
-    - name: Build with Maven
+    - name: Clean app
+      run: mvn clean
+
+    - name: Build app
       run: mvn -B package --file pom.xml
       
-    - name: Deloy to server
+    - name: Deloy app to server
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -r -o StrictHostKeyChecking=no ./target/${{ secrets.FILE_JAR }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
 
     - name: Destroy running app
