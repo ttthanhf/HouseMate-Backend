@@ -11,10 +11,10 @@ public class Enum {
 		PACKAGE
 	}
 
-	public static enum UsageDurationUnit {
+	public static enum TimeUnit {
+		MONTH,
 		DAY,
-		WEEK,
-		MONTH
+		WEEK
 	}
 
 	public static enum SortRequired {
@@ -28,23 +28,22 @@ public class Enum {
 		DISCONTINUED
 	}
 
-	public static enum UnitOfMeasure {
-		HOUR,
-		KG,
-		TIME,
-		BOTTLE,
-                ITEM,
-		COMBO
-	}
-	
 	@Getter
 	@AllArgsConstructor
 	public static enum ServiceField {
-		NAME("titleName"),
-		PRICE("finalPrice"),
+		NAME("titleName"), PRICE("finalPrice"),
 		NUMBER_OF_SOLD("numberOfSold");
 
 		private String fieldName;
 	}
-
+	
+	public enum ServiceConfiguration {
+		SERVICE_GROUPS,
+		SERVICE_UNITS,
+		OFFICE_HOURS_START,
+		OFFICE_HOURS_END,
+		FIND_STAFF_HOURS,
+		MINIMUM_RETURN_HOURS
+	}
+	
 }

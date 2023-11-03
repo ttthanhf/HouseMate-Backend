@@ -41,7 +41,7 @@ public class ScheduleController {
         return service.getScheduleForStaff(request);
     }
 
-    @Operation(summary = "Get staff schedule by user ID")
+    @Operation(summary = "Get all schedule for the staff by staff ID (userId)")
     @GetMapping("/staff/{userId}")
     public ResponseEntity<List<EventRes>> getStaffScheduleByUserId(@PathVariable int userId) {
         return service.getStaffScheduleByUserId(userId);
@@ -52,30 +52,6 @@ public class ScheduleController {
     public ResponseEntity<Set<PurchasedServiceRes>> getAllPurchased(HttpServletRequest request) {
         return service.getAllPurchased(request);
     }
-
-//    @Operation(summary = "Create schedule for Hourly Service")
-//    @PostMapping("/create/hourly")
-//    public ResponseEntity<String> createHourlySchedule(
-//            HttpServletRequest request, @Valid @RequestBody HourlyScheduleDTO hourlyScheduleDTO
-//    ) {
-//        return service.createHourlySchedule(request, hourlyScheduleDTO);
-//    }
-//
-//    @Operation(summary = "Create schedule for Return Service")
-//    @PostMapping("/create/return")
-//    public ResponseEntity<String> createReturnSchedule(
-//            HttpServletRequest request, @Valid @RequestBody ReturnScheduleDTO returnScheduleDTO
-//    ) {
-//        return service.createReturnSchedule(request, returnScheduleDTO);
-//    }
-//
-//    @Operation(summary = "Create schedule for Delivery Service")
-//    @PostMapping("/create/delivery")
-//    public ResponseEntity<String> createDeliverySchedule(
-//            HttpServletRequest request, @Valid @RequestBody DeliveryScheduleDTO deliveryScheduleDTO
-//    ) {
-//        return service.createDeliverySchedule(request, deliveryScheduleDTO);
-//    }
 
     @Operation(summary = "Create schedule")
     @PostMapping("/create")

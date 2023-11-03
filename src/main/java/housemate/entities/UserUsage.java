@@ -7,6 +7,7 @@ package housemate.entities;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.Data;
+import lombok.SneakyThrows;
 
 /**
  *
@@ -15,7 +16,7 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name = "user_usage")
-public class UserUsage {
+public class UserUsage implements Cloneable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,7 +46,13 @@ public class UserUsage {
 
     @Column(name = "is_expired")
     private boolean isExpired;
-    
+
+    @SneakyThrows
+    @Override
+    public UserUsage clone() {
+        return (UserUsage) super.clone();
+    }
+
     @Transient
     private Service service;
 }
