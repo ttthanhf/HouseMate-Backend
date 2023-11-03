@@ -129,7 +129,7 @@ public class ScheduleService {
             // Check expiration and run out of remaining
             int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(userUsage.getUserUsageId());
             int remaining = userUsage.getRemaining() - totalUsed;
-            if (remaining == 0 || userUsage.getEndDate().isBefore(LocalDateTime.now())) continue;
+            if (remaining <= 0 || userUsage.getEndDate().isBefore(LocalDateTime.now())) continue;
 
             // Query the relationship to get data in database
             int serviceId = userUsage.getServiceId();
