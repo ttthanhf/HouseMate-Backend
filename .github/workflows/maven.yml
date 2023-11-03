@@ -50,15 +50,16 @@ jobs:
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -f ${{ secrets.FILE_JAR }}" || true
 
     - name: Run app
-      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "cd ${{ secrets.SERVER_PATH }} && java -jar ${{ secrets.FILE_JAR }}" &
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "cd ${{ secrets.SERVER_PATH }} && nohup java -jar ${{ secrets.FILE_JAR }}" &
 
     - name: Verify app
       run: |
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "
+        cd ${{ secrets.SERVER_PATH }} &&
         timeout 30s bash -c '
           while true; do 
-            echo "$(sudo tail -n 1 ${{ secrets.SERVER_PATH }}nohup.out)"
-            if sudo tail -n 1 ${{ secrets.SERVER_PATH }}nohup.out | grep -q "Running default command line with"; then
+            echo "$(sudo tail -n 1 nohup.out)"
+            if sudo tail -n 1 nohup.out | grep -q "Running default command line with"; then
               break
             fi
             sleep 1s
