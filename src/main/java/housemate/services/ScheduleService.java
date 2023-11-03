@@ -262,7 +262,6 @@ public class ScheduleService {
         // Validate quantity
         int forecastQuantity = getMaxQuantity(startDate, userUsage.getEndDate(), schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve());
         int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(schedule.getUserUsageId());
-        System.out.println(forecastQuantity + " - " + totalUsed);
         if (forecastQuantity == 0 || forecastQuantity * schedule.getQuantityRetrieve() + totalUsed > userUsage.getRemaining()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage or decrease your quantity");
         }
