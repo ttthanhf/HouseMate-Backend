@@ -395,8 +395,8 @@ public class ScheduleService {
 
             // Store parent schedule ID
             Schedule scheduleDb = scheduleRepository.save(newSchedule);
-            parentScheduleId = month == 0 ? scheduleDb.getParentScheduleId() : parentScheduleId;
-            scheduleDb.setParentScheduleId(month == 0 ? scheduleDb.getParentScheduleId() : parentScheduleId);
+            parentScheduleId = month == 0 ? scheduleDb.getScheduleId() : parentScheduleId;
+            scheduleDb.setParentScheduleId(parentScheduleId);
             scheduleRepository.save(scheduleDb);
         }
     }
