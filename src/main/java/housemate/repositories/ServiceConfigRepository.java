@@ -19,6 +19,8 @@ public interface ServiceConfigRepository extends JpaRepository<ServiceConfig, In
 	Optional<ServiceConfig> findByConfigTypeAndConfigValue(@Param("configType") String configType,
 			@Param("configValue") String configValue);
 
+	ServiceConfig findFirstByConfigType(ServiceConfiguration configType);
+
 	List<ServiceConfig> findAllByConfigType(ServiceConfiguration configType);
 
 }
