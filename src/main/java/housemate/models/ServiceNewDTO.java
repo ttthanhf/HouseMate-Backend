@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import housemate.constants.Enum.GroupType;
 import housemate.constants.Enum.SaleStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
