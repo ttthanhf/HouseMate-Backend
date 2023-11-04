@@ -27,6 +27,7 @@ import housemate.constants.Enum.TaskStatus;
 import housemate.constants.ImageType;
 import housemate.constants.Role;
 import housemate.constants.ScheduleStatus;
+import static housemate.constants.ServiceTaskConfig.*;
 import housemate.entities.Image;
 import housemate.entities.Order;
 import housemate.entities.Schedule;
@@ -104,6 +105,7 @@ public class TaskBuildupService {
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 	
 	private static final Map<Integer, ScheduledFuture<?>> eventNotiList = new HashMap<>();
+	
 
 	
 	//======CREATE TASK======
@@ -114,38 +116,29 @@ public class TaskBuildupService {
 			// get all schedule and filter which schedule will coming up in tomorrow
 			List<Schedule> schedules = scheduleRepo.findAllScheduleInUpComing(ScheduleStatus.PROCESSING, 1);
 			// generate task for these schedule
-			if (!schedules.isEmpty()) {
-				for (Schedule schedule : schedules)
-					taskList.add(this.createTask(schedule));
-				TaskBuildupService.createAndSendNotification("NEW TASK COMING !", "UPCOMING TASK",
-						List.of(staffRepo.findAll().stream().map(x -> x.getStaffId())));
-			} else
-				taskList = List.of();
+			if (schedules.isEmpty())
+				return List.of();
+			for (Schedule schedule : schedules)
+				taskList.add(this.createTask(schedule));
+			TaskBuildupService.createAndSendNotification("NEW TASK COMING !", "UPCOMING TASK",
+					List.of(staffRepo.findAll().stream().map(x -> x.getStaffId())));
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return taskList;
 	}
-
+	
 	public List<Task> createTaskOnUpComingSchedule(Schedule newSchedule) {
 		List<Schedule> schedules = scheduleRepo.findAllByParentScheduleAndInUpComing(ScheduleStatus.PROCESSING, 1, newSchedule.getScheduleId());
 		List<Task> taskList = new ArrayList<>();
-		if (schedules != null || !schedules.isEmpty()) {
-			for (Schedule theSchedule : schedules)
-				this.createTask(theSchedule);
+		if (schedules.isEmpty()) 
+				return List.of();
+		for (Schedule theSchedule : schedules) {
+			taskList.add(this.createTask(theSchedule));
 		}
-		schedules = scheduleRepo.findAllByParentScheduleAndInUpComing(ScheduleStatus.PROCESSING_ONTASK, 1, newSchedule.getScheduleId());
-		if (schedules != null || !schedules.isEmpty()) {
-			if (schedules != null || !schedules.isEmpty()) {
-				for (Schedule theSchedule : schedules)
-					taskList.add(taskRepo.findExistingTaskForSchedule(theSchedule.getScheduleId()));
-			}
-			TaskBuildupService.createAndSendNotification("NEW TASK COMING !", "UPCOMING TASK",
-					List.of(staffRepo.findAll().stream().map(x -> x.getStaffId())));
-		}
-		else 
-			taskList = List.of();
-		
+		TaskBuildupService.createAndSendNotification("NEW TASK COMING !", "UPCOMING TASK",
+				List.of(staffRepo.findAll().stream().map(x -> x.getStaffId())));
 		return taskList;
 	}
 
@@ -153,7 +146,7 @@ public class TaskBuildupService {
 	public Task createTask(Schedule schedule) {
 		// Check if the task for this schedule have created before by system
 		Task task = taskRepo.findExistingTaskForSchedule(schedule.getScheduleId());
-		log.info("IS TASK HAS EXISTED == CREATE {}" + task);
+		log.info("SCHEDULE ID {} - IS TASK HAS EXISTED == CREATE {}", schedule.getScheduleId(), task);
 		Task savedTask = null;
 		try {
 			if (task == null) {
@@ -163,8 +156,11 @@ public class TaskBuildupService {
 				task.setTaskStatus(TaskStatus.PENDING_APPLICATION);
 				task.setStaffId(null);
 				task.setReceivedAt(null);
-				scheduleRepo.findById(schedule.getScheduleId()).ifPresent(s -> s.setStatus(ScheduleStatus.PROCESSING_ONTASK));
 				savedTask = taskRepo.save(task);
+				Schedule scheduleToUpdate = scheduleRepo.findById(schedule.getScheduleId()).get();
+				scheduleToUpdate.setStatus(ScheduleStatus.PROCESSING);
+				scheduleToUpdate.setOnTask(true);
+				scheduleRepo.save(scheduleToUpdate);
 				//TODO: CREATE EVENT
 				this.createEventSendNotiWhenTimeComing(task, schedule.getStartDate());
 				this.createEventSendNotiUpcomingTask(task, schedule.getStartDate(),5);
@@ -194,8 +190,8 @@ public class TaskBuildupService {
 				});
 			}
 			
-			Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
-			UserAccount customerInfoFrAcc = userRepo.findById(schedule.getCustomerId()).get();
+			Schedule schedule = scheduleRepo.findById(task.getScheduleId()).orElse(null);
+			UserAccount customerInfoFrAcc = userRepo.findById(schedule.getCustomerId()).orElse(null);
 			List<Image> customerAvatar = imgRepo
 					.findAllByEntityIdAndImageType(customerInfoFrAcc.getUserId(), ImageType.AVATAR)
 					.orElse(List.of());
@@ -350,15 +346,14 @@ public class TaskBuildupService {
 		long hoursDiff = ChronoUnit.HOURS.between(timeNow, timeStartWorking);
 		TaskRes<Task> taskRes = null;
 
-		//TODO: CHECK DUPLICATE TIME WORKING
 		if (!task.getTaskStatus().equals(TaskStatus.PENDING_APPLICATION))
 			taskRes = TaskRes.build(task, TaskMessType.REJECT_APPROVE_STAFF,
 					"Waiting the task to open for applications !");
 
-		if (staff.getProfiencyScore() < 30 && hoursDiff > 3) {
+		if (staff.getProfiencyScore() < BAD_STAFF_PROFICIENT_SCORE && hoursDiff > DURATION_TIMES_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY) 
 			taskRes = TaskRes.build(task, TaskMessType.REJECT_APPROVE_STAFF,
-					"Unsufficent profiency score. Comback to apply if the task not found any staff before the time schedule starts 3 hours !");
-		}
+					"Unsufficent profiency score. Comback to apply if the task not found any staff before the time schedule starts " + DURATION_TIMES_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY + "hours !");
+		
 		if (staff.getProfiencyScore() >= 30 || (staff.getProfiencyScore() < 30 && hoursDiff <= 3 && hoursDiff > 0)) {
 			try {
 				task.setStaffId(staff.getStaffId());
@@ -368,8 +363,6 @@ public class TaskBuildupService {
 				task.getSchedule().setStatus(ScheduleStatus.PENDING);
 				task.getSchedule().setStaffId(staff.getStaffId());
 				taskRes = TaskRes.build(task, TaskMessType.OK, "Approved staff Successfully !");
-
-				// SEND NOTI FOUND STAFF FOR CUSTOMER
 				TaskBuildupService.createAndSendNotification(
 						"We have found staff will work on your schedule. Let contact with our staff !", "FOUND STAFF",
 						List.of(task.getSchedule().getCustomerId()));
@@ -390,17 +383,23 @@ public class TaskBuildupService {
 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 					"The kind of service not exist to report task of this service");
 		}
-		TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
-				TaskStatus.valueOf(taskReport.name()));
-		if (checkReportExists != null)
-			return TaskRes.build(checkReportExists, TaskMessType.OK, "You have already report task for this status !");
-
+		TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(), TaskStatus.valueOf(taskReport.name()));
+		if (checkReportExists != null) {
+			checkReportExists.setNote(reportNewDTO.getNote());
+			return TaskRes.build(checkReportExists, TaskMessType.OK,
+					"Update report successfully");
+		}
 		try {
 			taskReportResult.setTaskId(task.getTaskId());
 			taskReportResult.setReportAt(LocalDateTime.now());
 			taskReportResult.setNote(reportNewDTO.getNote());
 			switch (taskReport) {
 			case ARRIVED: {
+				//Checkconstraint
+				long minutesDiff = ChronoUnit.MINUTES.between(LocalDateTime.now(dateTimeZone), task.getSchedule().getStartDate());
+				if (minutesDiff > DURATION_MINUTES_TIMES_STAFF_START_REPORT)
+					return TaskRes.build(checkReportExists, TaskMessType.REJECT_REPORT_TASK,
+							"Please wait for the task report open to start report task progression. Task report wiil open at " + task.getSchedule().getStartDate().minusMinutes(DURATION_MINUTES_TIMES_STAFF_START_REPORT));
 				// Set up
 				task.setTaskStatus(TaskStatus.ARRIVED);
 				task.getSchedule().setStatus(ScheduleStatus.INCOMING);
@@ -422,7 +421,7 @@ public class TaskBuildupService {
 				boolean isReturnService = serviceInUsed.getGroupType().equals("RETURN_SERVICE");
 				if (isReturnService) {
 					Integer quantity = reportNewDTO.getQtyOfGroupReturn();
-					if (quantity != null)
+					if (quantity == null)
 						return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 								"Please fill the quantity for the service in type \"Return service\"");
 					if (!(serviceInUsed.getMin() == 0 && serviceInUsed.getMax() == 0))
@@ -432,7 +431,7 @@ public class TaskBuildupService {
 											+ " - " + serviceInUsed.getMax() + "]");
 					if (!(quantity <= userUsage.getRemaining() && quantity > 0))
 						return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-								"Please fill the quantity for the service in range [" + 1 + " - "
+								"Oops, You only have the quantity of " + userUsage.getRemaining() + ". Please fill the quantity for the service in range [" + 1 + " - "
 										+ userUsage.getRemaining() + "]");
 					task.getSchedule().setQuantityRetrieve(quantity);
 				}
@@ -454,9 +453,13 @@ public class TaskBuildupService {
 							"Please report task progress for the status ARRIVED ");
 				TaskReport checkDoingReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
 						TaskStatus.DOING);
-				if (checkArrivedReportExists == null)
+				if (checkDoingReportExists == null)
 					return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 							"Please report task progress the status DOING ");
+				if (LocalDateTime.now().isBefore(task.getSchedule().getEndDate()))
+					return TaskRes.build(checkReportExists, TaskMessType.REJECT_REPORT_TASK,
+							"You only allow report task progression DONE after at the time the the task end working require: " + task.getSchedule().getEndDate());
+			
 				// Set up
 				task.setTaskStatus(TaskStatus.DONE);
 				task.getSchedule().setStatus(ScheduleStatus.DONE);

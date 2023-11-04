@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import housemate.constants.Enum.TaskStatus;
 import housemate.entities.Task;
+import housemate.entities.TaskReport;
 
 public interface TaskReposiotory extends JpaRepository<Task, Integer> {
 
