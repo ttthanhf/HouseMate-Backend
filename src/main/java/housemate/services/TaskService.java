@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +26,7 @@ import housemate.constants.Enum.TaskReportType;
 import housemate.constants.Enum.TaskStatus;
 import housemate.constants.ImageType;
 import housemate.constants.Role;
+import housemate.entities.Customer;
 import housemate.entities.Image;
 import housemate.entities.Schedule;
 import housemate.entities.Staff;
@@ -31,6 +35,7 @@ import housemate.entities.TaskReport;
 import housemate.entities.UserAccount;
 import housemate.models.TaskReportNewDTO;
 import housemate.models.TaskViewDTO;
+import housemate.repositories.CustomerRepository;
 import housemate.repositories.ImageRepository;
 import housemate.repositories.ScheduleRepository;
 import housemate.repositories.StaffRepository;
@@ -41,6 +46,8 @@ import housemate.responses.TaskRes;
 import housemate.responses.TaskRes.TaskMessType;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import static housemate.constants.ServiceTaskConfig.*;
+
 
 @Component
 public class TaskService {
@@ -67,12 +74,14 @@ public class TaskService {
 	ImageRepository imgRepo;
 	
 	@Autowired
-	StaffRepository staffRepos;
+	CustomerRepository customerRepo;
 	
 	@Autowired
     AuthorizationUtil authorizationUtil;
 	
 	private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
+	
+	private static final Logger log = LoggerFactory.getLogger(TaskService.class);
 
 
 	// VIEW TASK PENDING APPLICATION
@@ -175,20 +184,20 @@ public class TaskService {
 	//CREATE TASK BY CUSTOMER
 	public ResponseEntity<?> createNewTask(HttpServletRequest request, int scheduleId){
 		Schedule schedule = scheduleRepo.findById(scheduleId).orElse(null);
+		int customerIdRequestCreate = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+		
 		if(schedule == null)
 			return ResponseEntity.badRequest().body("Schedule not exists to create !");
+		if(customerIdRequestCreate != schedule.getCustomerId())
+			return ResponseEntity.badRequest().body("You are not the owner of this schedule !");
 		if(schedule.getStatus().equals(ScheduleStatus.CANCEL) && taskRepo.findByScheduleIdAndTaskStatus(scheduleId, TaskStatus.CANCELLED_CAUSE_NOT_FOUND_STAFF) != null)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
 					"This task has been cancelled because not found any staff for your schedule. Let create another schedule if you want to continue");
 		if(schedule.getStatus().equals(ScheduleStatus.CANCEL)) 
 			return ResponseEntity.badRequest().body("Can not create task because you have cancelled this schedule !");
 		
-		int customerIdRequestCreate = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-		if(customerIdRequestCreate != schedule.getCustomerId())
-			return ResponseEntity.badRequest().body("You are not the owner of this schedule !");
-		
 		if(taskRepo.findExistingTaskForSchedule(scheduleId) != null)
-			return ResponseEntity.ok().body("This task has already created  !");
+			return ResponseEntity.ok().body("This task has already created !");
 
 		List<Task> task = taskBuildupServ.createTaskOnUpComingSchedule(schedule);
 		if(task.isEmpty()) 
@@ -200,24 +209,26 @@ public class TaskService {
 	
 	//CANCEL TASK
 	public ResponseEntity<?> cancelTask(HttpServletRequest request, int scheduleId) {
-		
 		int userIdRequestCancel = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 		
 		Schedule scheduleToBeCancelled = scheduleRepo.findById(scheduleId).orElse(null);
 		if(scheduleToBeCancelled == null)
 			return ResponseEntity.badRequest().body("Schedule not exists to cancel");
-		
+
 		UserAccount userCancel = userRepo.findByUserId(userIdRequestCancel);
 		if(userCancel == null) 
 			return ResponseEntity.badRequest().body("User not found to allow cancel !");
-		
-		
+
+
 		TaskRes taskRes = null;
 		Task taskToBeCancelled = taskRepo.findExistingTaskForSchedule(scheduleId);
 		Role role = userCancel.getRole();
+		Customer customer = customerRepo.findById(userCancel.getUserId()).orElse(null);
 		LocalDateTime timeStartOfScheduleToBeCancel = scheduleToBeCancelled.getStartDate();
 		LocalDateTime timeNow = LocalDateTime.now(dateTimeZone);
 		long hours = ChronoUnit.HOURS.between(timeNow, timeStartOfScheduleToBeCancel);
+
+		
 		
 		if(role.equals(Role.CUSTOMER) || role.equals(Role.ADMIN)) {
 			if(userIdRequestCancel != scheduleToBeCancelled.getCustomerId()) 
@@ -228,35 +239,36 @@ public class TaskService {
 						"This task has been cancelled because not found any staff for your schedule. Let create another schedule if you want to continue");
 			if(userIdRequestCancel == scheduleToBeCancelled.getCustomerId() && scheduleToBeCancelled.getStatus().equals(ScheduleStatus.CANCEL))
 				return ResponseEntity.ok().body("You have already cancel this schedule !");
+			if(customer.isBanned())
+				return ResponseEntity.ok().body("You are banned - Cannot cancel this task anymore !");
 			taskToBeCancelled = taskBuildupServ.cancelTaskByRole(Role.CUSTOMER, scheduleToBeCancelled, "The customer has cancelled the task !");
-			if (hours < 3 && hours > 0 && taskToBeCancelled.equals(TaskStatus.PENDING_WORKING)) {
-				if(!taskToBeCancelled.getTaskStatus().equals(TaskStatus.ARRIVED)){
-					//TODO: SUBSTRACT CUSTOMER RELIABLE SCORE
+			if (hours < DURATION_TIMES_CUSTOMER_SHOULD_NOT_CANCEL_TASK) {
+				if (taskToBeCancelled.getStaff() != null) {
+					int subtract = customer.getProfiencyScore() - MINUS_POINTS_FOR_CUSTOMER_CANCEL_TASK;
+					customer.setProfiencyScore(subtract < 0 ? 0 : subtract);
+					if(customer.getProfiencyScore() == 0)
+						customer.setBanned(true);
+						taskBuildupServ.createAndSendNotification("You are banned for cancel task of this schedule for many times", "BANNED CUSTOMER", List.of(customer.getCustomerId()));
 				}
 			}
 		}
-		if(role.equals(Role.STAFF)) {
+		if(role.equals(Role.STAFF)) {	
 			if(userIdRequestCancel != scheduleToBeCancelled.getStaffId()) 
 				return ResponseEntity.badRequest().body("You are not allow to cancel task of this schedule !");
 			taskToBeCancelled = taskBuildupServ.cancelTaskByRole(Role.STAFF, scheduleToBeCancelled, "The staff has cancelled the task !");
-			if (hours < 4 ) {
+			if (hours < DURATION_TIMES_STAFF_SHOULD_NOT_CANCEL_TASK) {
 				Staff staff = staffRepo.findById(userCancel.getUserId()).get();
-				int subtract = staff.getProfiencyScore() - 10;
+				int subtract = staff.getProfiencyScore() - MINUS_POINTS_FOR_STAFF_CANCEL_TASK;
 				staff.setProfiencyScore(subtract < 0 ? 0 : subtract);
 				if(staff.getProfiencyScore() == 0)
 					staff.setBanned(true);
+				taskBuildupServ.createAndSendNotification("You are banned for cancel task of this schedule for many times", "BANNED CUSTOMER", List.of(staff.getStaffId()));
+
 			}
-		}			
-		if (taskToBeCancelled == null) {
-			taskRes = TaskRes.build(taskToBeCancelled, TaskMessType.REJECT_CANCELLED, "Task not found to cancel");
-			return ResponseEntity.badRequest().body(taskRes);
 		}
-		taskRes = TaskRes.build(taskToBeCancelled, TaskMessType.OK, "The task of this schedule has been cancelled successfully !");
-				
-		Task cancelledTask = (Task) taskRes.getObject();
-		TaskViewDTO cancelledTaskView = taskBuildupServ.convertIntoTaskViewDtoFromTask(cancelledTask);
-		
-		return ResponseEntity.ok().body(cancelledTaskView);
+		if (taskToBeCancelled == null)
+			return ResponseEntity.badRequest().body("Task not found to cancel");
+		return ResponseEntity.ok().body("The task of this schedule has been cancelled successfully !");
 	}
 	
 	// UPDATE TASK TO CHANGE THE TIME
@@ -290,22 +302,23 @@ public class TaskService {
 	// APPROVE TASK
 	public ResponseEntity<?> approveStaff(HttpServletRequest request, int taskId) {
 		String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
-		if (!role.equals(Role.STAFF.name()))
+		if(!role.equals(Role.STAFF.name()))
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied - Only staff can apply");
 		
-		
-
 		int staffId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 		Staff staff = staffRepo.findById(staffId).orElse(null);
-		if (staff == null)
+		if(staff == null)
 			return ResponseEntity.badRequest().body("Staff not exists to be approved");
-		if (staff.isBanned())
+		if(staff.isBanned())
 			return ResponseEntity.badRequest().body("You are not allow to apply any task cause you are banned !");
-
+		
 		Task task = taskRepo.findById(taskId).orElse(null);
 		if (task == null)
 			return ResponseEntity.badRequest().body("Task not exists to be applied");
-
+		if(task.getTaskStatus().name().contains("CANCELLED"))
+			return ResponseEntity.badRequest().body("Cannot apply for this task - the task has been cancelled !");
+		if(scheduleRepo.findByStaffIdAndStartDate(staff.getStaffId(), task.getSchedule().getStartDate()) != null ) 
+			return ResponseEntity.badRequest().body("You cannot apply for this task cause you have duplicated time start to work!"); 
 		if(task.getStaffId() != null && task.getStaffId() != staffId)
 			return ResponseEntity.badRequest().body("Sorry, The task has already applied by another staff !");
 		
@@ -318,7 +331,6 @@ public class TaskService {
 
 		Task approvedTask = (Task) taskRes.getObject();
 		TaskViewDTO approvedTaskView = taskBuildupServ.convertIntoTaskViewDtoFromTask(approvedTask);
-
 		return ResponseEntity.ok().body(approvedTaskView);
 	}
 
@@ -334,14 +346,16 @@ public class TaskService {
 		if (!(taskToBeReported.getStaffId() != null 
 				&& !taskToBeReported.getTaskStatus().name().contains("CANCELLED")
 				&& userReportRole.equals(Role.STAFF) 
-				&& taskToBeReported.getStaffId() == taskToBeReported.getStaffId()))
+				&& userReport == taskToBeReported.getStaffId()))
 			return ResponseEntity.badRequest().body("You are not allow to report task progress for this task");
 
 		TaskRes<TaskReport> taskReportedRes = taskBuildupServ.reportTask(taskToBeReported, taskReportType, reportnewDTO);
-		if (taskReportedRes == null || taskReportedRes.getObject() == null)
+		if (taskReportedRes == null)
 			return ResponseEntity.badRequest().body("Task reported failed");
 		if (taskReportedRes.getMessType().name().contains("REJECT"))
 			return ResponseEntity.badRequest().body(taskReportedRes.getMessage());
+
+
 
 		return ResponseEntity.ok().body(taskReportedRes.getObject());
 	}

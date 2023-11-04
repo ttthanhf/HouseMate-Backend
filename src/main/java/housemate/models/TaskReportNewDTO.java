@@ -10,9 +10,6 @@ import lombok.Data;
 @Data
 public class TaskReportNewDTO {
 
-	@NotNull
-	private TaskReportType taskStatus;
-
 	private String note;
 
 	@Positive

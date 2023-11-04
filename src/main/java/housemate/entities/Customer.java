@@ -1,7 +1,5 @@
 package housemate.entities;
 
-import housemate.constants.Role;
-
 import org.hibernate.annotations.Where;
 
 import housemate.constants.Enum.AccountStatus;
@@ -22,22 +20,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Where(clause = "role = 'STAFF'" )
-public class Staff {
-
+@Where(clause = "role = 'CUSTOMER'")
+public class Customer {
 	@Id
 	@Column(name = "user_id")
-	private int staffId;
+	private int customerId;
 	
 	@OneToOne
 	@JoinColumn(name = "user_id", referencedColumnName = "user_id", updatable = false, insertable = false)
-	private UserAccount staffInfo;
+	private UserAccount customerInfo;
 	
 	@Column(name = "profiency_score")
 	private int profiencyScore;
-	
-	@Column(name = "avg_rating")
-	private float avgRating;
 	
 	@Column(name = "account_status")
 	@Enumerated(EnumType.STRING)
@@ -45,6 +39,4 @@ public class Staff {
 	
 	@Column(name = "is_banned")
 	private boolean isBanned;
-	
-	
 }
