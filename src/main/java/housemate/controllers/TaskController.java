@@ -26,7 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@CrossOrigin
+@CrossOrigin(origins = "*")
 @Tag(name = "Task")
 @RequestMapping("/tasks")
 @SecurityRequirement(name = "bearerAuth")
