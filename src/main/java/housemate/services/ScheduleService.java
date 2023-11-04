@@ -320,9 +320,13 @@ public class ScheduleService {
         int differenceHours = groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_HOURS : 1;
         LocalDateTime minimumEndDate = LocalDateTime.now().plusHours(FIND_STAFF_HOURS + differenceHours);
         if (isOutsideOfficeHours(minimumEndDate)) {
-            LocalDateTime newDate = minimumEndDate.plusDays(1).withHour(7).withMinute(0).withSecond(0);
+            // If minimumEndDate started on a next day
+            boolean isNextDate = minimumEndDate.getHour() > OFFICE_HOURS_START;
 
-            if (newDate.isAfter(startDate)) {
+            // Assign minimumEndDate at 7:00:00
+            LocalDateTime newDate = minimumEndDate.withHour(7).withMinute(0).withSecond(0).withNano(0).plusDays(isNextDate ? 1 : 0);
+
+            if (startDate.isBefore(newDate)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your start date after " + formatDateTime((newDate)));
             }
         }
