@@ -72,7 +72,7 @@ public class Service {
 	private int max;
 
 	@Transient
-	private List<Image> images = Collections.EMPTY_LIST;
+	private List<Image> images = List.of();
 	
 	@JsonInclude(value = Include.NON_NULL)
 	@Transient

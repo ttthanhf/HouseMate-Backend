@@ -31,8 +31,6 @@ public class TaskViewDTO {
 
 	private int taskId;
 	
-	private int scheduleId;
-	
 	private LocalDateTime createdAt;
 
 	private TaskStatus taskStatus;
@@ -46,6 +44,8 @@ public class TaskViewDTO {
 
 	private Staff staff;
 	
+	private Schedule schedule;
+
 	private CustomerViewOnTask customer;
 	
 	private ServiceViewOnTask service;
@@ -71,11 +71,15 @@ public class TaskViewDTO {
 	public static class ServiceViewOnTask {
 		private int serviceId;
 		private String titleName;
+		private String packageName;
 		private String unitOfMeasure;
 		private String groupType;
+		private boolean isPackage;
 		private int min;
 		private int max;
 		private ServiceType serviceType;
+		private List<Image> images;
+		
 	}
 	
 	@Data
