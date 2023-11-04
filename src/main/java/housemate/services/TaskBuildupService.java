@@ -34,6 +34,7 @@ import housemate.constants.ServiceTaskConfig;
 import static housemate.constants.ServiceTaskConfig.*;
 import housemate.entities.Image;
 import housemate.entities.Order;
+import housemate.entities.OrderItem;
 import housemate.entities.Schedule;
 import housemate.entities.Service;
 import housemate.entities.ServiceFeedback;
@@ -215,16 +216,23 @@ public class TaskBuildupService {
 			CustomerViewOnTask customerViewOnTask = mapper.map(customerInfoFrAcc, CustomerViewOnTask.class);
 			customerViewOnTask.setAvatar(customerAvatar);
 			
-			//TODO: Consider Delete
-			Order order = orderRepo.findById(orderItemRepo
-					.findById(userUsageRepo.findById(schedule.getUserUsageId()).get().getOrderItemId()).getOrderId())
-					.orElse(null);
+			String servicePackageName = "";
+			OrderItem orderItem = orderItemRepo.findById(userUsageRepo.findById(schedule.getUserUsageId()).get().getOrderItemId());
+			Service parentService = servRepo.findByServiceId(orderItem.getServiceId()).get();
+			if(parentService.isPackage())
+				servicePackageName = parentService.getTitleName();
+			Order order = orderRepo.findById(orderItem.getOrderId()).orElse(null);
+			
+			 
 			String addressWorking = order == null ? "No address exist" : order.getAddress();
-			//String addressWorking =  orderRepo.findById(schedule.getUserUsageId()).get().getAddress();
 			Service serviceInfoFrServ = servRepo.findByServiceId(schedule.getServiceId()).orElse(null);
 			ServiceType serviceType = servTypeRepo.findById(schedule.getServiceTypeId()).orElse(null);
 			ServiceViewOnTask service = mapper.map(serviceInfoFrServ, ServiceViewOnTask.class);
 			service.setServiceType(serviceType);
+			List<Image> serviceImage = imgRepo.findAllByEntityIdAndImageType(serviceInfoFrServ.getServiceId(), ImageType.SERVICE).orElse(List.of());
+			service.setImages(serviceImage);
+			service.setPackageName(servicePackageName);
+			
 			
 			ServiceFeedback feedbackFrEntity = feedbRepo.findByCustomerIdAndTaskIdAndServiceId(
 					schedule.getCustomerId(), task.getTaskId(), service.getServiceId());

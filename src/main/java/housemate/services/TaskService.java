@@ -373,7 +373,7 @@ public class TaskService {
 		if(task.getTaskStatus().name().contains("CANCELLED"))
 			return ResponseEntity.status(HttpStatus.OK).body("The task has been cancelled. No any report for this task !");
 		if (taskReport.isEmpty())
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Have not any report for this task !");
+			return ResponseEntity.status(HttpStatus.OK).body("Have not any report for this task !");
 		
 		List<TaskReport> taskReports = taskReportRepo.findAllByTaskId(task.getTaskId());
 
