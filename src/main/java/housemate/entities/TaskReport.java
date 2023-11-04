@@ -40,10 +40,6 @@ public class TaskReport {
 
     @Column(name = "note", length = 3000)
     private String note;
-    
-	@ManyToOne
-	@JoinColumn(name = "task_id", referencedColumnName = "task_id", updatable = false, insertable = false)
-	private Task task;
 	
 	@Transient
 	List<Image> taskReportImages ;

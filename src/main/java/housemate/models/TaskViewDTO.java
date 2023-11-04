@@ -9,9 +9,17 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import housemate.constants.Enum.TaskStatus;
 import housemate.entities.Image;
 import housemate.entities.Schedule;
+import housemate.entities.Service;
+import housemate.entities.ServiceFeedback;
 import housemate.entities.ServiceType;
 import housemate.entities.Staff;
 import housemate.entities.TaskReport;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,27 +30,29 @@ import lombok.NoArgsConstructor;
 public class TaskViewDTO {
 
 	private int taskId;
-
-	private Schedule schedule;
+	
+	private int scheduleId;
 	
 	private LocalDateTime createdAt;
+
+	private TaskStatus taskStatus;
+	
+	private String addressWorking;
+	
+	@JsonInclude(content = Include.NON_NULL)
+	private String taskNote;
+	
+	private LocalDateTime receivedAt;
+
+	private Staff staff;
 	
 	private CustomerViewOnTask customer;
 	
 	private ServiceViewOnTask service;
-	
-	private String addressWorking;
 
-	private Staff staff;
-
-	private LocalDateTime receivedAt;
-	
-	private TaskStatus taskStatus;
-	
 	private List<TaskReport> taskReportList ;
 	
-	@JsonInclude(content = Include.NON_NULL)
-	private String taskNote;
+	private ServiceFeedbackViewOnTask feedback;
 	
 	@Data
 	@NoArgsConstructor
@@ -62,13 +72,25 @@ public class TaskViewDTO {
 		private int serviceId;
 		private String titleName;
 		private String unitOfMeasure;
-		private String description;
 		private String groupType;
-		private boolean isPackage;
 		private int min;
 		private int max;
-		private List<Image> images;
 		private ServiceType serviceType;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class ServiceFeedbackViewOnTask {
+		private int serviceFeedbackId;
+		private int serviceId;
+		private int taskId;
+		private int customerId;
+		private int rating;
+		private String content;
+		private LocalDateTime createdAt;
+		
+
 	}
 	
 }

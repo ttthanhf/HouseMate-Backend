@@ -53,6 +53,5 @@ public class Task {
 	@OneToOne
 	@JoinColumn(name = "staff_id", referencedColumnName = "user_id", updatable = false, insertable = false)
 	private Staff staff;
-	
 
 }
