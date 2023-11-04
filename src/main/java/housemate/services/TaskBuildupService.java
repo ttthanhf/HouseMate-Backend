@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
+
+import org.aspectj.lang.annotation.Before;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,8 @@ import housemate.constants.Enum.TaskStatus;
 import housemate.constants.ImageType;
 import housemate.constants.Role;
 import housemate.constants.ScheduleStatus;
+import housemate.constants.ServiceTaskConfig;
+
 import static housemate.constants.ServiceTaskConfig.*;
 import housemate.entities.Image;
 import housemate.entities.Order;
@@ -103,6 +107,9 @@ public class TaskBuildupService {
 	
 	@Autowired
 	TaskScheduler taskScheduler;
+	
+	@Autowired 
+	ServiceTaskConfig taskConfig;
 
 	private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 	
@@ -112,6 +119,10 @@ public class TaskBuildupService {
 	
 	private static final Map<Integer, ScheduledFuture<?>> eventNotiList = new HashMap<>();
 	
+	
+	public void setting() {
+		taskConfig.setting();
+	}
 
 	
 	//======CREATE TASK======
@@ -216,7 +227,7 @@ public class TaskBuildupService {
 			service.setServiceType(serviceType);
 			
 			ServiceFeedback feedbackFrEntity = feedbRepo.findByCustomerIdAndTaskIdAndServiceId(
-					task.getSchedule().getCustomerId(), task.getTaskId(), service.getServiceId());
+					schedule.getCustomerId(), task.getTaskId(), service.getServiceId());
 			ServiceFeedbackViewOnTask feedback = null;
 			if (feedbackFrEntity != null)
 				 feedback = mapper.map(feedbackFrEntity, ServiceFeedbackViewOnTask.class);
@@ -259,6 +270,7 @@ public class TaskBuildupService {
 		taskToBeCancelled.setTaskStatus(TaskStatus.CANCELLED_BY_CUSTOMER);
 		taskToBeCancelled.setTaskNote(taskNoteMess);
 		scheduleHasTaskToBeCancelledByCustomer.setStatus(ScheduleStatus.CANCEL);
+		taskRepo.save(taskToBeCancelled);
 		// SHUTDOWN EVENT COUNT DOWN OF OLD TASK OF OLD SCHEDULE
 		if (eventNotiList.get(taskToBeCancelled.getTaskId()) != null) {
 			eventNotiList.get(taskToBeCancelled.getTaskId()).cancel(true);
@@ -355,6 +367,7 @@ public class TaskBuildupService {
 	// ======APPROVE STAFF======
 	@Transactional
 	public TaskRes<Task> approveQualifiedStaff(Staff staff, Task task) {
+		taskConfig.setting();
 		LocalDateTime timeNow = LocalDateTime.now(dateTimeZone);
 		LocalDateTime timeStartWorking = task.getSchedule().getStartDate();
 		long hoursDiff = ChronoUnit.HOURS.between(timeNow, timeStartWorking);
@@ -390,6 +403,7 @@ public class TaskBuildupService {
 	
 	@Transactional
 	public TaskRes<TaskReport> reportTask(Task task, TaskReportType taskReport, TaskReportNewDTO reportNewDTO) {
+		taskConfig.setting();
 		TaskReport taskReportResult = new TaskReport();
 		Service serviceInUsed = servRepo.findByServiceId(task.getSchedule().getServiceId()).orElse(null);
 		UserUsage userUsage = userUsageRepo.findById(task.getSchedule().getUserUsageId()).get();
@@ -534,8 +548,6 @@ public class TaskBuildupService {
 		};
 		ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
 		eventNotiList.put(task.getTaskId(), taskEvent);
-		taskScheduler.scheduleAtFixedRate(() -> {
-		}, Instant.now(), Duration.ofSeconds(3));
 		log.info("======createEventSendNotiUpcomingTask======");
 	}
 
@@ -569,9 +581,6 @@ public class TaskBuildupService {
 		};
 		ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
 		eventNotiList.put(task.getTaskId(), taskEvent);
-		taskScheduler.scheduleAtFixedRate(() -> {
-			log.info("TIMENOW EVENT 2 {}", dateFormat.format(new Date()));
-		}, Instant.now(), Duration.ofSeconds(5));
 		log.info("======createEventSendNotiUpcomingTask======");
 
 	}

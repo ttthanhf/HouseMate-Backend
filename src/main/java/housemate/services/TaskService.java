@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import housemate.constants.ScheduleStatus;
+import housemate.constants.ServiceTaskConfig;
 import housemate.constants.Enum.TaskReportType;
 import housemate.constants.Enum.TaskStatus;
 import housemate.constants.ImageType;
@@ -79,6 +80,9 @@ public class TaskService {
 	@Autowired
     AuthorizationUtil authorizationUtil;
 	
+	@Autowired 
+	ServiceTaskConfig taskConfig;
+	
 	private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 	
 	private static final Logger log = LoggerFactory.getLogger(TaskService.class);
@@ -88,8 +92,7 @@ public class TaskService {
 	public ResponseEntity<?> getAllTaskInPendingApplication(
 			Optional<Sort.Direction> orderByCreatedDirection,
 			Optional<Integer> page,
-			Optional<Integer> size) {
-		
+			Optional<Integer> size) {		
 		int pageNo = page.orElse(0);
 		int pageSize = size.orElse(9);
 		Sort.Direction direction = orderByCreatedDirection.orElse(Direction.ASC);
@@ -209,6 +212,7 @@ public class TaskService {
 	
 	//CANCEL TASK
 	public ResponseEntity<?> cancelTask(HttpServletRequest request, int scheduleId) {
+		taskConfig.setting();
 		int userIdRequestCancel = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 		
 		Schedule scheduleToBeCancelled = scheduleRepo.findById(scheduleId).orElse(null);
