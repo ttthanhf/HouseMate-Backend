@@ -50,7 +50,17 @@ jobs:
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -r -o StrictHostKeyChecking=no ./target/${{ secrets.FILE_JAR }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
 
     - name: Destroy running app
-      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}" || true
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -9 -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}" || true
+
+    - name: Check if app is destroyed
+      run: |
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}
+        timeout 10s bash -c '
+          while [[ $(ps aux | pgrep -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}) ]]; do
+            echo "$(ps aux | pgrep -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }})"
+            sleep 1
+        done
+        '
 
     - name: Run app
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}" &

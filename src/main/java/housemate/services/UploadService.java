@@ -18,8 +18,10 @@ import com.amazonaws.services.s3.model.UploadPartResult;
 import housemate.constants.ImageType;
 import housemate.constants.Role;
 import housemate.entities.Image;
+import housemate.entities.UserAccount;
 import housemate.models.UploadDTO;
 import housemate.repositories.ImageRepository;
+import housemate.repositories.UserRepository;
 import housemate.utils.AuthorizationUtil;
 import housemate.utils.RandomUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -58,6 +60,9 @@ public class UploadService {
     private AuthorizationUtil authorizationUtil;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     public UploadService(
             @Value("${s3.endpoint}") String endpoint,
             @Value("${s3.region}") String region,
@@ -87,7 +92,7 @@ public class UploadService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Select at least one file to upload");
         }
 
-        if (uploadDTO.getImageType().equals(ImageType.AVATAR.toString())) {
+        if (uploadDTO.getImageType().equals(ImageType.AVATAR)) {
             if (files.length > 1) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Only one image for set avatar");
             }
@@ -96,7 +101,7 @@ public class UploadService {
             }
         }
 
-        if (uploadDTO.getImageType().equals(ImageType.SERVICE.toString()) && !role.equals(Role.ADMIN.toString())) {
+        if (uploadDTO.getImageType().equals(ImageType.SERVICE) && !role.equals(Role.ADMIN.toString())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Only admin role can upload image for service");
         }
 
@@ -150,6 +155,13 @@ public class UploadService {
                     .withPartETags(partETags);
 
             s3client.completeMultipartUpload(completeRequest);
+
+            if (uploadDTO.getImageType().equals(ImageType.AVATAR)) {
+                UserAccount user = userRepository.findByUserId(userId);
+                user.setAvatar(domainCDN + imageName);
+                userRepository.save(user);
+                break;
+            }
 
             Image image = new Image();
             image.setImageUrl(domainCDN + imageName);
