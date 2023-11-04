@@ -75,4 +75,6 @@ public class Schedule implements Cloneable {
 
     @Transient
     private String phone;
+    
+    
 }

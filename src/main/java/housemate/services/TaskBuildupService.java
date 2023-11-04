@@ -32,6 +32,7 @@ import housemate.entities.Image;
 import housemate.entities.Order;
 import housemate.entities.Schedule;
 import housemate.entities.Service;
+import housemate.entities.ServiceFeedback;
 import housemate.entities.ServiceType;
 import housemate.entities.Staff;
 import housemate.entities.Task;
@@ -41,7 +42,9 @@ import housemate.entities.UserUsage;
 import housemate.models.TaskReportNewDTO;
 import housemate.models.TaskViewDTO;
 import housemate.models.TaskViewDTO.CustomerViewOnTask;
+import housemate.models.TaskViewDTO.ServiceFeedbackViewOnTask;
 import housemate.models.TaskViewDTO.ServiceViewOnTask;
+import housemate.repositories.FeedbackRepository;
 import housemate.repositories.ImageRepository;
 import housemate.repositories.OrderItemRepository;
 import housemate.repositories.OrderRepository;
@@ -92,6 +95,9 @@ public class TaskBuildupService {
 	
 	@Autowired
 	OrderItemRepository orderItemRepo;
+	
+	@Autowired
+	FeedbackRepository feedbRepo;
 	
 	ModelMapper mapper = new ModelMapper();
 	
@@ -208,12 +214,20 @@ public class TaskBuildupService {
 			ServiceType serviceType = servTypeRepo.findById(schedule.getServiceTypeId()).orElse(null);
 			ServiceViewOnTask service = mapper.map(serviceInfoFrServ, ServiceViewOnTask.class);
 			service.setServiceType(serviceType);
-
+			
+			ServiceFeedback feedbackFrEntity = feedbRepo.findByCustomerIdAndTaskIdAndServiceId(
+					task.getSchedule().getCustomerId(), task.getTaskId(), service.getServiceId());
+			ServiceFeedbackViewOnTask feedback = null;
+			if (feedbackFrEntity != null)
+				 feedback = mapper.map(feedbackFrEntity, ServiceFeedbackViewOnTask.class);
+			
 			taskView = mapper.map(task, TaskViewDTO.class);
 			taskView.setCustomer(customerViewOnTask);
 			taskView.setAddressWorking(addressWorking);
 			taskView.setService(service);
 			taskView.setTaskReportList(taskReports);
+			taskView.setFeedback(feedback);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
