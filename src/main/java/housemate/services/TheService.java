@@ -1,14 +1,18 @@
 package housemate.services;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,29 +22,32 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
-import housemate.constants.Enum.SaleStatus;
-import housemate.constants.Enum.ServiceCategory;
-import housemate.constants.Enum.ServiceField;
-import housemate.constants.Enum.SortRequired;
-import housemate.constants.Enum.UnitOfMeasure;
-import housemate.constants.Enum.UsageDurationUnit;
+import housemate.constants.Enum.ServiceConfiguration;
+import housemate.constants.Enum.*;
+import housemate.constants.ImageType;
+import housemate.entities.Image;
 import housemate.entities.PackageServiceItem;
 import housemate.entities.Period;
+import housemate.entities.PeriodPriceConfig;
 import housemate.entities.Service;
 import housemate.entities.ServiceType;
 import housemate.models.ServiceNewDTO;
 import housemate.models.ServiceViewDTO;
 import housemate.repositories.CommentRepository;
 import housemate.repositories.FeedbackRepository;
+import housemate.repositories.ImageRepository;
 import housemate.repositories.PackageServiceItemRepository;
+import housemate.repositories.PeriodPriceConfigRepository;
 import housemate.repositories.PeriodRepository;
+import housemate.repositories.ServiceConfigRepository;
 import housemate.repositories.ServiceRepository;
 import housemate.repositories.ServiceTypeRepository;
 import housemate.utils.AuthorizationUtil;
+import housemate.utils.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import housemate.models.ServiceViewDTO.ServicePrice;
-import java.text.Normalizer;
-import java.util.regex.Pattern;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  *
@@ -69,30 +76,27 @@ public class TheService {
 	PeriodRepository periodRepo;
 	
 	@Autowired
+	ImageRepository imgRepo;
+	
+	@Autowired
+	PeriodPriceConfigRepository periodPriceConfRepo;
+	
+	@Autowired
     AuthorizationUtil authorizationUtil;
+	
+	@Autowired
+	ServiceConfigRepository servConfRepo;
 
 	ModelMapper mapper = new ModelMapper();
-
-	public ResponseEntity<?> getAllAvailable() {
-		List<Service> serviceList = serviceRepo.findAllAvailable();
-		if (serviceList.isEmpty())
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Empty Services Now !");
-		return ResponseEntity.ok(serviceList);
-	}
-
-	public ResponseEntity<?> getAllKind(HttpServletRequest request) {
-		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
-		List<Service> serviceList = serviceRepo.findAll();
-		if (serviceList == null)
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
-		return ResponseEntity.ok().body(serviceList);
-	}
+	
+	private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
 	public ResponseEntity<?> getAllSingleService() {
 		List<Service> serviceList = serviceRepo.findAllByIsPackageFalse();
 		if (serviceList == null)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
+		serviceList.forEach(
+				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST)));
 		return ResponseEntity.ok().body(serviceList);
 	}
 
@@ -100,7 +104,77 @@ public class TheService {
 		List<Service> serviceList = serviceRepo.findTopSale();
 		if (serviceList == null)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
+		serviceList.forEach(
+				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST)));
 		return ResponseEntity.ok().body(serviceList);
+	}
+	
+	public ResponseEntity<?> searchFilterAllKind(
+			HttpServletRequest request,
+			Optional<String> keyword,
+			Optional<ServiceCategory> category,
+			Optional<SaleStatus> saleStatus,
+			Optional<Integer> rating,
+			Optional<ServiceField> sortBy,
+			Optional<SortRequired> orderBy,
+			Optional<Integer> page,
+			Optional<Integer> size) {
+
+		// check the role admin is allowed
+		if (!authorizationUtil.getRoleFromAuthorizationHeader(request).equals(Role.ADMIN.toString()))
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+
+		String keywordValue = !keyword.isPresent() ? null : StringUtil.stringNormalizationForCompare(keyword.get());
+		Boolean categoryValue = category.isEmpty() 
+				              ? null
+				              : (category.get().equals(ServiceCategory.PACKAGE) == true ? true : false);
+		SaleStatus statusValue = saleStatus.orElse(null);
+		int ratingValue = rating.orElse(0);
+		ServiceField fieldname = sortBy.orElse(ServiceField.PRICE);
+		SortRequired requireOrder = orderBy.orElse(SortRequired.ASC);
+		int pageNo = page.orElse(0);
+		int pageSize = size.orElse(9);
+		if (pageNo < 0 || pageSize < 1)
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("Page number starts with 1. Page size must not be less than 1");
+
+		// setting sort
+		Sort sort;
+		sort = Sort.by(Sort.Direction.ASC, fieldname.getFieldName());
+		if (requireOrder.equals(SortRequired.DESC))
+			sort = Sort.by(Sort.Direction.DESC, fieldname.getFieldName());
+
+		Pageable sortedPage = pageNo == 0 ? PageRequest.of(0, pageSize, sort)
+										  : PageRequest.of(pageNo - 1, pageSize, sort);
+
+		Page<Service> serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, categoryValue, sortedPage);
+		int maxPages = (int) Math.ceil((double) serviceList.getTotalPages());
+		
+		if (serviceList.isEmpty() || serviceList == null)
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
+		
+		serviceList.forEach(
+				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST)));
+		
+		List<ServiceViewDTO> serviceViewList = new ArrayList<>();
+		for (Service service : serviceList.getContent()) {
+			ServiceViewDTO serviceView = new  ServiceViewDTO();
+			//set service to view
+			serviceView.setService(service);
+			List<ServicePrice> priceList = new ArrayList<>();
+			ServicePrice servicePrice = new ServicePrice();
+			List<Period> periodServiceList = periodRepo.findAllByServiceId(service.getServiceId());
+			periodServiceList.forEach(s -> priceList.add(mapper.map(s, ServicePrice.class)));
+			serviceView.setPriceList(priceList);
+			serviceViewList.add(serviceView);
+		}
+		Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+		Page<ServiceViewDTO> serviceViewPage = new PageImpl<ServiceViewDTO>(serviceViewList, serviceList.getPageable(), serviceList.getTotalElements());
+		
+		if (serviceViewPage.isEmpty() || serviceViewPage == null)
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
+		
+		return ResponseEntity.ok(serviceViewPage);
 	}
 
 	public ResponseEntity<?> searchFilterAllKindAvailable(
@@ -113,7 +187,7 @@ public class TheService {
 			Optional<Integer> page,
 			Optional<Integer> size) {
 
-		String keywordValue = keyword == null ? null : removeDiacriticalMarks(keyword.trim().replaceAll("\\s+", " "));
+		String keywordValue = keyword == null ? null : StringUtil.stringNormalizationForCompare(keyword);
 		Boolean categoryValue = category.isEmpty() ? null : (category.get().equals(ServiceCategory.PACKAGE) == true ? true : false);
 		SaleStatus statusValue = saleStatus.orElse(null);
 		int ratingValue = rating.orElse(0);
@@ -140,7 +214,10 @@ public class TheService {
 		
 		if (serviceList.isEmpty() || serviceList == null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
-
+		
+		serviceList.forEach(
+				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST)));
+		
 		return ResponseEntity.ok(serviceList);
 	}
 
@@ -149,7 +226,9 @@ public class TheService {
 		ServiceViewDTO serviceDtoForDetail = new ServiceViewDTO();
 
 		Service service = serviceRepo.findById(serviceId).orElse(null);
-
+		List<Image> imgList = imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.SERVICE).orElse(Collections.EMPTY_LIST);
+		service.setImages(imgList);
+		
 		if (service == null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found this service !");
 
@@ -167,7 +246,7 @@ public class TheService {
 			if (packageServiceChildList != null) {
 				for (PackageServiceItem packageServiceItem : packageServiceChildList) {
 					Service serviceChild = serviceRepo.findByServiceId(packageServiceItem.getSingleServiceId()).orElse(null);
-					packageServiceItem.setDescription(serviceChild.getTitleName() + " : " + serviceChild.getDescription());
+					packageServiceItem.setTypeList(serviceTypeRepo.findAllByServiceId(packageServiceItem.getSingleServiceId()).orElse(null));
 				}
 				serviceDtoForDetail.setPackageServiceItemList(packageServiceChildList);
 			}
@@ -179,18 +258,7 @@ public class TheService {
 		List<Period> periodServiceList = periodRepo.findAllByServiceId(serviceId);
 		periodServiceList.forEach(s -> priceList.add(mapper.map(s, ServicePrice.class)));
 		serviceDtoForDetail.setPriceList(priceList);
-
-		// TODO: Update imgList later
-		List<String> imgList = new ArrayList<>();
-		imgList.add("https://www.mollymaid.com/us/en-us/molly-maid/_assets/images/services/mly-service-kitchen-2.webp");
-		imgList.add("https://i.ebayimg.com/images/g/DBkAAOSwA5limhuC/s-l1600.jpg");
-		imgList.add("https://images6.fanpop.com/image/photos/37000000/Doing-Housework-disney-37043579-1680-1050.jpg");
-		imgList.add("https://i.ytimg.com/vi/gmZstKaBtj8/maxresdefault.jpg");
-		imgList.add("https://images.squarespace-cdn.com/content/v1/5d815167fadd7b051fbda1e8/1587078895641-E42HDAP26ZJL6BO1HEA2/IMG_0801e.jpg");
-		imgList.add("https://www.happywater.my/wp-content/uploads/2020/07/Water-Delivery-malaysia.jpg");
-		imgList.add("https://res.cloudinary.com/jerrick/image/upload/c_scale,f_jpg,q_auto/5e88760f9671a2001cc57c50.jpg");
-		serviceDtoForDetail.setImages(imgList);
-
+		
 		return ResponseEntity.ok().body(serviceDtoForDetail);
 	}
 
@@ -206,9 +274,9 @@ public class TheService {
 		try {
 			// Check all before saving object service
 			// Check duplicate title name
-			String formatedTitleName = serviceDTO.getTitleName().trim().replaceAll("\\s+", " ");
+			String formatedTitleName = StringUtil.formatedString(serviceDTO.getTitleName());
 			serviceDTO.setTitleName(formatedTitleName);
-			if (serviceRepo.findByTitleNameIgnoreCase(removeDiacriticalMarks(formatedTitleName)) != null)
+			if (serviceRepo.findByTitleNameIgnoreCase(StringUtil.removeDiacriticalMarks(formatedTitleName)) != null)
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The title name has existed before !");
 
 			//check valid between original price and final price of service 
@@ -224,21 +292,37 @@ public class TheService {
 				serviceDTO.setSaleStatus(SaleStatus.ONSALE);
 			else
 				serviceDTO.setSaleStatus(SaleStatus.AVAILABLE);
+			
+			//check the group name is included in SERVICE_GROUP COLLECTION
+			if(servConfRepo.findByConfigTypeAndConfigValue(ServiceConfiguration.SERVICE_GROUPS.name(), StringUtil.formatedString(serviceDTO.getGroupType())).orElse(null) == null) {
+				return ResponseEntity.badRequest()
+						.body("The " + ServiceConfiguration.SERVICE_GROUPS.name() + " does not include the config value " 
+								+ StringUtil.formatedString(serviceDTO.getGroupType()).toUpperCase()
+								+ " .Let config new value for " + ServiceConfiguration.SERVICE_GROUPS.name());
+			}
+			//check the unit of measure is included in SERVICE_GROUP COLLECTION
+			if(servConfRepo.findByConfigTypeAndConfigValue(ServiceConfiguration.SERVICE_UNITS.name(), StringUtil.formatedString(serviceDTO.getUnitOfMeasure())).orElse(null) == null) {
+				return ResponseEntity.badRequest()
+						.body("The " + ServiceConfiguration.SERVICE_UNITS.name() + " does not include the config value " 
+								+ StringUtil.formatedString(serviceDTO.getUnitOfMeasure()).toUpperCase()
+								+ " .Let config new value for " + ServiceConfiguration.SERVICE_UNITS.name());
+			}
+
 
 			// check single service constraints
 			if (!serviceDTO.getIsPackage()) {
 				if (serviceDTO.getServiceChildList() != null)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("The single service not allow to set service child list !");
-				if (serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
+				if (serviceDTO.getUnitOfMeasure().equals("Gói"))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-							.body("The unit of measure of single service should not be COMBO !");
+							.body("The unit of measure of single service should not be Gói !");
 				if (serviceDTO.getTypeNameList() != null) {
 					Set<String> typeNameList = serviceDTO.getTypeNameList();
 					Set<String> uniqueNames = new HashSet<>();
 					// check any type name have equal ignore case
 					for (String typeName : typeNameList)
-						if (!uniqueNames.add(removeDiacriticalMarks(typeName.toLowerCase().trim().replaceAll("\\s+", " "))))
+						if (!uniqueNames.add(StringUtil.stringNormalizationForCompare(typeName)))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("Duplicated the type name in this service !");
 				}
@@ -252,9 +336,9 @@ public class TheService {
 				if (serviceDTO.getServiceChildList() == null || serviceDTO.getServiceChildList().size() < 2)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							.body("The package contains at least 2 single services !");
-				if (!serviceDTO.getUnitOfMeasure().equals(UnitOfMeasure.COMBO))
+				if (!serviceDTO.getUnitOfMeasure().equals("Gói"))
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-							.body("The unit of measure of package must be COMBO !");
+							.body("The unit of measure of package has been set default to Gói !");
 				for (Integer singleServiceId : serviceDTO.getServiceChildList().keySet()) {
 					if (serviceRepo.findByServiceId(singleServiceId).isEmpty())
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -271,11 +355,26 @@ public class TheService {
 			if (cylcePriceListOfNewServ.size() != 4 || !cycleList.containsAll(cylcePriceListOfNewServ.keySet()))
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 						.body("Have to set price foreach 4 cycles : 3, 6, 9 ,12 of this service");
-			if (!cylcePriceListOfNewServ.entrySet().stream().allMatch(p -> p.getValue() >= 1000))
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-						.body("Set the price for each cycle from 1000 upper");
-
-			// TODO CHECK IMAGES CONSTRAINTS HERE IF HAVE
+			Function<Integer, PeriodPriceConfig> findByConfigValueAndConfigName = key -> periodPriceConfRepo
+					.findByConfigValueAndConfigName(LocalDateTime.now(dateTimeZone), key, TimeUnit.MONTH);
+			for (Entry<Integer, Integer> period : cylcePriceListOfNewServ.entrySet()) {
+				PeriodPriceConfig periodPriceConfig = findByConfigValueAndConfigName.apply(period.getKey());
+				if (periodPriceConfig != null) {
+					float min = periodPriceConfig.getMin();
+					float max = periodPriceConfig.getMax();
+					float periodPrice = period.getValue();
+					float propor = periodPrice / serviceDTO.getFinalPrice();
+					boolean validSetting = min <= propor && propor <= max;
+					if (!validSetting) {
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+								.body("Period price for cycle " + period.getKey() + " out of range proportion [" + min
+										+ "-" + max + "]" + " ~ [" + min * serviceDTO.getOriginalPrice() + "-"
+										+ max * serviceDTO.getOriginalPrice() + "]" + " against the original price "
+										+ serviceDTO.getOriginalPrice());
+					}
+				}
+			}
+			cylcePriceListOfNewServ.put(1, serviceDTO.getFinalPrice()); // the cycle 1 into the service period price
 
 			// ==after check all then map to DTO & save SavedService into DB to get newservice Id==
 			savedService = serviceRepo.save(mapper.map(serviceDTO, Service.class));
@@ -324,17 +423,18 @@ public class TheService {
 			
 			// save the cycle price list
 			for (Integer cycleVaule : cylcePriceListOfNewServ.keySet()) {
-				Period newServicePeriod = Period.builder()
-						.serviceId(savedService.getServiceId())
-						.periodValue(cycleVaule)
-						.periodName(UsageDurationUnit.MONTH.name())
+				float cyclePropor = 1;
+				if (cycleVaule != 1) {
+					cyclePropor = periodPriceConfRepo
+							.findByConfigValueAndConfigName(LocalDateTime.now(dateTimeZone), cycleVaule, TimeUnit.MONTH)
+							.getMax();
+				}
+				Period newServicePeriod = Period.builder().serviceId(savedService.getServiceId())
+						.periodValue(cycleVaule).periodName(TimeUnit.MONTH.name())
 						.finalPrice(cylcePriceListOfNewServ.get(cycleVaule))
-						.originalPrice(savedService.getOriginalPrice()*cycleVaule)
-						.build();
+						.originalPrice((int) Math.ceil(savedService.getOriginalPrice() * cyclePropor)).build();
 				periodRepo.save(newServicePeriod);
 			}
-			
-			// TODO SAVE IMAGES
 
 		} catch (Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -360,10 +460,10 @@ public class TheService {
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The service does not exists !");
 
 			// Check Valid Name For Update
-			String formatedTitleName = serviceDTO.getTitleName().trim().replaceAll("\\s+", " ");
+			String formatedTitleName = StringUtil.formatedString(serviceDTO.getTitleName());
 			serviceDTO.setTitleName(formatedTitleName);
 			if (!formatedTitleName.equalsIgnoreCase(oldService.getTitleName()))
-				if (serviceRepo.findByTitleNameIgnoreCase(removeDiacriticalMarks(serviceDTO.getTitleName().trim())) != null)
+				if (serviceRepo.findByTitleNameIgnoreCase(StringUtil.removeDiacriticalMarks(formatedTitleName)) != null)
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The title name has existed before !");
 			
 			//check valid between original price and final price of service 
@@ -393,6 +493,15 @@ public class TheService {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 						.body("This sevice id is the single service. Not allow to change the status of is package !"
 								+ " \nSet this isPackage to be false please");
+			
+			//check the group name is included in SERVICE_GROUP COLLECTION
+			if(servConfRepo.findByConfigTypeAndConfigValue(ServiceConfiguration.SERVICE_GROUPS.name(), StringUtil.formatedString(serviceDTO.getGroupType())).orElse(null) == null) {
+				return ResponseEntity.badRequest()
+						.body("The " + ServiceConfiguration.SERVICE_GROUPS.name() + " does not include the config value " 
+								+ StringUtil.formatedString(serviceDTO.getGroupType()).toUpperCase()
+								+ " .Let config new value for " + ServiceConfiguration.SERVICE_GROUPS.name());
+			}
+
 
 			// update typeNameList for single services
 			if (!oldService.isPackage()) {
@@ -407,7 +516,7 @@ public class TheService {
 					Set<String> uniqueNames = new HashSet<>();
 					// check any type name have equal ignore case
 					for (String typeName : typeNameList)
-						if (!uniqueNames.add(removeDiacriticalMarks(typeName.toLowerCase().trim().replaceAll("\\s+", " "))))
+						if (!uniqueNames.add(StringUtil.stringNormalizationForCompare(typeName)))
 							return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 									.body("Duplicated the type name of this service !");
 					// Reset Type Name List and Update
@@ -457,22 +566,47 @@ public class TheService {
 			updatedService = serviceRepo.save(oldService);
 			
 			//Update the price cycle list of this service
+			// check service price cycle list constraints
 			List<Integer> cycleList = List.of(3, 6, 9, 12);
 			Map<Integer, Integer> cylcePriceListOfNewServ = serviceDTO.getPeriodPriceServiceList();
 			if (cylcePriceListOfNewServ.size() != 4 || !cycleList.containsAll(cylcePriceListOfNewServ.keySet()))
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 						.body("Have to set price foreach 4 cycles : 3, 6, 9 ,12 of this service");
-			if (!cylcePriceListOfNewServ.entrySet().stream().allMatch(p -> p.getValue() >= 1000))
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-						.body("Set the price for each cycle from 1000 upper");
+			Function<Integer, PeriodPriceConfig> findByConfigValueAndConfigName = key -> periodPriceConfRepo
+					.findByConfigValueAndConfigName(LocalDateTime.now(dateTimeZone), key, TimeUnit.MONTH);
+			for (Entry<Integer, Integer> period : cylcePriceListOfNewServ.entrySet()) {
+				PeriodPriceConfig periPriceConfig = findByConfigValueAndConfigName.apply(period.getKey());
+				if (periPriceConfig != null) {
+					float min = periPriceConfig.getMin();
+					float max = periPriceConfig.getMax();
+					float periodPrice = period.getValue();
+					float propor = periodPrice / serviceDTO.getFinalPrice();
+					boolean validSetting = min <= propor && propor <= max;
+					if (!validSetting) {
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+								.body("Period price for cycle " + period.getKey() + " out of range proportion [" + min
+										+ "-" + max + "]" + " ~ [" + min * serviceDTO.getOriginalPrice() + "-"
+										+ max * serviceDTO.getOriginalPrice() + "]" + " against the original price "
+										+ serviceDTO.getOriginalPrice());
+					}
+				}
+			}
+			cylcePriceListOfNewServ.put(1, serviceDTO.getFinalPrice()); // the cycle 1 into the service period price
+
 			for (Integer cycleVaule : cylcePriceListOfNewServ.keySet()) {
+				float cyclePropor = 1;
+				if (cycleVaule != 1) {
+					cyclePropor = periodPriceConfRepo
+							.findByConfigValueAndConfigName(LocalDateTime.now(dateTimeZone), cycleVaule, TimeUnit.MONTH)
+							.getMax();
+				}
 				periodRepo.save(Period.builder()
 						.periodId(periodRepo.findByServiceIdAndPeriodValue(oldService.getServiceId(),cycleVaule).getPeriodId())
 						.serviceId(oldService.getServiceId())
 						.periodValue(cycleVaule)
-						.periodName(UsageDurationUnit.MONTH.name())
+						.periodName(TimeUnit.MONTH.name())
 						.finalPrice(cylcePriceListOfNewServ.get(cycleVaule))
-						.originalPrice(updatedService.getOriginalPrice()*cycleVaule)
+						.originalPrice((int) Math.ceil(updatedService.getOriginalPrice() * cyclePropor))
 						.build());
 			}
 
@@ -484,12 +618,6 @@ public class TheService {
 
 		return this.getOne(updatedService.getServiceId());
 	}
-	
-	  private static String removeDiacriticalMarks(String str) {
-	        str = Normalizer.normalize(str, Normalizer.Form.NFD);
-	        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-	        return pattern.matcher(str).replaceAll("");
-	    }
 
 	// TODO: DELETE SERVICE LATER
 	  

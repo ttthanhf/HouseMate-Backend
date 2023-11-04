@@ -1,5 +1,6 @@
 package housemate.entities;
 
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,11 +25,10 @@ public class ServiceType {
 	@Column(name = "service_type_id")
 	private int serviceTypeId;
 	
-
 	@Column(name = "service_id")
 	private int serviceId;
 		
-	
 	@Column(name = "type_name")
 	private String typeName;
+
 }

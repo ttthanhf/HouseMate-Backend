@@ -22,6 +22,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 
     Schedule getByScheduleId(int scheduleId);
 
-    @Query("SELECT IFNULL(SUM(s.quantityRetrieve), 0) FROM Schedule s WHERE s.serviceId = :serviceId AND s.customerId = :customerId")
-    int getSumOfQuantityRetrieve(@Param("serviceId") int serviceId, @Param("customerId") int customerId);
+    List<Schedule> getByStaffId(int staffId);
+
+    @Query(value = "SELECT COALESCE(SUM(s.quantityRetrieve), 0) FROM Schedule s WHERE s.userUsageId = :userUsageId")
+    int getTotalQuantityRetrieveByUserUsageId(@Param("userUsageId") int userUsageId);
 }
