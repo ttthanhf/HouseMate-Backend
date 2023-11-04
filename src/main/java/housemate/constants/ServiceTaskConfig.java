@@ -2,9 +2,14 @@ package housemate.constants;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
+
 import housemate.constants.Enum.ServiceConfiguration;
 import housemate.repositories.ServiceConfigRepository;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
+@Component
 public class ServiceTaskConfig {
 	@Autowired
 	ServiceConfigRepository servConfRepo;
@@ -19,24 +24,33 @@ public class ServiceTaskConfig {
 
 	@Bean
 	public void setting() {
-		DURATION_TIMES_CUSTOMER_SHOULD_NOT_CANCEL_TASK = Integer.parseInt(servConfRepo
+		this.DURATION_TIMES_CUSTOMER_SHOULD_NOT_CANCEL_TASK = Integer.parseInt(servConfRepo
 				.findFirstByConfigType(ServiceConfiguration.DURATION_TIMES_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY)
 				.getConfigValue());
-		DURATION_TIMES_STAFF_SHOULD_NOT_CANCEL_TASK = Integer.parseInt(servConfRepo
+		this.DURATION_TIMES_STAFF_SHOULD_NOT_CANCEL_TASK = Integer.parseInt(servConfRepo
 				.findFirstByConfigType(ServiceConfiguration.DURATION_TIMES_STAFF_SHOULD_NOT_CANCEL_TASK)
 				.getConfigValue());
-		DURATION_TIMES_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY = Integer.parseInt(servConfRepo
+		this.DURATION_TIMES_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY = Integer.parseInt(servConfRepo
 				.findFirstByConfigType(ServiceConfiguration.DURATION_TIMES_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY)
 				.getConfigValue());
-		MINUS_POINTS_FOR_CUSTOMER_CANCEL_TASK = Integer.parseInt(servConfRepo
+		this.MINUS_POINTS_FOR_CUSTOMER_CANCEL_TASK = Integer.parseInt(servConfRepo
 				.findFirstByConfigType(ServiceConfiguration.MINUS_POINTS_FOR_CUSTOMER_CANCEL_TASK)
 				.getConfigValue());
-		MINUS_POINTS_FOR_STAFF_CANCEL_TASK = Integer.parseInt(servConfRepo
+		this.MINUS_POINTS_FOR_STAFF_CANCEL_TASK = Integer.parseInt(servConfRepo
 				.findFirstByConfigType(ServiceConfiguration.MINUS_POINTS_FOR_STAFF_CANCEL_TASK)
 				.getConfigValue());
-		BAD_STAFF_PROFICIENT_SCORE = Integer.parseInt(servConfRepo
+		this.BAD_STAFF_PROFICIENT_SCORE = Integer.parseInt(servConfRepo
 				.findFirstByConfigType(ServiceConfiguration.BAD_STAFF_PROFICIENT_SCORE)
 				.getConfigValue());
 	}
+	
+	
+
+	
+	
+	
+	
+		
+	
 
 }

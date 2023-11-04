@@ -12,8 +12,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 import housemate.constants.Enum.ServiceField;
+import housemate.constants.ServiceTaskConfig;
 import housemate.constants.Enum.SaleStatus;
 import housemate.constants.Enum.ServiceCategory;
+import housemate.constants.Enum.ServiceConfiguration;
 import housemate.constants.Enum.SortRequired;
 import housemate.models.ServiceNewDTO;
 import housemate.services.TheService;
@@ -26,10 +28,14 @@ import jakarta.validation.Valid;
 @RestController
 @CrossOrigin
 @Tag(name = "Service")
+
 public class ServicesController {
 	
 	@Autowired
 	TheService servDao;
+	
+	@Autowired 
+	ServiceTaskConfig taskConfig;
 	
 	@GetMapping(path = "/services")
 	@Operation(summary = "Search service by filter and sort")
@@ -41,6 +47,7 @@ public class ServicesController {
 			@RequestParam(required = false) Optional<SortRequired> orderBy,
 			@RequestParam(required = false) Optional<Integer> page,
 			@RequestParam(required = false) Optional<Integer> size) {
+
 		return servDao.searchFilterAllKindAvailable(null, category, saleStatus, rating, sortBy, orderBy, page, size);
 	}
 
