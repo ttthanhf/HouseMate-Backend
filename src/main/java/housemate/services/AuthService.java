@@ -24,13 +24,18 @@ import java.util.UUID;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * @author hdang09
@@ -176,7 +181,8 @@ public class AuthService {
         return ResponseEntity.status(HttpStatus.OK).body("Set new password successfully!");
     }
 
-    public ResponseEntity<String> loginWithGoogle(Map<String, Object> userOAuth) {
+    public ResponseEntity<String> loginWithGoogle(OAuth2AuthenticationToken oAuth2AuthenticationToken) {
+        Map<String, Object> userOAuth = oAuth2AuthenticationToken.getPrincipal().getAttributes();
         String email = (String) userOAuth.get("email");
         String fullName = (String) userOAuth.get("name");
         boolean emailVerified = (boolean) userOAuth.get("email_verified");
@@ -200,6 +206,14 @@ public class AuthService {
         //Create uri with token for redirect
         String url = URL_CLIENT + "/" + "?success=true&token=" + token;
         URI uri = URI.create(url);
+
+        //REMOVE JSESSIONID
+        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
+        Cookie cookie = new Cookie("JSESSIONID", "");
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        response.addCookie(cookie);
+
         return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
     }
 }
