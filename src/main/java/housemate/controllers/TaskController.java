@@ -54,33 +54,33 @@ public class TaskController {
 		return taskServiceDao.getAllTaskForStaffByTaskStatus(request, taskStatus, page, size);
 	}
 	
-	@GetMapping("/{id}")
+	@GetMapping("/{task-id}")
 	@Operation(summary = "View the specific task in details")
-	public ResponseEntity<?> getTaskInDetails(@PathVariable("id") int taskId) {
+	public ResponseEntity<?> getTaskInDetails(@PathVariable("task-id") int taskId) {
 		return taskServiceDao.getTaskInDetails(taskId);
 	}
 	
-	@GetMapping("/schedule/{id}")
+	@GetMapping("/schedule/{schedule-id}")
 	@Operation(summary = "View the task in details of specific schedule - Role: current CUSTOMER + ADMIN")
 	public ResponseEntity<?> getTaskViewInDetailsForCustomerByScheduleId(
 			HttpServletRequest request,
-			@PathVariable("id") int scheduleId) {
+			@PathVariable("schedule-id") int scheduleId) {
 		return taskServiceDao.getTaskViewInDetailsForCustomerByScheduleId(request, scheduleId);
 	}
 	
-	@PostMapping("/new/schedule/{id}")
+	@PostMapping("/new/schedule/{schedule-id}")
 	@Operation(summary = "View the task in details of specific schedule - Role: CUSTOMER - owner of the schedule")
 	public ResponseEntity<?> createNewTask(
 			HttpServletRequest request,
-			@PathVariable("id") int scheduleId) {
+			@PathVariable("schedule-id") int scheduleId) {
 		return taskServiceDao.createNewTask(request, scheduleId);
 	}
 	
-	@DeleteMapping("/cancel/schedule/{id}")
+	@DeleteMapping("/cancel/schedule/{schedule-id}")
 	@Operation(summary = "Cancel the task of specific schedule - Role: CUSTOMER - owner of the schedule + STAFF - reponsible for doing the task of this schedule")
 	public ResponseEntity<?> cancelTask(
 			HttpServletRequest request,
-			@PathVariable("id") int scheduleId) {
+			@PathVariable("schedule-id") int scheduleId) {
 		return taskServiceDao.cancelTask(request, scheduleId);
 	}
 	
@@ -93,15 +93,15 @@ public class TaskController {
 		return taskServiceDao.updateTaskTimeWorking(request, oldSchedule, newSchedule);
 	}
 	
-	@PostMapping("{id}/staff/application")
+	@PostMapping("{task-id}/staff/application")
 	@Operation(summary = "Apply for doing specific task - Role: STAFF only")
 	public ResponseEntity<?> approveStaff(
 			HttpServletRequest request,
-			@PathVariable("id") int taskId) {
+			@PathVariable("task-id") int taskId) {
 		return taskServiceDao.approveStaff(request, taskId);
 	}
 
-	@PostMapping("{id}/staff/reports")
+	@PostMapping("{task-id}/staff/reports")
 	@Operation(summary = "Report task progression of specific task - Role: STAFF responsible for this task")
 	public ResponseEntity<?> reportTaskByStaff(
 			HttpServletRequest request,
@@ -111,10 +111,10 @@ public class TaskController {
 		return taskServiceDao.reportTaskByStaff(request, taskId, taskReportType, reportnewDTO);
 	}
 	
-	@GetMapping("{id}/reports")
+	@GetMapping("{task-id}/reports")
 	@Operation(summary = "View task progressions of specific task")
 	public ResponseEntity<?> getTaskReportListByTask(
-			@PathVariable("id") int taskId) {
+			@PathVariable("task-id") int taskId) {
 		return taskServiceDao.getTaskReportListByTask(taskId);
 	}
 	
