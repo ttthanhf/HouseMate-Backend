@@ -5,37 +5,38 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
-import java.util.Date;
+import java.time.LocalDateTime;
+import lombok.Data;
 
 /**
  *
  * @author ThanhF
  */
+@Data
 @Entity
-@Table(name = "Notification")
+@Table(name = "notifications")
 public class Notification {
 
     @Id
-    @Column(name = "notification_object_id")
-    private int notificationObjectId;
+    @Column(name = "notification_id")
+    private int notificationId;
 
-    @Id
-    @Column(name = "receiver_id")
-    private int receiverId;
+    @Column(name = "user_id")
+    private int userId;
 
-    @Column(name = "sent_at")
-    private Date sentAt;
+    @Column(name = "notification_created_at")
+    private LocalDateTime notificationCreatedAt;
 
     @Column(name = "is_read")
     private boolean isRead;
-
-    public Notification(int notificationObjectId, int receiverId, Date sentAt, boolean isRead) {
-        this.notificationObjectId = notificationObjectId;
-        this.receiverId = receiverId;
-        this.sentAt = sentAt;
-        this.isRead = isRead;
-    }
-
     
-}
+    @Column(name = "datetime")
+    private LocalDateTime datetime;
+    
+    @Column(name = "status")
+    private String status;
+    
+    @Column(name = "service_name")
+    private String serviceName;
 
+}
