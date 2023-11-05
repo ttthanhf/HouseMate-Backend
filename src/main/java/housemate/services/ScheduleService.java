@@ -79,6 +79,7 @@ public class ScheduleService {
         List<Schedule> schedules = scheduleRepository.getByCustomerId(userId);
 
         for (Schedule schedule : schedules) {
+            System.out.println(schedule);
             // Check if schedule is before current date
             boolean isBeforeCurrentDate = schedule.getEndDate().isBefore(LocalDateTime.now());
             if (isBeforeCurrentDate) {
@@ -193,26 +194,60 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
         }
 
-        validateAndProcessSchedule(userId, currentSchedule.getServiceId(), currentSchedule.getUserUsageId(), currentSchedule, false);
+        List<Schedule> schedules = scheduleRepository.getAllByParentScheduleId(currentSchedule.getParentScheduleId());
+
+        // Update ONLY_ONE_TIME => EVERY_MONTH/EVERY_WEEK
+
+        // Update ONLY_ONE_TIME => ONLY_ONE_TIME
+
+        // Update EVERY_MONTH/EVERY_WEEK => ONLY_ONE_TIME
+        // Update EVERY_MONTH/EVERY_WEEK => EVERY_MONTH/EVERY_WEEK
 
         // I. Update only one time
         if (updateSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME)) {
             // 1. Update on the parent (the first schedule)
+            if (scheduleId == currentSchedule.getParentScheduleId()) {
+
+                // [BAD CASE, COMPLEXITY: n]
+                int parentScheduleId = schedules.get(1).getParentScheduleId();
+                for (Schedule schedule : schedules) {
+                    schedule.setParentScheduleId(parentScheduleId);
+                    scheduleRepository.save(schedule);
+                }
+
+                return ResponseEntity.status(HttpStatus.OK).body("Update successfully!");
+            }
 
             // 2. Update on the child (from the second after)
             Schedule newSchedule = scheduleMapper.updateSchedule(currentSchedule, updateSchedule);
+            newSchedule.setParentScheduleId(0);
             scheduleRepository.save(newSchedule);
 
             return ResponseEntity.status(HttpStatus.OK).body("Update successfully!");
         }
 
         // II. Update every week/ every month
-        // 1. Update on the parent (the first schedule)
+        // 1. Update on the parent (the first schedule) [DO NOTHING]
 
         // 2. Update on the child (from the second after)
+        if (scheduleId != currentSchedule.getParentScheduleId()) {
+            int parentScheduleId = 0;
 
+            for (Schedule schedule : schedules) {
+                if (schedule.getScheduleId() == scheduleId) {
+                    parentScheduleId = schedule.getScheduleId();
+                }
 
-        return ResponseEntity.status(HttpStatus.OK).body("Update successfully!");
+                if (parentScheduleId == 0) continue;
+
+                schedule.setParentScheduleId(parentScheduleId);
+                scheduleRepository.save(schedule);
+            }
+
+        }
+
+        return validateAndProcessSchedule(userId, currentSchedule.getServiceId(), currentSchedule.getUserUsageId(), currentSchedule, false);
+
     }
 
     // ======================================== REUSABLE FUNCTIONS ========================================
