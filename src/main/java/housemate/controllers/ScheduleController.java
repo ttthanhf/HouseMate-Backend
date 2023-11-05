@@ -59,5 +59,11 @@ public class ScheduleController {
         return service.createSchedule(request, scheduleDTO);
     }
 
+    @Operation(summary = "Cancel schedule")
+    @DeleteMapping("/cancel/{scheduleId}")
+    public ResponseEntity<String> cancelSchedule(HttpServletRequest request, @PathVariable int scheduleId) {
+        return service.cancelSchedule(request, scheduleId);
+    }
+
 }
 

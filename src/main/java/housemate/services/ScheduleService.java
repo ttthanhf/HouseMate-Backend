@@ -428,4 +428,28 @@ public class ScheduleService {
     private String formatDateTime(LocalDateTime dateTime) {
         return dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
     }
+
+    public ResponseEntity<String> cancelSchedule(HttpServletRequest request, int scheduleId) {
+        Schedule schedule = scheduleRepository.getByScheduleId(scheduleId);
+
+        if (schedule == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find this schedule");
+        }
+
+        // Check if schedule is on task
+        if (schedule.isOnTask()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error! This schedule is on task");
+        }
+
+        // Check if status is invalid or not
+        ScheduleStatus status = schedule.getStatus();
+        if (status != ScheduleStatus.PROCESSING && status != ScheduleStatus.PENDING) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You can't cancel this schedule");
+        }
+
+        schedule.setStatus(ScheduleStatus.CANCEL);
+        scheduleRepository.save(schedule);
+
+        return ResponseEntity.status(HttpStatus.OK).body("Cancel schedule successfully");
+    }
 }
