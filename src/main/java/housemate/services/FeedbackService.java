@@ -54,7 +54,7 @@ public class FeedbackService {
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 		
 		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Không tìm thấy đánh giá nào cho dịch vụ này");
+			return ResponseEntity.ok(serviceFeedbList);
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
@@ -78,7 +78,7 @@ public class FeedbackService {
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 
 		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy nhận xét nào cho dịch vụ này !");
+			return ResponseEntity.ok(serviceFeedbList);
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
@@ -99,7 +99,7 @@ public class FeedbackService {
 	public ResponseEntity<?> findTopFeedback(int ratingLevel) {
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findTopFeedback(ratingLevel);
 		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Danh sách cho top đánh giá hiện đang rỗng !");
+			return ResponseEntity.ok(serviceFeedbList);
 
 		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
 		for (ServiceFeedback feeback : serviceFeedbList) {
@@ -109,15 +109,14 @@ public class FeedbackService {
 			feedbackViewDetail.setAvatar(customer.getAvatar());
 			feebackDetailList.add(feedbackViewDetail);
 		}
-
 		return ResponseEntity.ok(feebackDetailList);
 	}
 
 	public ResponseEntity<?> filterServiceFeedbackByRating(int serviceId, int ratingLevel) {
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByRating(serviceId, ratingLevel);
 		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.status(HttpStatus.NO_CONTENT)
-					.body("Không tìm thấy đánh giá nào có rating " + ratingLevel + " !");
+			return ResponseEntity.ok(serviceFeedbList);
+
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 
@@ -138,7 +137,7 @@ public class FeedbackService {
 	public ResponseEntity<?> findAll() {
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAll();
 		if(serviceFeedbList.isEmpty())
-			return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Không có đánh giá nào để hiển thị ! Hãy tạo đánh giá !");
+			return ResponseEntity.ok(serviceFeedbList);
 	
 		return ResponseEntity.ok(serviceFeedbList);
 	}
@@ -177,7 +176,6 @@ public class FeedbackService {
 			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Có lỗi đã xảy ra ! Tạo đánh giá thất bại ! Hãy thử tạo lại !");
 		}
-		
 		return this.getOne(feedbackToSave.getServiceFeedbackId());
 	}
 
@@ -204,7 +202,6 @@ public class FeedbackService {
 			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Có lỗi đã xảy ra ! Cập nhật đánh giá thất bại !");
 		}
-		
 		return this.getOne(feedbackToUpdate.getServiceFeedbackId());
 	}
 	
