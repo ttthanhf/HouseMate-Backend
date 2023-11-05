@@ -30,6 +30,7 @@ public class ScheduleMapper {
     public EventRes mapToEventRes(Schedule schedule, Service service) {
         EventRes event = new EventRes();
 
+        event.setScheduleId(schedule.getScheduleId());
         event.setTitle(service.getTitleName());
         event.setStart(schedule.getStartDate());
         event.setEnd(schedule.getEndDate());
