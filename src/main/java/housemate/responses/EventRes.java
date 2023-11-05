@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class EventRes {
+    private int scheduleId;
     private String title;
     private LocalDateTime start;
     private LocalDateTime end;
