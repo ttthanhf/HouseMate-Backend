@@ -2,6 +2,7 @@ package housemate.services;
 
 import housemate.constants.Cycle;
 import housemate.constants.Enum.ServiceConfiguration;
+import housemate.constants.Role;
 import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
 import housemate.mappers.ScheduleMapper;
@@ -72,8 +73,7 @@ public class ScheduleService {
         this.MINIMUM_RETURN_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.MINIMUM_RETURN_HOURS).getConfigValue());
     }
 
-    public ResponseEntity<List<EventRes>> getScheduleForCustomer(HttpServletRequest request) {
-        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+    private List<EventRes> getCustomerSchedule(int userId) {
         List<EventRes> events = new ArrayList<>();
         List<Schedule> schedules = scheduleRepository.getByCustomerId(userId);
 
@@ -102,13 +102,19 @@ public class ScheduleService {
             }
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(events);
+        return events;
     }
 
-    public ResponseEntity<List<EventRes>> getScheduleForStaff(HttpServletRequest request) {
+    public ResponseEntity<List<EventRes>> getScheduleForCurrentUser(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        List<EventRes> events = getEventsForStaff(userId);
-        return ResponseEntity.status(HttpStatus.OK).body(events);
+        Role userRole = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+
+        if (userRole.equals(Role.CUSTOMER)) {
+            List<EventRes> events = getCustomerSchedule(userId);
+            return ResponseEntity.status(HttpStatus.OK).body(events);
+        } else {
+            return getStaffScheduleByUserId(userId);
+        }
     }
 
     public ResponseEntity<List<EventRes>> getStaffScheduleByUserId(int userId) {
@@ -209,7 +215,7 @@ public class ScheduleService {
     private void setStaffInfo(List<EventRes> events, Schedule schedule, EventRes event) {
         if (schedule.getStaffId() != 0) {
             UserAccount staff = userRepository.findByUserId(schedule.getStaffId());
-            event.setStaff(staff.getFullName());
+            event.setUserName(staff.getFullName());
             event.setPhone(staff.getPhoneNumber());
         }
         events.add(event);
@@ -217,7 +223,7 @@ public class ScheduleService {
 
     private void setCustomerInfo(List<EventRes> events, Schedule schedule, EventRes event) {
         UserAccount customer = userRepository.findByUserId(schedule.getCustomerId());
-        event.setStaff(customer.getFullName());
+        event.setUserName(customer.getFullName());
         event.setPhone(customer.getPhoneNumber());
 
         events.add(event);
