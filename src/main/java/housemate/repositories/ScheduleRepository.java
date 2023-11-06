@@ -20,8 +20,6 @@ import java.util.List;
 public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     List<Schedule> getByCustomerId(int customerId);
 
-    Schedule getByScheduleId(int scheduleId);
-
     List<Schedule> getByStaffId(int staffId);
 
     @Query(value = "SELECT COALESCE(SUM(s.quantityRetrieve), 0) FROM Schedule s WHERE s.userUsageId = :userUsageId")
