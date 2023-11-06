@@ -224,7 +224,7 @@ public class TaskBuildupService {
 		    .orElse(List.of());
 	    service.setImages(serviceImage);
 	    service.setPackageName(servicePackageName);
-
+	    
 	    ServiceFeedback feedbackFrEntity = feedbRepo.findByCustomerIdAndTaskIdAndServiceId(schedule.getCustomerId(),
 		    task.getTaskId(), service.getServiceId());
 	    ServiceFeedbackViewOnTask feedback = null;
@@ -237,7 +237,6 @@ public class TaskBuildupService {
 	    taskView.setService(service);
 	    taskView.setTaskReportList(taskReports);
 	    taskView.setFeedback(feedback);
-
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
@@ -476,7 +475,7 @@ public class TaskBuildupService {
 			TaskStatus.ARRIVED);
 		if (checkArrivedReportExists == null)
 		    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-			    " Hãy báo cáo cho trạng thái \"Đã Đến\" ");
+			    " Hãy báo cáo cho trạng thái \"Đã Đến\"");
 		TaskReport checkDoingReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
 			TaskStatus.DOING);
 		if (checkDoingReportExists == null)
@@ -511,7 +510,7 @@ public class TaskBuildupService {
 	    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 		    "Có lỗi xảy ra ! Báo cáo thất bại !");
 	}
-	return TaskRes.build(taskReportResult, TaskMessType.OK, "Report task successfully !");
+	return TaskRes.build(taskReportResult, TaskMessType.OK, "Báo cáo thành công !");
     }
 
     // === SETTING TIME FOR AUTOMATIC NOTIFICATION===//
