@@ -6,9 +6,11 @@ package housemate.repositories;
 
 import housemate.entities.Schedule;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,4 +28,15 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 
     @Query(value = "SELECT COALESCE(SUM(s.quantityRetrieve), 0) FROM Schedule s WHERE s.userUsageId = :userUsageId")
     int getTotalQuantityRetrieveByUserUsageId(@Param("userUsageId") int userUsageId);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE Schedule s SET s.status = 'CANCEL', s.quantityRetrieve = 0 WHERE s.scheduleId = :scheduleId")
+    void cancelThisSchedule(@Param("scheduleId") int scheduleId);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE Schedule s SET s.status = 'CANCEL', s.quantityRetrieve = 0 " +
+            "WHERE s.scheduleId >= :scheduleId AND s.parentScheduleId = :parentScheduleId")
+    void cancelThisAndFollowingSchedule(@Param("scheduleId") int scheduleId, @Param("scheduleId") int parentScheduleId);
 }
