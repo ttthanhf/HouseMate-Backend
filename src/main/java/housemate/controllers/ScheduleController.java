@@ -29,18 +29,11 @@ public class ScheduleController {
     @Autowired
     ScheduleService service;
 
-    @Operation(summary = "Get all schedule for the current customer")
-    @GetMapping("/customer")
-    public ResponseEntity<List<EventRes>> getScheduleForCustomer(HttpServletRequest request) {
-        return service.getScheduleForCustomer(request);
+    @Operation(summary = "Get all schedule for the current user")
+    @GetMapping()
+    public ResponseEntity<List<EventRes>> getScheduleForCurrentUser(HttpServletRequest request) {
+        return service.getScheduleForCurrentUser(request);
     }
-
-    @Operation(summary = "Get all schedule for the current staff")
-    @GetMapping("/staff")
-    public ResponseEntity<List<EventRes>> getScheduleForStaff(HttpServletRequest request) {
-        return service.getScheduleForStaff(request);
-    }
-
     @Operation(summary = "Get all schedule for the staff by staff ID (userId)")
     @GetMapping("/staff/{userId}")
     public ResponseEntity<List<EventRes>> getStaffScheduleByUserId(@PathVariable int userId) {
