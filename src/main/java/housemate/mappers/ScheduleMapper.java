@@ -22,7 +22,7 @@ public class ScheduleMapper {
         schedule.setNote(note == null ? "" : note.trim());
         schedule.setCycle(scheduleDTO.getCycle());
         schedule.setStatus(ScheduleStatus.PROCESSING);
-        schedule.setUserUsageId(schedule.getUserUsageId());
+        schedule.setUserUsageId(scheduleDTO.getUserUsageId());
 
         return schedule;
     }
