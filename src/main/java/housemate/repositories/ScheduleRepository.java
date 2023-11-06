@@ -29,13 +29,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     @Query(value = "SELECT COALESCE(SUM(s.quantityRetrieve), 0) FROM Schedule s WHERE s.userUsageId = :userUsageId")
     int getTotalQuantityRetrieveByUserUsageId(@Param("userUsageId") int userUsageId);
 
-    List<Schedule> getAllByParentScheduleId(int parentScheduleId);
-
-//    @Modifying
-//    @Transactional
-//    @Query("DELETE FROM Schedule s WHERE s.scheduleId >= :scheduleId AND s.parentScheduleId = :parentScheduleId")
-//    void deleteThisAndFollowing(@Param("scheduleId") int scheduleId, @Param("parentScheduleId") int parentScheduleId);
-
     @Transactional
     void deleteByScheduleIdGreaterThanEqualAndParentScheduleIdEquals(int scheduleId, int parentScheduleId);
 
