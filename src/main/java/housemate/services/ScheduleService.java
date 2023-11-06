@@ -30,10 +30,6 @@ import java.util.Set;
 @org.springframework.stereotype.Service
 public class ScheduleService {
 
-    private  int OFFICE_HOURS_START;
-    private  int OFFICE_HOURS_END;
-    private  int FIND_STAFF_HOURS;
-    private  int MINIMUM_RETURN_HOURS;
     private static final String RETURN_SERVICE = "RETURN_SERVICE"; // This is special service => create 2 schedule
     private final ServiceRepository serviceRepository;
     private final ScheduleRepository scheduleRepository;
@@ -44,6 +40,10 @@ public class ScheduleService {
     private final UserRepository userRepository;
     private final OrderItemRepository orderItemRepository;
     private final ServiceConfigRepository serviceConfigRepository;
+    private final int OFFICE_HOURS_START;
+    private final int OFFICE_HOURS_END;
+    private final int FIND_STAFF_HOURS;
+    private final int MINIMUM_RETURN_HOURS;
 
 
     @Autowired
@@ -178,7 +178,7 @@ public class ScheduleService {
     public ResponseEntity<String> createSchedule(HttpServletRequest request, ScheduleDTO scheduleDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), schedule, true);
+        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), schedule);
     }
 
     public ResponseEntity<String> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO updateSchedule, int scheduleId) {
@@ -190,63 +190,78 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not find this schedule with schedule ID + " + scheduleId);
         }
 
+        // Check if status
         if (isStatusInvalid(scheduleId)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
         }
 
         List<Schedule> schedules = scheduleRepository.getAllByParentScheduleId(currentSchedule.getParentScheduleId());
 
-        // Update ONLY_ONE_TIME => EVERY_MONTH/EVERY_WEEK
+        // Check is valid cycle
+        boolean isValidCycle = currentSchedule.getCycle().equals(updateSchedule.getCycle()) || updateSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME);
+        if (!isValidCycle) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cycle is in valid");
+        }
 
-        // Update ONLY_ONE_TIME => ONLY_ONE_TIME
+        boolean isUpdateOnlyOnce = updateSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME);
+        boolean isUpdateOnParent = scheduleId == currentSchedule.getParentScheduleId();
 
-        // Update EVERY_MONTH/EVERY_WEEK => ONLY_ONE_TIME
-        // Update EVERY_MONTH/EVERY_WEEK => EVERY_MONTH/EVERY_WEEK
+        // Change parent schedule ID for EVERY_WEEK/EVERY_MONTH schedule
+//        if (isUpdateOnlyOnce) {
+//            // 1. Update on the parent (the first schedule) [DO NOTHING]
+//            if (isUpdateOnParent) {
+//                // [BAD CASE, COMPLEXITY: n]
+//                int parentScheduleId = schedules.get(1).getParentScheduleId();
+//                for (Schedule schedule : schedules) {
+//                    schedule.setParentScheduleId(parentScheduleId);
+//                    scheduleRepository.save(schedule);
+//                }
+//
+//            }
+//            // 2. Update on the child (from the second after)
+//            else {
+//                Schedule newSchedule = scheduleMapper.updateSchedule(currentSchedule, updateSchedule);
+//                newSchedule.setParentScheduleId(0);
+//                scheduleRepository.save(newSchedule);
+//
+//            }
+//
+//        } else {
+//            // 2. Update on the child (from the second after)
+//            if (!isUpdateOnParent) {
+//                int parentScheduleId = 0;
+//
+//                for (Schedule schedule : schedules) {
+//                    if (schedule.getScheduleId() == scheduleId) {
+//                        parentScheduleId = schedule.getScheduleId();
+//                    }
+//
+//                    if (parentScheduleId == 0) continue;
+//
+//                    schedule.setParentScheduleId(parentScheduleId);
+//                    scheduleRepository.save(schedule);
+//                }
+//
+//            }
+//
+//        }
 
-        // I. Update only one time
-        if (updateSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME)) {
-            // 1. Update on the parent (the first schedule)
-            if (scheduleId == currentSchedule.getParentScheduleId()) {
+        if (isUpdateOnlyOnce) {
+            scheduleRepository.deleteById(scheduleId);
 
-                // [BAD CASE, COMPLEXITY: n]
+            if (isUpdateOnParent && !currentSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME)) {
                 int parentScheduleId = schedules.get(1).getParentScheduleId();
                 for (Schedule schedule : schedules) {
                     schedule.setParentScheduleId(parentScheduleId);
                     scheduleRepository.save(schedule);
                 }
-
-                return ResponseEntity.status(HttpStatus.OK).body("Update successfully!");
             }
-
-            // 2. Update on the child (from the second after)
-            Schedule newSchedule = scheduleMapper.updateSchedule(currentSchedule, updateSchedule);
-            newSchedule.setParentScheduleId(0);
-            scheduleRepository.save(newSchedule);
-
-            return ResponseEntity.status(HttpStatus.OK).body("Update successfully!");
+        } else {
+            scheduleRepository.deleteAll(schedules);
         }
 
-        // II. Update every week/ every month
-        // 1. Update on the parent (the first schedule) [DO NOTHING]
-
-        // 2. Update on the child (from the second after)
-        if (scheduleId != currentSchedule.getParentScheduleId()) {
-            int parentScheduleId = 0;
-
-            for (Schedule schedule : schedules) {
-                if (schedule.getScheduleId() == scheduleId) {
-                    parentScheduleId = schedule.getScheduleId();
-                }
-
-                if (parentScheduleId == 0) continue;
-
-                schedule.setParentScheduleId(parentScheduleId);
-                scheduleRepository.save(schedule);
-            }
-
-        }
-
-        return validateAndProcessSchedule(userId, currentSchedule.getServiceId(), currentSchedule.getUserUsageId(), currentSchedule, false);
+        Schedule newSchedule = scheduleMapper.updateSchedule(currentSchedule, updateSchedule);
+        return validateAndProcessSchedule(userId, currentSchedule.getServiceId(), currentSchedule.getUserUsageId(), newSchedule);
 
     }
 
@@ -294,7 +309,7 @@ public class ScheduleService {
         events.add(event);
     }
 
-    private ResponseEntity<String> validateAndProcessSchedule(int userId, int serviceId, int userUsageId, Schedule schedule, boolean isCreateSchedule) {
+    private ResponseEntity<String> validateAndProcessSchedule(int userId, int serviceId, int userUsageId, Schedule schedule) {
         // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
@@ -338,9 +353,7 @@ public class ScheduleService {
         }
 
         // Store to database
-        if (isCreateSchedule) {
-            storeToDatabase(schedule);
-        }
+        storeToDatabase(schedule);
 
         return ResponseEntity.status(HttpStatus.OK).body("Set schedule successfully! Please wait for our staff to apply this job!");
     }
@@ -383,7 +396,7 @@ public class ScheduleService {
         if (isOutsideOfficeHours(startDate)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your start date in range from 7:00 to 18:00");
         }
-        
+
         // Validate endDate in office hours
         if (isOutsideOfficeHours(endDate)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your end date in range from 7:00 to 18:00");
@@ -455,7 +468,7 @@ public class ScheduleService {
                 newSchedule.setEndDate(newSchedule.getEndDate().plusWeeks(week));
 
                 // Store parent schedule ID
-                Schedule scheduleDb =  newSchedule.getScheduleId() == 0 ? scheduleRepository.save(newSchedule) : newSchedule;
+                Schedule scheduleDb = newSchedule.getScheduleId() == 0 ? scheduleRepository.save(newSchedule) : newSchedule;
                 parentScheduleId = week == 0 ? scheduleDb.getScheduleId() : parentScheduleId;
                 scheduleDb.setParentScheduleId(parentScheduleId);
                 scheduleRepository.save(scheduleDb);
