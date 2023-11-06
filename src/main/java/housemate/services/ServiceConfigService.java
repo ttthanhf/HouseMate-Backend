@@ -7,6 +7,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
@@ -20,25 +21,25 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import net.minidev.json.JSONObject;
 
-@Service
+@Component
 public class ServiceConfigService {
 
 	@Autowired
 	ServiceConfigRepository servConfRepo;
 
 	@Autowired
-	private AuthorizationUtil authorizationUtil;
-
+	AuthorizationUtil authorizationUtil;
+	
 	ModelMapper mapper = new ModelMapper();
 
 	public ResponseEntity<?> getAllByServiceConfigType(ServiceConfiguration serviceConfiguration) {
 	    List<ServiceConfig> serviceConfigList = servConfRepo.findAllByConfigType(serviceConfiguration);
 		return ResponseEntity.ok(serviceConfigList);
 	}
-	
+	 
 	public List<String> getConfigValuesOfConfigTypeName(ServiceConfiguration serviceConfiguration) {
 	    List<ServiceConfig> serviceConfigList = servConfRepo.findAllByConfigType(serviceConfiguration);
-	    if (serviceConfigList.isEmpty())
+	    if (serviceConfigList == null)
 		return List.of();
 	    List<String> configValues = serviceConfigList.stream().map(x -> x.getConfigValue())
 		    .collect(Collectors.toList());
@@ -111,6 +112,8 @@ public class ServiceConfigService {
 		servConfRepo.delete(existedServConf);
 		return ResponseEntity.ok("Deleted Successfully");
 	}
+	
+	
 	
 	
 
