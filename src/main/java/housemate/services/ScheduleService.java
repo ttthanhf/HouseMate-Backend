@@ -73,7 +73,7 @@ public class ScheduleService {
         this.MINIMUM_RETURN_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.MINIMUM_RETURN_HOURS).getConfigValue());
     }
 
-    public ResponseEntity<List<EventRes>> getCustomerSchedule(int userId) {
+    private ResponseEntity<List<EventRes>> getCustomerSchedule(int userId) {
         List<EventRes> events = new ArrayList<>();
         List<Schedule> schedules = scheduleRepository.getByCustomerId(userId);
 
@@ -214,7 +214,7 @@ public class ScheduleService {
     private void setStaffInfo(List<EventRes> events, Schedule schedule, EventRes event) {
         if (schedule.getStaffId() != 0) {
             UserAccount staff = userRepository.findByUserId(schedule.getStaffId());
-            event.setName(staff.getFullName());
+            event.setUserName(staff.getFullName());
             event.setPhone(staff.getPhoneNumber());
         }
         events.add(event);
@@ -222,7 +222,7 @@ public class ScheduleService {
 
     private void setCustomerInfo(List<EventRes> events, Schedule schedule, EventRes event) {
         UserAccount customer = userRepository.findByUserId(schedule.getCustomerId());
-        event.setName(customer.getFullName());
+        event.setUserName(customer.getFullName());
         event.setPhone(customer.getPhoneNumber());
 
         events.add(event);
