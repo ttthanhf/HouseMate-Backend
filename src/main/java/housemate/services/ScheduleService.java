@@ -73,7 +73,7 @@ public class ScheduleService {
         this.MINIMUM_RETURN_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.MINIMUM_RETURN_HOURS).getConfigValue());
     }
 
-    private ResponseEntity<List<EventRes>> getCustomerSchedule(int userId) {
+    private List<EventRes> getCustomerSchedule(int userId) {
         List<EventRes> events = new ArrayList<>();
         List<Schedule> schedules = scheduleRepository.getByCustomerId(userId);
 
@@ -102,7 +102,7 @@ public class ScheduleService {
             }
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(events);
+        return events;
     }
 
     public ResponseEntity<List<EventRes>> getScheduleForCurrentUser(HttpServletRequest request) {
@@ -110,7 +110,8 @@ public class ScheduleService {
         Role userRole = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
 
         if (userRole.equals(Role.CUSTOMER)) {
-            return getCustomerSchedule(userId);
+            List<EventRes> events = getCustomerSchedule(userId);
+            return ResponseEntity.status(HttpStatus.OK).body(events);
         } else {
             return getStaffScheduleByUserId(userId);
         }
