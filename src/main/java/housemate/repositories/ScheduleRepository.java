@@ -5,11 +5,14 @@
 package housemate.repositories;
 
 import housemate.entities.Schedule;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -30,17 +33,17 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 
     List<Schedule> getAllByParentScheduleId(int parentScheduleId);
 
-    @Modifying
-    @Query("DELETE FROM Schedule s " +
-            "WHERE s.scheduleId >= :scheduleId AND s.parentScheduleId = (" +
-            "    SELECT sc.parentScheduleId FROM Schedule sc WHERE sc.scheduleId = :scheduleId" +
-            ")")
-    void deleteThisAndFollowing(@Param("scheduleId") int scheduleId);
+//    @Modifying
+//    @Transactional
+//    @Query("DELETE FROM Schedule s WHERE s.scheduleId >= :scheduleId AND s.parentScheduleId = :parentScheduleId")
+//    void deleteThisAndFollowing(@Param("scheduleId") int scheduleId, @Param("parentScheduleId") int parentScheduleId);
+
+    @Transactional
+    void deleteByScheduleIdGreaterThanEqualAndParentScheduleIdEquals(int scheduleId, int parentScheduleId);
 
     @Modifying
-    @Query("UPDATE Schedule s SET s.parentScheduleId = :scheduleId " +
-            "WHERE s.scheduleId <> :scheduleId AND s.parentScheduleId = (" +
-            "    SELECT sc.parentScheduleId FROM Schedule sc WHERE sc.scheduleId = :scheduleId" +
-            ")")
+    @Transactional
+    @Query("UPDATE Schedule s SET s.parentScheduleId = :scheduleId + 1 " +
+            "WHERE s.scheduleId <> :scheduleId AND s.parentScheduleId = :scheduleId")
     void updateChildrenSchedule(@Param("scheduleId") int scheduleId);
 }
