@@ -96,7 +96,7 @@ public class TheService {
 		if (serviceList == null)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
 		serviceList.forEach(
-				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST)));
+				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
 		return ResponseEntity.ok().body(serviceList);
 	}
 
@@ -105,7 +105,7 @@ public class TheService {
 		if (serviceList == null)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
 		serviceList.forEach(
-				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST)));
+				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
 		return ResponseEntity.ok().body(serviceList);
 	}
 	

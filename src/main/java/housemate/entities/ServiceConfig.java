@@ -23,13 +23,12 @@ public class ServiceConfig {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "service_config_id")
-	private int service_config_id;
+	private int serviceConfigId;
 	
 	@Column(name = "config_type")
 	@Enumerated(EnumType.STRING)
 	private ServiceConfiguration configType;
 	
 	@Column(name = "config_value")
-	private String configValue;
-		
+	private String configValue;	
 }
