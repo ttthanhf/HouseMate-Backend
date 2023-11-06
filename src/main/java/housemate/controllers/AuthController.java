@@ -59,7 +59,6 @@ public class AuthController {
 
     @GetMapping("/callback/google/redirect")
     public ResponseEntity<String> loginSuccessWithGoogle(OAuth2AuthenticationToken oAuth2AuthenticationToken) {
-        Map<String, Object> user = oAuth2AuthenticationToken.getPrincipal().getAttributes();
-        return authService.loginWithGoogle(user);
+        return authService.loginWithGoogle(oAuth2AuthenticationToken);
     }
 }
