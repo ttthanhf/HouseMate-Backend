@@ -178,7 +178,8 @@ public class ScheduleService {
     public ResponseEntity<String> createSchedule(HttpServletRequest request, ScheduleDTO scheduleDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
-        return validateAndProcessSchedule(userId, scheduleDTO.getServiceId(), scheduleDTO.getUserUsageId(), schedule);
+        schedule.setCustomerId(userId);
+        return validateAndProcessSchedule(schedule);
     }
 
     public ResponseEntity<String> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO updateSchedule, int scheduleId) {
@@ -191,11 +192,10 @@ public class ScheduleService {
         }
 
         // Check if status
-        if (isStatusInvalid(scheduleId)) {
+        ScheduleStatus status = currentSchedule.getStatus();
+        if (status != ScheduleStatus.PROCESSING && status != ScheduleStatus.PENDING) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
         }
-
-        List<Schedule> schedules = scheduleRepository.getAllByParentScheduleId(currentSchedule.getParentScheduleId());
 
         // Check is valid cycle
         boolean isValidCycle = currentSchedule.getCycle().equals(updateSchedule.getCycle()) || updateSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME);
@@ -203,66 +203,18 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cycle is in valid");
         }
 
-        boolean isUpdateOnlyOnce = updateSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME);
-        boolean isUpdateOnParent = scheduleId == currentSchedule.getParentScheduleId();
+        // Delete schedule
+        scheduleRepository.deleteThisAndFollowing(scheduleId);
 
-        // Change parent schedule ID for EVERY_WEEK/EVERY_MONTH schedule
-//        if (isUpdateOnlyOnce) {
-//            // 1. Update on the parent (the first schedule) [DO NOTHING]
-//            if (isUpdateOnParent) {
-//                // [BAD CASE, COMPLEXITY: n]
-//                int parentScheduleId = schedules.get(1).getParentScheduleId();
-//                for (Schedule schedule : schedules) {
-//                    schedule.setParentScheduleId(parentScheduleId);
-//                    scheduleRepository.save(schedule);
-//                }
-//
-//            }
-//            // 2. Update on the child (from the second after)
-//            else {
-//                Schedule newSchedule = scheduleMapper.updateSchedule(currentSchedule, updateSchedule);
-//                newSchedule.setParentScheduleId(0);
-//                scheduleRepository.save(newSchedule);
-//
-//            }
-//
-//        } else {
-//            // 2. Update on the child (from the second after)
-//            if (!isUpdateOnParent) {
-//                int parentScheduleId = 0;
-//
-//                for (Schedule schedule : schedules) {
-//                    if (schedule.getScheduleId() == scheduleId) {
-//                        parentScheduleId = schedule.getScheduleId();
-//                    }
-//
-//                    if (parentScheduleId == 0) continue;
-//
-//                    schedule.setParentScheduleId(parentScheduleId);
-//                    scheduleRepository.save(schedule);
-//                }
-//
-//            }
-//
-//        }
-
-        if (isUpdateOnlyOnce) {
-            scheduleRepository.deleteById(scheduleId);
-
-            if (isUpdateOnParent && !currentSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME)) {
-                int parentScheduleId = schedules.get(1).getParentScheduleId();
-                for (Schedule schedule : schedules) {
-                    schedule.setParentScheduleId(parentScheduleId);
-                    scheduleRepository.save(schedule);
-                }
-            }
-        } else {
-            scheduleRepository.deleteAll(schedules);
+        // Check if delete only once on parent
+        boolean isUpdateOnlyOnceOnParent = !currentSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME) && currentSchedule.getScheduleId() == currentSchedule.getParentScheduleId();
+        if (isUpdateOnlyOnceOnParent) {
+            scheduleRepository.updateChildrenSchedule(scheduleId);
         }
 
         Schedule newSchedule = scheduleMapper.updateSchedule(currentSchedule, updateSchedule);
-        return validateAndProcessSchedule(userId, currentSchedule.getServiceId(), currentSchedule.getUserUsageId(), newSchedule);
-
+        newSchedule.setCustomerId(userId);
+        return validateAndProcessSchedule(newSchedule);
     }
 
     // ======================================== REUSABLE FUNCTIONS ========================================
@@ -309,7 +261,9 @@ public class ScheduleService {
         events.add(event);
     }
 
-    private ResponseEntity<String> validateAndProcessSchedule(int userId, int serviceId, int userUsageId, Schedule schedule) {
+    private ResponseEntity<String> validateAndProcessSchedule(Schedule schedule) {
+        int serviceId = schedule.getServiceId();
+
         // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
@@ -317,7 +271,7 @@ public class ScheduleService {
         }
 
         // Check correct user usage ID
-        UserUsage userUsage = userUsageRepository.findById(userUsageId).orElse(null);
+        UserUsage userUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
         if (userUsage == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please input correct userUsageID");
         }
@@ -326,7 +280,7 @@ public class ScheduleService {
         }
 
         // Validate service ID
-        ResponseEntity<String> serviceIdValidation = validateServiceId(serviceId, userId);
+        ResponseEntity<String> serviceIdValidation = validateServiceId(serviceId, schedule.getCustomerId());
         if (serviceIdValidation != null) return serviceIdValidation;
 
         // Validate date
@@ -340,10 +294,6 @@ public class ScheduleService {
             String formattedDate = userUsage.getEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
         }
-
-        // Map to entity
-        schedule.setCustomerId(userId);
-        schedule.setUserUsageId(userUsageId);
 
         // Validate quantity
         int forecastQuantity = getMaxQuantity(startDate, userUsage.getEndDate(), schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve());
@@ -458,10 +408,8 @@ public class ScheduleService {
         // Store to database (EVERY_WEEK)
         if (cycle == Cycle.EVERY_WEEK) {
             for (int week = 0; week < maxQuantity; week++) {
-                System.out.println("Current schedule: " + schedule.getScheduleId());
                 // Create new instance for schedule
                 Schedule newSchedule = schedule.clone();
-                System.out.println("New schedule: " + newSchedule.getScheduleId());
 
                 newSchedule.setCustomerId(customerId);
                 newSchedule.setStartDate(newSchedule.getStartDate().plusWeeks(week));
@@ -506,11 +454,6 @@ public class ScheduleService {
         }
 
         return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(remaining, quantity));
-    }
-
-    private boolean isStatusInvalid(int scheduleId) {
-        ScheduleStatus status = scheduleRepository.getByScheduleId(scheduleId).getStatus();
-        return status != ScheduleStatus.PROCESSING && status != ScheduleStatus.PENDING;
     }
 
     private boolean isOutsideOfficeHours(LocalDateTime date) {
