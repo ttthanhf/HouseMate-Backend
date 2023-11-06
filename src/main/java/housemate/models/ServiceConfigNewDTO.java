@@ -14,4 +14,6 @@ public class ServiceConfigNewDTO {
 	@NotEmpty
 	private String configValue;
 
+
+
 }

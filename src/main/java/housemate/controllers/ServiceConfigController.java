@@ -46,13 +46,13 @@ public class ServiceConfigController {
 	@PostMapping("/new")
 	@Operation(summary = "Create new config value for the specific config type")
 	public ResponseEntity<?> createNewConfigValue(HttpServletRequest request, @Valid @RequestBody ServiceConfigNewDTO serviceConfigNew){
-		return servConfDao.createNewServConf(request, serviceConfigNew);
+		return servConfDao.createNewServConfig(request, serviceConfigNew);
 	}
 	
 	@PutMapping("/{id}")
 	@Operation(summary = "Update new config value for the specific config type")
 	public ResponseEntity<?> updateConfigValue(HttpServletRequest request, @PathVariable("id") int serviceConfigId, @Valid @RequestBody ServiceConfigNewDTO serviceConfigNew){
-		return servConfDao.updateServConf(request, serviceConfigId, serviceConfigNew);
+		return servConfDao.updateServConfigValue(request, serviceConfigId, serviceConfigNew);
 	}
 	
 	@DeleteMapping("/{id}")
