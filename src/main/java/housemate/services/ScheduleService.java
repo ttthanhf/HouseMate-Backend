@@ -1,6 +1,7 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
+    import housemate.constants.DeleteType;
 import housemate.constants.Enum.ServiceConfiguration;
 import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
@@ -429,16 +430,16 @@ public class ScheduleService {
         return dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
     }
 
-    public ResponseEntity<String> cancelSchedule(HttpServletRequest request, int scheduleId) {
+    public ResponseEntity<String> cancelSchedule(HttpServletRequest request, int scheduleId, DeleteType deleteType) {
         Schedule schedule = scheduleRepository.getByScheduleId(scheduleId);
 
         if (schedule == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't find this schedule");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this schedule");
         }
 
         // Check if schedule is on task
-        if (schedule.isOnTask()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error! This schedule is on task");
+        if (schedule.isOnTask() || schedule.getStaffId() != 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error! This schedule is on task or already have staff");
         }
 
         // Check if status is invalid or not
@@ -447,8 +448,12 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You can't cancel this schedule");
         }
 
-        schedule.setStatus(ScheduleStatus.CANCEL);
-        scheduleRepository.save(schedule);
+        // Cancel schedule
+        if (deleteType.equals(DeleteType.THIS_SCHEDULE)) {
+            scheduleRepository.cancelThisSchedule(scheduleId);
+        } else if (deleteType.equals(DeleteType.THIS_AND_FOLLOWING_SCHEDULE)) {
+            scheduleRepository.cancelThisAndFollowingSchedule(scheduleId, schedule.getParentScheduleId());
+        }
 
         return ResponseEntity.status(HttpStatus.OK).body("Cancel schedule successfully");
     }
