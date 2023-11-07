@@ -1,6 +1,7 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
+    import housemate.constants.DeleteType;
 import housemate.constants.Enum.ServiceConfiguration;
 import housemate.constants.Role;
 import housemate.constants.ScheduleStatus;
@@ -469,5 +470,35 @@ public class ScheduleService {
 
     private String formatDateTime(LocalDateTime dateTime) {
         return dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+    }
+
+    public ResponseEntity<String> cancelSchedule(HttpServletRequest request, int scheduleId, DeleteType deleteType) {
+        Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
+
+        if (schedule == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this schedule");
+        }
+
+        // Check if schedule is on task
+        if (schedule.isOnTask() || schedule.getStaffId() != 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error! This schedule is on task or already have staff");
+        }
+
+        // Check if status is invalid or not
+        ScheduleStatus status = schedule.getStatus();
+        if (status != ScheduleStatus.PROCESSING && status != ScheduleStatus.PENDING) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You can't cancel this schedule");
+        }
+
+        // Cancel schedule
+        if (deleteType.equals(DeleteType.THIS_SCHEDULE)) {
+            scheduleRepository.cancelThisSchedule(scheduleId);
+        } else if (deleteType.equals(DeleteType.THIS_AND_FOLLOWING_SCHEDULE)) {
+            scheduleRepository.cancelThisAndFollowingSchedule(scheduleId, schedule.getParentScheduleId());
+        }
+
+        // TODO: Fetch API /tasks/cancel/schedule/{schedule-id}
+
+        return ResponseEntity.status(HttpStatus.OK).body("Cancel schedule successfully");
     }
 }
