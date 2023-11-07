@@ -467,24 +467,9 @@ public class ScheduleService {
             userUsage.setService(serviceChild);
             userUsage.setRemaining(remaining);
 
-//            // Add new UserUsage to the existedPurchase in purchases Set (Set<PurchasedServiceRes>)
-//            PurchasedServiceRes existedPurchase = getPurchaseById(purchases, serviceId);
-//            if (existedPurchase != null) {
-//                existedPurchase.getUsages().add(userUsage);
-//                purchases.add(existedPurchase);
-//                continue;
-//            }
-//
-//            // Create new PurchasedServiceRes
-//            PurchasedServiceRes purchase = new PurchasedServiceRes();
-//            purchase.setServiceId(service.getServiceId());
-//            purchase.setTitleName(service.getTitleName());
-//            schedule.setGroupType(service.getGroupType());
+            // Store to schedule
             schedule.setType(typeList);
             schedule.getUsages().add(userUsage);
-
-//            // Add to Set<PurchasedServiceRes>
-//            purchases.add(purchase);
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(schedule);
