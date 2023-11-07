@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
-import housemate.constants.Enum.ServiceConfiguration;
+import housemate.constants.ServiceConfiguration;
 import housemate.constants.Enum.*;
 import housemate.constants.ImageType;
 import housemate.entities.Image;
