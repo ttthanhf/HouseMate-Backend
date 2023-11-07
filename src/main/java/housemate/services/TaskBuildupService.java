@@ -405,7 +405,8 @@ public class TaskBuildupService {
 	TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
 		TaskStatus.valueOf(taskReport.name()));
 	if (checkReportExists != null) {
-	    checkReportExists.setNote(reportNewDTO.getNote());
+	    if (reportNewDTO != null && reportNewDTO.getNote() != null)
+		checkReportExists.setNote(reportNewDTO.getNote());
 	    return TaskRes.build(checkReportExists, TaskMessType.OK, "Cập nhật báo cáo công việc thành công");
 	}
 	try {
@@ -420,14 +421,15 @@ public class TaskBuildupService {
 			task.getSchedule().getStartDate());
 		if (minutesDiff > DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum())
 		    return TaskRes.build(checkReportExists, TaskMessType.REJECT_REPORT_TASK,
-			    "Bạn chỉ được bắt đầu báo cáo công việc tại thời điểm "
+			    "Tiến trình báo cáo chưa mở để bạn bắt đầu. Bạn sẽ được mở quyền báo cáo cho công việc tại thời điểm "
 				    + task.getSchedule().getStartDate()
 					    .minusMinutes(DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum()));
 		// Set up
 		task.setTaskStatus(TaskStatus.ARRIVED);
 		task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 		taskReportResult.setTaskStatus(task.getTaskStatus());
-		// Send notification
+		
+		//TODO: RECONSTRUCT NOTIFICATION
 		TaskBuildupService.createAndSendNotification(
 			"Your task is being processed by our staff. Please wait for our staff done their job !",
 			"ARRIVED TASK PROGRESSION", List.of(task.getSchedule().getCustomerId()));
@@ -463,7 +465,8 @@ public class TaskBuildupService {
 		task.setTaskStatus(TaskStatus.DOING);
 		task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 		taskReportResult.setTaskStatus(task.getTaskStatus());
-		// Send notification
+		
+		//TODO: RECONSTRUCT NOTIFICATION
 		TaskBuildupService.createAndSendNotification(
 			"Your task is being processed by our staff. Please wait for our staff done their job !",
 			"DOING TASK PROGRESSION", List.of(task.getSchedule().getCustomerId()));
@@ -492,7 +495,7 @@ public class TaskBuildupService {
 		int newQuantityRemaining = userUsage.getRemaining() - task.getSchedule().getQuantityRetrieve();
 		userUsage.setRemaining(newQuantityRemaining);
 
-		// Send notification
+		//TODO: RECONSTRUCT NOTIFICATION
 		TaskBuildupService.createAndSendNotification(
 			"Your task has been done by our staff. Let enjoy the result !", "DONE TASK PROGRESSION",
 			List.of(task.getSchedule().getCustomerId()));
