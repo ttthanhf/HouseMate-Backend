@@ -6,12 +6,12 @@ package housemate.repositories;
 
 import housemate.constants.ScheduleStatus;
 import housemate.entities.Schedule;
-import housemate.entities.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -45,4 +45,12 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 
     List<Schedule> getByStaffId(int staffId);
 
+    @Transactional
+    void deleteByScheduleIdGreaterThanEqualAndParentScheduleIdEquals(int scheduleId, int parentScheduleId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Schedule s SET s.parentScheduleId = :scheduleId + 1 " +
+            "WHERE s.scheduleId <> :scheduleId AND s.parentScheduleId = :scheduleId")
+    void updateChildrenSchedule(@Param("scheduleId") int scheduleId);
 }
