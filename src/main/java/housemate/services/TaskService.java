@@ -22,7 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import housemate.constants.ScheduleStatus;
-import static housemate.constants.Enum.ServiceConfiguration.*;
+import static housemate.constants.ServiceConfiguration.*;
 import housemate.constants.Enum.TaskReportType;
 import housemate.constants.Enum.TaskStatus;
 import housemate.constants.ImageType;
@@ -277,7 +277,7 @@ public class TaskService {
 	}
 	if (role.equals(Role.STAFF)) {
 	    if (userIdRequestCancel != scheduleToBeCancelled.getStaffId())
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are not allow to cancel task of this schedule !");
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không có quyền được xóa lịch này !");
 	    taskToBeCancelled = taskBuildupServ.cancelTaskByRole(Role.STAFF, scheduleToBeCancelled,
 		    "The staff has cancelled the task !");
 	    if (taskToBeCancelled == null)
@@ -423,5 +423,4 @@ public class TaskService {
 	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Hệ thống không tìm thấy nhân viên nào !");
 	return ResponseEntity.ok().body(staffs);
     }
-    // TODO: SHUT DOWN AUTO CREATE TASK AUTO MATICALLY
 }

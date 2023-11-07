@@ -21,7 +21,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import static housemate.constants.Enum.ServiceConfiguration.*;
+import static housemate.constants.ServiceConfiguration.*;
 import housemate.constants.Enum.TaskReportType;
 import housemate.constants.Enum.TaskStatus;
 import housemate.constants.ImageType;
@@ -181,7 +181,7 @@ public class TaskBuildupService {
 		if (savedTask != null) {
 		    this.createEventSendNotiWhenTimeComing(task, schedule.getStartDate());
 		    //TODO: REMOVE HARD CODE 5 
-		    this.createEventSendNotiUpcomingTask(task, schedule.getStartDate(), 5);
+		    this.createEventSendNotiUpcomingTask(task, schedule.getStartDate(), DURATION_HOURS_SEND_INCOMING_NOTI_BEFORE.getNum());
 		  //TODO: RECONSTRUCT NOTIFICATION
 			TaskBuildupService.createAndSendNotification("Your schedule will be starting soon !",
 				"UPCOMING SCHEDULE", List.of(schedule.getCustomerId()));

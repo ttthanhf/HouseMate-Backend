@@ -2,16 +2,14 @@ package housemate.services;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
-import housemate.constants.Enum.ServiceConfiguration;
+import housemate.constants.ServiceConfiguration;
 import housemate.entities.ServiceConfig;
 import housemate.models.ServiceConfigNewDTO;
 import housemate.repositories.ServiceConfigRepository;
@@ -106,13 +104,14 @@ public class ServiceConfigService {
 
 	@Transactional
 	public ResponseEntity<?> deleteConfigValue(HttpServletRequest request, int serviceConfigId) {
-		ServiceConfig existedServConf = servConfRepo.findById(serviceConfigId).orElse(null);
-		if (existedServConf == null)
-			return ResponseEntity.badRequest().body("Not found to delete !");
+	    ServiceConfig existedServConf = servConfRepo.findById(serviceConfigId).orElse(null);
+	    try {
 		servConfRepo.delete(existedServConf);
-		return ResponseEntity.ok("Deleted Successfully");
+	    } catch (Exception e) {
+		return ResponseEntity.badRequest().body("Not found to delete !");
+	    }
+	    return ResponseEntity.ok("Deleted Successfully");
 	}
-	
 	
 	
 	

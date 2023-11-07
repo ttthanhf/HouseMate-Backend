@@ -1,8 +1,8 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
-    import housemate.constants.DeleteType;
-import housemate.constants.Enum.ServiceConfiguration;
+import housemate.constants.DeleteType;
+import housemate.constants.ServiceConfiguration;
 import housemate.constants.Role;
 import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
