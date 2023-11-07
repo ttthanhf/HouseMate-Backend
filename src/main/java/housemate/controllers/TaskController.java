@@ -49,19 +49,10 @@ public class TaskController {
 	@Operation(summary = "Filter the task status based on the current staff - Role: current STAFF only")
 	public ResponseEntity<?> getAllTaskForStaffByTaskStatus(
 			HttpServletRequest request,
-			@RequestParam(required = false)TaskStatus taskStatus,
+			@RequestParam(required = false) TaskStatus taskStatus,
 			@RequestParam(required = false) Optional<Integer> page,
 			@RequestParam(required = false) Optional<Integer> size) {
 		return taskServiceDao.getAllTaskForStaffByTaskStatus(request, taskStatus, page, size);
-	}
-	
-	@GetMapping("/staff/cancelled")
-	@Operation(summary = "Filter the task status based on the current staff - Role: current STAFF only")
-	public ResponseEntity<?> getAllCancelledTaskForStaff(
-			HttpServletRequest request,
-			@RequestParam(required = false) Optional<Integer> page,
-			@RequestParam(required = false) Optional<Integer> size) {
-		return taskServiceDao.getAllCancelledTaskForStaff(request, page, size);
 	}
 	
 	@GetMapping("/{task-id}")
@@ -84,14 +75,6 @@ public class TaskController {
 			HttpServletRequest request,
 			@PathVariable("schedule-id") int scheduleId) {
 		return taskServiceDao.createNewTask(request, scheduleId);
-	}
-	
-	@DeleteMapping("/cancel/schedule/{schedule-id}")
-	@Operation(summary = "Cancel the task of specific schedule - Role: CUSTOMER - owner of the schedule + STAFF - reponsible for doing the task of this schedule")
-	public ResponseEntity<?> cancelTask(
-			HttpServletRequest request,
-			@PathVariable("schedule-id") int scheduleId) {
-		return taskServiceDao.cancelTask(request, scheduleId);
 	}
 	
 	@PutMapping("/new-time/schedule")

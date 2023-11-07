@@ -6,17 +6,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import housemate.constants.Enum.TaskStatus;
 import housemate.entities.Task;
-import housemate.entities.TaskReport;
 
 public interface TaskReposiotory extends JpaRepository<Task, Integer> {
 
 	List<Task> findByScheduleId(int scheduleId);
 
-	@Query("SELECT t FROM Task t WHERE t.scheduleId = ?1 AND t.taskStatus NOT LIKE '%CANCELLED%'")
-	Task findExistingTaskForSchedule(int scheduleId);
+	@Query("SELECT t FROM Task t WHERE t.scheduleId = :scheduleId AND t.taskStatus NOT LIKE '%CANCELLED%'")
+	Task findExistingTaskForSchedule(@Param("scheduleId") int scheduleId);
 	
 	Task findByScheduleIdAndTaskStatus(int scheduleId, TaskStatus taskStatus);
 
