@@ -1,5 +1,6 @@
 package housemate.controllers;
 
+import housemate.constants.DeleteType;
 import housemate.models.*;
 import housemate.responses.EventRes;
 import housemate.responses.PurchasedServiceRes;
@@ -50,6 +51,12 @@ public class ScheduleController {
     @PostMapping("/create")
     public ResponseEntity<String> createSchedule(HttpServletRequest request, @Valid @RequestBody ScheduleDTO scheduleDTO) {
         return service.createSchedule(request, scheduleDTO);
+    }
+
+    @Operation(summary = "Cancel schedule")
+    @DeleteMapping("/cancel/{scheduleId}")
+    public ResponseEntity<String> cancelSchedule(HttpServletRequest request, @PathVariable int scheduleId, DeleteType deleteType) {
+        return service.cancelSchedule(request, scheduleId, deleteType);
     }
 
     @Operation(summary = "Update schedule")

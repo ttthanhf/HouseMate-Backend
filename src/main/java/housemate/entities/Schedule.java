@@ -64,6 +64,9 @@ public class Schedule implements Cloneable {
     @Column(name = "on_task")
     private boolean onTask;
 
+    @Column(name = "on_task")
+    private boolean onTask;
+
     @SneakyThrows
     @Override
     public Schedule clone() {
