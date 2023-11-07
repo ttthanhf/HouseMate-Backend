@@ -434,4 +434,13 @@ public class ScheduleService {
     private String formatDateTime(LocalDateTime dateTime) {
         return dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
     }
+
+    public ResponseEntity<?> getScheduleById(HttpServletRequest request, int scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
+        if (schedule == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this schedule");
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(schedule);
+    }
 }
