@@ -94,7 +94,6 @@ public class Enum {
 		}
 		return configValue == null ? null : Integer.parseInt(configValue);
 	    }
-
 	}
 	
 	public enum AccountStatus {
