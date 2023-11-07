@@ -22,6 +22,7 @@ import housemate.entities.Schedule;
 import housemate.models.TaskReportNewDTO;
 import housemate.services.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -109,7 +110,7 @@ public class TaskController {
 			HttpServletRequest request,
 			@PathVariable("task-id") int taskId,
 			@RequestParam(required = true) TaskReportType taskReportType,
-			@Valid @Nullable TaskReportNewDTO reportnewDTO) {
+			@Valid @Nullable @RequestBody(required = false) TaskReportNewDTO reportnewDTO) {
 		return taskServiceDao.reportTaskByStaff(request, taskId, taskReportType, reportnewDTO);
 	}
 	
