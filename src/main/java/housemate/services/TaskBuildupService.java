@@ -565,7 +565,8 @@ public class TaskBuildupService {
 
 	    @Override
 	    public void run() {
-		if (task.getStaff() == null) {
+		if (task.getStaffId() == null) {
+		    
 		  //TODO: RECONSTRUCT NOTIFICATION
 		    TaskBuildupService.createAndSendNotification(
 			    "We are trying to find the staff for your task, please waiting for staff apply !",
@@ -574,10 +575,13 @@ public class TaskBuildupService {
 		    log.info("TASK {} UPCOMING NOTI SEND - STAFF IS NULL - SENT AT {}", task.getTaskId(),
 			    dateFormat.format(new Date()));
 		}
-		if (task.getStaff() != null) {
-		    //TODO: CHECK INCOMING STATUS
-		    task.getSchedule().setStatus(ScheduleStatus.INCOMING);
+		if (task.getStaffId() != null) {
+		    //TODO: CHANGE INTO INCOMING STATUS
+		    task.setTaskStatus(TaskStatus.INCOMING);
 		    taskRepo.save(task);
+		    Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
+		    schedule.setStatus(ScheduleStatus.INCOMING);
+		    scheduleRepo.save(schedule);
 		    
 		    //TODO: RECONSTRUCT NOTIFICATION
 		    TaskBuildupService.createAndSendNotification(
