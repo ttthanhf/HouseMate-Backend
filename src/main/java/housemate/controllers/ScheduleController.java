@@ -1,5 +1,6 @@
 package housemate.controllers;
 
+import housemate.entities.Schedule;
 import housemate.constants.DeleteType;
 import housemate.models.*;
 import housemate.responses.EventRes;
@@ -35,6 +36,7 @@ public class ScheduleController {
     public ResponseEntity<List<EventRes>> getScheduleForCurrentUser(HttpServletRequest request) {
         return service.getScheduleForCurrentUser(request);
     }
+
     @Operation(summary = "Get all schedule for the staff by staff ID (userId)")
     @GetMapping("/staff/{userId}")
     public ResponseEntity<List<EventRes>> getStaffScheduleByUserId(@PathVariable int userId) {
@@ -51,6 +53,12 @@ public class ScheduleController {
     @PostMapping("/create")
     public ResponseEntity<String> createSchedule(HttpServletRequest request, @Valid @RequestBody ScheduleDTO scheduleDTO) {
         return service.createSchedule(request, scheduleDTO);
+    }
+
+    @Operation(summary = "Get schedule by schedule ID")
+    @GetMapping("/{scheduleId}")
+    public ResponseEntity<?> getScheduleById(HttpServletRequest request, @PathVariable int scheduleId) {
+        return service.getScheduleById(request, scheduleId);
     }
 
     @Operation(summary = "Cancel schedule")
