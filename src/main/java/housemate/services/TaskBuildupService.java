@@ -400,13 +400,15 @@ public class TaskBuildupService {
 	UserUsage userUsage = userUsageRepo.findById(task.getSchedule().getUserUsageId()).get();
 	if (serviceInUsed == null) {
 	    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-		    " Loại dịch vụ này không tồn tại ! Từ chối báo cáo cho công việc với loại dịch vụ không tồn tại !");
+		    "Loại dịch vụ này không tồn tại ! Từ chối báo cáo cho công việc với loại dịch vụ không tồn tại !");
 	}
 	TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
 		TaskStatus.valueOf(taskReport.name()));
 	if (checkReportExists != null) {
-	    if (reportNewDTO != null && reportNewDTO.getNote() != null)
+	    if (reportNewDTO != null && reportNewDTO.getNote() != null) 
 		checkReportExists.setNote(reportNewDTO.getNote());
+
+	    
 	    return TaskRes.build(checkReportExists, TaskMessType.OK, "Cập nhật báo cáo công việc thành công");
 	}
 	try {
@@ -445,10 +447,11 @@ public class TaskBuildupService {
 		// Check for return service type
 		boolean isReturnService = serviceInUsed.getGroupType().equals("RETURN_SERVICE");
 		if (isReturnService) {
-		    Integer quantity = reportNewDTO.getQtyOfGroupReturn();
-		    if (quantity == null)
+		    Integer quantity = null;
+		    if (reportNewDTO == null || reportNewDTO.getQtyOfGroupReturn() == null) 			
 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-				"Hãy điền giá trị khối lượng cho loại dịch vụ thuộc \"Gửi trả\" ");
+				"Hãy điền giá trị khối lượng cho loại dịch vụ thuộc \"Gửi trả\"");
+		    quantity = reportNewDTO.getQtyOfGroupReturn();
 		    if (!(serviceInUsed.getMin() == 0 && serviceInUsed.getMax() == 0))
 			if (!(quantity >= serviceInUsed.getMin() && quantity <= serviceInUsed.getMax()))
 			    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
@@ -477,7 +480,7 @@ public class TaskBuildupService {
 			TaskStatus.ARRIVED);
 		if (checkArrivedReportExists == null)
 		    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-			    " Hãy báo cáo cho trạng thái \"Đã Đến\"");
+			    "Hãy báo cáo cho trạng thái \"Đã Đến\"");
 		TaskReport checkDoingReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
 			TaskStatus.DOING);
 		if (checkDoingReportExists == null)
