@@ -12,6 +12,6 @@ public class EventRes {
     private LocalDateTime start;
     private LocalDateTime end;
     private ScheduleStatus status;
-    private String staff;
+    private String userName;
     private String phone;
 }
