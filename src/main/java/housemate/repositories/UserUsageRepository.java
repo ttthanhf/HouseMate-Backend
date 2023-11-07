@@ -6,6 +6,8 @@ package housemate.repositories;
 
 import housemate.entities.UserUsage;
 import java.util.List;
+
+import org.apache.catalina.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -38,4 +40,6 @@ public interface UserUsageRepository extends JpaRepository<UserUsage, Integer> {
             + "WHERE u.serviceId = :serviceId AND u.userId = :userId AND u.remaining <> 0 AND CURDATE() < u.endDate "
             + "ORDER BY u.endDate LIMIT 1")
     Optional<UserUsage> getSoonerSchedule(int serviceId, int userId);
+
+    List<UserUsage> getAllByServiceIdAndUserId(int serviceId, int userId);
 }

@@ -441,6 +441,52 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this schedule");
         }
 
+        List<ServiceType> typeList = serviceTypeRepository.findAllByServiceId(schedule.getServiceId()).orElse(null);
+        schedule.setType(typeList);
+
+        Set<PurchasedServiceRes> purchases = new HashSet<>();
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        List<UserUsage> usageList = userUsageRepository.getAllByServiceIdAndUserId(schedule.getServiceId(), userId);
+
+        // Get all serviceID based on order ID
+        for (UserUsage uu : usageList) {
+            // Create new instance for user usage (clone)
+            UserUsage userUsage = uu.clone();
+
+            // Check expiration and run out of remaining
+            int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(userUsage.getUserUsageId());
+            int remaining = userUsage.getRemaining() - totalUsed;
+            if (remaining <= 0 || userUsage.getEndDate().isBefore(LocalDateTime.now())) continue;
+
+            // Query the relationship to get data in database
+            int serviceId = userUsage.getServiceId();
+            int orderItemId = userUsage.getOrderItemId();
+            OrderItem orderItem = orderItemRepository.findById(orderItemId);
+            Service service = serviceRepository.getServiceByServiceId(serviceId);
+            Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+            userUsage.setService(serviceChild);
+            userUsage.setRemaining(remaining);
+
+//            // Add new UserUsage to the existedPurchase in purchases Set (Set<PurchasedServiceRes>)
+//            PurchasedServiceRes existedPurchase = getPurchaseById(purchases, serviceId);
+//            if (existedPurchase != null) {
+//                existedPurchase.getUsages().add(userUsage);
+//                purchases.add(existedPurchase);
+//                continue;
+//            }
+//
+//            // Create new PurchasedServiceRes
+//            PurchasedServiceRes purchase = new PurchasedServiceRes();
+//            purchase.setServiceId(service.getServiceId());
+//            purchase.setTitleName(service.getTitleName());
+//            schedule.setGroupType(service.getGroupType());
+            schedule.setType(typeList);
+            schedule.getUsages().add(userUsage);
+
+//            // Add to Set<PurchasedServiceRes>
+//            purchases.add(purchase);
+        }
+
         return ResponseEntity.status(HttpStatus.OK).body(schedule);
     }
 }
