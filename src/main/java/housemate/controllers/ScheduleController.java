@@ -60,5 +60,13 @@ public class ScheduleController {
         return service.getScheduleById(request, scheduleId);
     }
 
+    @Operation(summary = "Update schedule")
+    @PutMapping("/update/{scheduleId}")
+    public ResponseEntity<String> updateSchedule(
+            HttpServletRequest request, @Valid @RequestBody ScheduleUpdateDTO scheduleUpdateDTO, @PathVariable int scheduleId
+    ) {
+        return service.updateSchedule(request, scheduleUpdateDTO, scheduleId);
+    }
+
 }
 
