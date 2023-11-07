@@ -4,6 +4,7 @@ import com.google.analytics.data.v1beta.*;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
 import housemate.constants.Role;
+import housemate.models.AnalyticDTO;
 import housemate.models.responses.AnalyticPageResponse;
 import housemate.models.responses.AnalyticUserResponse;
 import housemate.utils.AuthorizationUtil;
@@ -69,7 +70,7 @@ public class AnalyticService implements DisposableBean {
         }
     }
 
-    public ResponseEntity<?> getAnalyticUser(HttpServletRequest request, int dayAgo) {
+    public ResponseEntity<?> getAnalyticUser(HttpServletRequest request, AnalyticDTO analyticDTO) {
 
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
@@ -84,7 +85,7 @@ public class AnalyticService implements DisposableBean {
                 .addMetrics(Metric.newBuilder().setName("sessions"))
                 .addMetrics(Metric.newBuilder().setName("newUsers"))
                 .addMetrics(Metric.newBuilder().setName("activeUsers"))
-                .addDateRanges(DateRange.newBuilder().setStartDate(dayAgo + "daysAgo").setEndDate("today"))
+                .addDateRanges(DateRange.newBuilder().setStartDate(analyticDTO.getStartDate().toString()).setEndDate(analyticDTO.getEndDate().toString()))
                 .build();
 
         RunReportResponse response = analyticsData.runReport(reportRequest);
@@ -110,7 +111,7 @@ public class AnalyticService implements DisposableBean {
         return ResponseEntity.status(HttpStatus.OK).body(listAnalyticUserResponse);
     }
 
-    public ResponseEntity<?> getAnalyticPage(HttpServletRequest request, int dayAgo) {
+    public ResponseEntity<?> getAnalyticPage(HttpServletRequest request, AnalyticDTO analyticDTO) {
 
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
@@ -127,7 +128,7 @@ public class AnalyticService implements DisposableBean {
                 .addMetrics(Metric.newBuilder().setName("newUsers"))
                 .addMetrics(Metric.newBuilder().setName("activeUsers"))
                 .addMetrics(Metric.newBuilder().setName("eventCount"))
-                .addDateRanges(DateRange.newBuilder().setStartDate(dayAgo + "daysAgo").setEndDate("today"))
+                .addDateRanges(DateRange.newBuilder().setStartDate(analyticDTO.getStartDate().toString()).setEndDate(analyticDTO.getEndDate().toString()))
                 .build();
 
         RunReportResponse response = analyticsData.runReport(reportRequest);

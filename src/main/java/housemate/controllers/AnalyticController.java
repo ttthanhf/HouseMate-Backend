@@ -4,6 +4,7 @@
  */
 package housemate.controllers;
 
+import housemate.models.AnalyticDTO;
 import housemate.services.AnalyticService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,14 +27,14 @@ public class AnalyticController {
     @Autowired
     AnalyticService analyticService;
 
-    @GetMapping("/user/days-ago/{daysAgo}")
-    public ResponseEntity<?> getAnalyticUser(HttpServletRequest request, @PathVariable int daysAgo) {
-        return analyticService.getAnalyticUser(request, daysAgo);
+    @PostMapping("/user") //Dùng method get sẽ ko lấy được RequestBody nên phải dùng method POST
+    public ResponseEntity<?> getAnalyticUser(HttpServletRequest request, @RequestBody AnalyticDTO analyticDTO) {
+        return analyticService.getAnalyticUser(request, analyticDTO);
     }
 
-    @GetMapping("/page/days-ago/{daysAgo}")
-    public ResponseEntity<?> getAnalyticPage(HttpServletRequest request, @PathVariable int daysAgo) {
-        return analyticService.getAnalyticPage(request, daysAgo);
+    @PostMapping("/page")//Dùng method get sẽ ko lấy được RequestBody nên phải dùng method POST
+    public ResponseEntity<?> getAnalyticPage(HttpServletRequest request, @RequestBody AnalyticDTO analyticDTO) {
+        return analyticService.getAnalyticPage(request, analyticDTO);
     }
 
 }
