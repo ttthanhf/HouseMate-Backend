@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author hdang09
@@ -72,4 +74,10 @@ public class Schedule implements Cloneable {
 
     @Transient
     private String phone;
+
+    @Transient
+    private List<ServiceType> type;
+
+    @Transient
+    private List<UserUsage> usages = new ArrayList<>();
 }
