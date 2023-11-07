@@ -27,12 +27,12 @@ public class AnalyticController {
     AnalyticService analyticService;
 
     @GetMapping("/user/days-ago/{daysAgo}")
-    public ResponseEntity<?> getAnalyticUser(HttpServletRequest request, @PathVariable String daysAgo) {
+    public ResponseEntity<?> getAnalyticUser(HttpServletRequest request, @PathVariable int daysAgo) {
         return analyticService.getAnalyticUser(request, daysAgo);
     }
 
     @GetMapping("/page/days-ago/{daysAgo}")
-    public ResponseEntity<?> getAnalyticPage(HttpServletRequest request, @PathVariable String daysAgo) {
+    public ResponseEntity<?> getAnalyticPage(HttpServletRequest request, @PathVariable int daysAgo) {
         return analyticService.getAnalyticPage(request, daysAgo);
     }
 

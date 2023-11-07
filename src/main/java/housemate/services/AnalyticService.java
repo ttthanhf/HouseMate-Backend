@@ -1,13 +1,6 @@
 package housemate.services;
 
-import com.google.analytics.data.v1beta.BetaAnalyticsDataClient;
-import com.google.analytics.data.v1beta.BetaAnalyticsDataSettings;
-import com.google.analytics.data.v1beta.DateRange;
-import com.google.analytics.data.v1beta.Dimension;
-import com.google.analytics.data.v1beta.Metric;
-import com.google.analytics.data.v1beta.Row;
-import com.google.analytics.data.v1beta.RunReportRequest;
-import com.google.analytics.data.v1beta.RunReportResponse;
+import com.google.analytics.data.v1beta.*;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
 import housemate.constants.Role;
@@ -76,7 +69,7 @@ public class AnalyticService implements DisposableBean {
         }
     }
 
-    public ResponseEntity<?> getAnalyticUser(HttpServletRequest request, String dayAgo) {
+    public ResponseEntity<?> getAnalyticUser(HttpServletRequest request, int dayAgo) {
 
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
@@ -117,7 +110,7 @@ public class AnalyticService implements DisposableBean {
         return ResponseEntity.status(HttpStatus.OK).body(listAnalyticUserResponse);
     }
 
-    public ResponseEntity<?> getAnalyticPage(HttpServletRequest request, String dayAgo) {
+    public ResponseEntity<?> getAnalyticPage(HttpServletRequest request, int dayAgo) {
 
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
