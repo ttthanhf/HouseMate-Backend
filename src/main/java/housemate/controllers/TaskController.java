@@ -57,6 +57,15 @@ public class TaskController {
 		return taskServiceDao.getAllTaskForStaffByTaskStatus(request, taskStatus, page, size);
 	}
 	
+	@GetMapping("/staff/cancelled")
+	@Operation(summary = "Filter the task status based on the current staff - Role: current STAFF only")
+	public ResponseEntity<?> getAllCancelledTaskForStaff(
+			HttpServletRequest request,
+			@RequestParam(required = false) Optional<Integer> page,
+			@RequestParam(required = false) Optional<Integer> size) {
+		return taskServiceDao.getAllCancelledTaskForStaff(request, page, size);
+	}
+	
 	@GetMapping("/{task-id}")
 	@Operation(summary = "View the specific task in details")
 	public ResponseEntity<?> getTaskInDetails(@PathVariable("task-id") int taskId) {
@@ -122,9 +131,12 @@ public class TaskController {
 	}
 	
 	@GetMapping("/staffs")
+	@Operation(summary = "Sắp cho cút sang staff query")
 	public ResponseEntity<?> getAllStaffs() {
 		return taskServiceDao.getAllStaff();
 	}
+	
+	
 	
 	
 	

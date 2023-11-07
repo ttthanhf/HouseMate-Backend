@@ -108,6 +108,40 @@ public class TaskService {
 
 	return ResponseEntity.ok(taskViewList);
     }
+    
+    // VIEW CANCELLED TASK BY STAFF
+    public ResponseEntity<?> getAllCancelledTaskForStaff(HttpServletRequest request,
+	    Optional<Integer> page, Optional<Integer> size) {
+	int staffId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+
+	Staff staff = staffRepo.findById(staffId).orElse(null);
+	if (staff == null)
+	    return ResponseEntity.badRequest().body("Staff not exists");
+
+	int pageNo = page.orElse(0);
+	int pageSize = size.orElse(9);
+	if (pageNo < 0 || pageSize < 1)
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Trang bắt đầu không được nhỏ hơn 1 !");
+
+	// setting sort and pageable
+	Sort sort = Sort.by(Sort.Direction.DESC, "receivedAt");
+
+	Pageable pagableTaskList = pageNo == 0 ? PageRequest.of(0, pageSize, sort)
+		: PageRequest.of(pageNo - 1, pageSize, sort);
+
+	Page<Task> taskListForStaff = taskRepo.findAllCancelledByStaffId(staffId, pagableTaskList);
+	Page<TaskViewDTO> taskViewListForStaff = Page.empty(pagableTaskList);
+
+	if (taskListForStaff.isEmpty())
+	    return ResponseEntity.ok(List.of());
+
+	Function<Task, TaskViewDTO> convertInToTaskViewDTO = task -> {
+	    return taskBuildupServ.convertIntoTaskViewDtoFromTask(task);
+	};
+	taskViewListForStaff = taskListForStaff.map(convertInToTaskViewDTO);
+
+	return ResponseEntity.ok(taskViewListForStaff);
+    }
 
     // VIEW TASK UP COMING WORING BY STAFF
     public ResponseEntity<?> getAllTaskForStaffByTaskStatus(HttpServletRequest request, @Nullable TaskStatus taskStatus,

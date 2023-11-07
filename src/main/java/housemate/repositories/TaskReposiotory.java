@@ -26,4 +26,8 @@ public interface TaskReposiotory extends JpaRepository<Task, Integer> {
 	     + "AND (:taskStatus IS NULL OR t.taskStatus = :taskStatus) ")
 	Page<Task> findAllByTaskStatusAndStaffId(@Param("staffId") int staffId, @Param("taskStatus") TaskStatus taskStatus, Pageable pagableTaskList);
 
+	@Query("SELECT t FROM Task t WHERE t.staffId = :staffId "
+		+ "AND t.taskStatus LIKE '%CANCELLED%' ")
+	Page<Task> findAllCancelledByStaffId(@Param("staffId") int staffId, Pageable pagableTaskList);
+
 }
