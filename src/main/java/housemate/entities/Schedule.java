@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-
 import java.time.LocalDateTime;
 
 /**
@@ -61,9 +60,6 @@ public class Schedule implements Cloneable {
     @Column(name = "user_usage_id")
     private int userUsageId;
     
-    @Column(name = "on_task")
-    private boolean onTask;
-
     @Column(name = "on_task")
     private boolean onTask;
 
