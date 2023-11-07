@@ -2,18 +2,21 @@ package housemate.models;
 
 import org.springframework.lang.Nullable;
 
-import housemate.constants.Enum.TaskReportType;
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 @Data
+@JsonInclude(value = Include.ALWAYS)
 public class TaskReportNewDTO {
 
-	private String note;
-
-	@Positive
-	@Nullable
-	private Integer qtyOfGroupReturn;
+    @Nullable
+    private String note;
+    
+    @Positive
+    @Nullable
+    private Integer qtyOfGroupReturn;
 
 }

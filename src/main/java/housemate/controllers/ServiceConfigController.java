@@ -37,7 +37,7 @@ public class ServiceConfigController {
 		return servConfDao.getAll();
 	}
 	
-	@GetMapping("/{type}")
+	@GetMapping("/type")
 	@Operation(summary = "View the collection of each service config type")
 	public ResponseEntity<?> viewAllByConfigType(@RequestParam ServiceConfiguration configType){
 		return servConfDao.getAllByServiceConfigType(configType);
@@ -60,7 +60,4 @@ public class ServiceConfigController {
 	public ResponseEntity<?> deleteConfigValue(HttpServletRequest request, @PathVariable("id") int serviceConfigId){
 		return servConfDao.deleteConfigValue(request, serviceConfigId);
 	}
-	
-	
-
 }
