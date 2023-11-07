@@ -134,15 +134,17 @@ public class TaskBuildupService {
     }
 
     public List<Task> createTaskOnUpComingSchedule(Schedule newSchedule) {
-	List<Schedule> schedules = scheduleRepo.findAllByParentScheduleAndInUpComing(ScheduleStatus.PROCESSING, 1,
-		newSchedule.getScheduleId());
+	List<Schedule> schedules = scheduleRepo.findAllByParentScheduleAndInUpComing(ScheduleStatus.PROCESSING, 1, newSchedule.getParentScheduleId());
+	log.info("IS SCHEDULE IN CREATE IS NULL {} ", schedules.size());
 	List<Task> taskList = new ArrayList<>();
 	try {
+		log.debug("SCHEDULES WHEN FIND ALL BY PARENTS - IS EMPTY {} | IS NULL: {}", schedules.isEmpty(), schedules == null);
 	    if (schedules.isEmpty())
 		return List.of();
-	    for (Schedule theSchedule : schedules) {
+	    for (Schedule theSchedule : schedules) 
 		taskList.add(this.createTask(theSchedule));
-	    }
+	    
+	    //TODO: RECONSTRUCT NOTIFICATION
 	    TaskBuildupService.createAndSendNotification("NEW TASK COMING !", "UPCOMING TASK",
 		    List.of(staffRepo.findAll().stream().map(x -> x.getStaffId())));
 	} catch (Exception e) {
@@ -157,7 +159,7 @@ public class TaskBuildupService {
     public Task createTask(Schedule schedule) {
 	// Check if the task for this schedule have created before by system
 	Task task = taskRepo.findExistingTaskForSchedule(schedule.getScheduleId());
-	log.info("SCHEDULE ID {} - IS TASK HAS EXISTED == CREATE {}", schedule.getScheduleId(), task);
+	log.info("SCHEDULE ID {} - IS TASK HAS EXISTED WHEN CREATE {}", schedule.getScheduleId(), task);
 	Task savedTask = null;
 	try {
 	    if (task == null) {
@@ -167,17 +169,23 @@ public class TaskBuildupService {
 		task.setTaskStatus(TaskStatus.PENDING_APPLICATION);
 		task.setStaffId(null);
 		task.setReceivedAt(null);
-		savedTask = taskRepo.save(task);
 		Schedule scheduleToUpdate = scheduleRepo.findById(schedule.getScheduleId()).get();
 		scheduleToUpdate.setStatus(ScheduleStatus.PROCESSING);
 		scheduleToUpdate.setOnTask(true);
 		scheduleRepo.save(scheduleToUpdate);
+		task.setSchedule(schedule);
+		savedTask = taskRepo.save(task);
+		
 		
 		// CREATE EVENT
-		this.createEventSendNotiWhenTimeComing(task, schedule.getStartDate());
-		this.createEventSendNotiUpcomingTask(task, schedule.getStartDate(), 5);
-		TaskBuildupService.createAndSendNotification("Your schedule will be starting soon !",
-			"UPCOMING SCHEDULE", List.of(schedule.getCustomerId()));
+		if (savedTask != null) {
+		    this.createEventSendNotiWhenTimeComing(task, schedule.getStartDate());
+		    //TODO: remove hard code 5
+		    this.createEventSendNotiUpcomingTask(task, schedule.getStartDate(), 5);
+		  //TODO: RECONSTRUCT NOTIFICATION
+			TaskBuildupService.createAndSendNotification("Your schedule will be starting soon !",
+				"UPCOMING SCHEDULE", List.of(schedule.getCustomerId()));
+		}
 	    }
 	} catch (Exception e) {
 	    e.printStackTrace();
@@ -240,6 +248,7 @@ public class TaskBuildupService {
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
+	
 	return taskView;
     }
 
@@ -355,27 +364,14 @@ public class TaskBuildupService {
 	    return TaskRes.build(tasksOldAndNew, TaskMessType.REJECT_UPDATE_TASK,
 		    "Lỗi xảy ra. Cập nhật lịch mới cho task thất bài !");
 	}
+	
 	return TaskRes.build(tasksOldAndNew, TaskMessType.OK, "Cập nhật thời gian cho task thành công !");
     }
 
     // ======APPROVE STAFF======
     @Transactional
     public TaskRes<Task> approveQualifiedStaff(Staff staff, Task task) {
-	LocalDateTime timeNow = LocalDateTime.now(dateTimeZone);
-	LocalDateTime timeStartWorking = task.getSchedule().getStartDate();
-	long hoursDiff = ChronoUnit.HOURS.between(timeNow, timeStartWorking);
 	TaskRes<Task> taskRes = null;
-
-	if (!task.getTaskStatus().equals(TaskStatus.PENDING_APPLICATION))
-	    taskRes = TaskRes.build(task, TaskMessType.REJECT_APPROVE_STAFF,
-		    "Hãy đợi task được mở để ứng tuyển !");
-	if (staff.getProfiencyScore() < BAD_STAFF_PROFICIENT_SCORE.getNum()
-		&& hoursDiff > DURATION_HOURS_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY.getNum())
-	    taskRes = TaskRes.build(task, TaskMessType.REJECT_APPROVE_STAFF,
-		    " Bạn không đủ điểm để ứng tuyển ! Hãy quay lại ứng tuyển trong khoảng thời gian trước lịch làm việc này  "
-			    + DURATION_HOURS_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY.getNum() + "hours !");
-
-	if (staff.getProfiencyScore() >= 30 || (staff.getProfiencyScore() < 30 && hoursDiff <= 3 && hoursDiff > 0)) {
 	    try {
 		task.setStaffId(staff.getStaffId());
 		task.setReceivedAt(LocalDateTime.now(dateTimeZone));
@@ -384,15 +380,17 @@ public class TaskBuildupService {
 		task.getSchedule().setStatus(ScheduleStatus.PENDING);
 		task.getSchedule().setStaffId(staff.getStaffId());
 		taskRes = TaskRes.build(task, TaskMessType.OK, "Ứng tuyển thành công !");
+		
+		//TODO: RECONSTRUCT NOTIFICATION
 		TaskBuildupService.createAndSendNotification(
 			"We have found staff will work on your schedule. Let contact with our staff !", "FOUND STAFF",
 			List.of(task.getSchedule().getCustomerId()));
 	    } catch (Exception e) {
+		e.printStackTrace();
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 		return TaskRes.build(task, TaskMessType.REJECT_UPDATE_TASK, "Something Errors. Approved failed !");
 	    }
-	}
-	return taskRes;
+	    return taskRes;
     }
 
     @Transactional
@@ -402,18 +400,19 @@ public class TaskBuildupService {
 	UserUsage userUsage = userUsageRepo.findById(task.getSchedule().getUserUsageId()).get();
 	if (serviceInUsed == null) {
 	    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-		    " Loại dịch vụ này không tồn tại ! Từ chối báo cáo !");
+		    " Loại dịch vụ này không tồn tại ! Từ chối báo cáo cho công việc với loại dịch vụ không tồn tại !");
 	}
 	TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
 		TaskStatus.valueOf(taskReport.name()));
 	if (checkReportExists != null) {
 	    checkReportExists.setNote(reportNewDTO.getNote());
-	    return TaskRes.build(checkReportExists, TaskMessType.OK, "Cập nhật report thành công");
+	    return TaskRes.build(checkReportExists, TaskMessType.OK, "Cập nhật báo cáo công việc thành công");
 	}
 	try {
 	    taskReportResult.setTaskId(task.getTaskId());
 	    taskReportResult.setReportAt(LocalDateTime.now());
-	    taskReportResult.setNote(reportNewDTO.getNote());
+	    if (reportNewDTO != null && reportNewDTO.getNote() != null)
+		taskReportResult.setNote(reportNewDTO.getNote());
 	    switch (taskReport) {
 	    case ARRIVED: {
 		// Checkconstraint
@@ -528,24 +527,31 @@ public class TaskBuildupService {
 	    public void run() {
 		if (task.getStaffId() == null) {
 		    task.setTaskStatus(TaskStatus.CANCELLED_CAUSE_NOT_FOUND_STAFF);
+		    taskRepo.save(task);
 		    Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
 		    schedule.setStatus(ScheduleStatus.CANCEL);
 		    scheduleRepo.save(schedule);
+		    
+		  //TODO: RECONSTRUCT NOTIFICATION
 		    TaskBuildupService.createAndSendNotification(
 			    "Sorry, time is coming but staff is during peak hours, there is no staff to serve you at this time !",
 			    "NOT FOUND STAFF", List.of(task.getSchedule().getCustomerId()));
+		    
 		    log.info("TASK {} CLOSED AT {} STAFF IS NULL", task.getTaskId(), dateFormat.format(new Date()));
 		}
 		if (task.getStaffId() != null) {
+		  //TODO: RECONSTRUCT NOTIFICATION
 		    TaskBuildupService.createAndSendNotification("Let go to welcome your staff coming to your home ! !",
 			    "STAFF COMING", List.of(task.getSchedule().getCustomerId()));
+		    
 		    log.info("TASK {} CLOSED AT {} STAFF NOT NULL", task.getTaskId(), dateFormat.format(new Date()));
 		}
 	    }
 	};
 	ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
 	eventNotiList.put(task.getTaskId(), taskEvent);
-	log.info("======createEventSendNotiUpcomingTask======");
+	
+	log.info("CREATED EVENT SEND NOTI WHEN TIME COMING ");
     }
 
     public void createEventSendNotiUpcomingTask(Task task, LocalDateTime timeStartTask, int periodHourBefore) {
@@ -557,21 +563,27 @@ public class TaskBuildupService {
 	    @Override
 	    public void run() {
 		if (task.getStaff() == null) {
+		  //TODO: RECONSTRUCT NOTIFICATION
 		    TaskBuildupService.createAndSendNotification(
 			    "We are trying to find the staff for your task, please waiting for staff apply !",
 			    "NOT FOUND STAFF", List.of(task.getSchedule().getCustomerId()));
+		  
 		    log.info("TASK {} UPCOMING NOTI SEND - STAFF IS NULL - SENT AT {}", task.getTaskId(),
 			    dateFormat.format(new Date()));
 		}
 		if (task.getStaff() != null) {
+		    //TODO: CHECK INCOMING STATUS
 		    task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 		    taskRepo.save(task);
+		    
+		    //TODO: RECONSTRUCT NOTIFICATION
 		    TaskBuildupService.createAndSendNotification(
 			    "Our staff will coming to your house, please wait for our staff coming !", "INCOMING ",
 			    List.of(task.getSchedule().getCustomerId()));
 		    TaskBuildupService.createAndSendNotification("You have the task today at "
 			    + userRepo.findByUserId(task.getSchedule().getCustomerId()).getFullName() + "'s house !",
 			    "INCOMING ", List.of(task.getStaffId()));
+		   
 		    log.info("TASK {} UPCOMING NOTI SEND - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
 			    dateFormat.format(new Date()));
 		}
@@ -580,7 +592,8 @@ public class TaskBuildupService {
 	};
 	ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
 	eventNotiList.put(task.getTaskId(), taskEvent);
-	log.info("======createEventSendNotiUpcomingTask======");
+	
+	log.info("CREATE EVENT SEND NOTI UPCOMING SHCEDULE");
 
     }
 

@@ -40,7 +40,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     @Query(value = "SELECT COALESCE(SUM(s.quantityRetrieve), 0) FROM Schedule s WHERE s.userUsageId = :userUsageId")
     int getTotalQuantityRetrieveByUserUsageId(@Param("userUsageId") int userUsageId);
 
-    Schedule findByStaffIdAndStartDate(int staffId, LocalDateTime startDate);
+    @Query("SELECT s FROM Schedule s WHERE s.staffId = :staffId AND (s.startDate <= :endDate AND s.endDate >= :startDate) AND s.status NOT LIKE '%CANCEL%'")
+    List<Schedule> findByStaffIdAndStartDate(@Param("staffId") int staffId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     List<Schedule> getByStaffId(int staffId);
 

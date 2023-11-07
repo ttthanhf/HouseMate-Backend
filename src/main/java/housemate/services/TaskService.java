@@ -186,23 +186,23 @@ public class TaskService {
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Không thể lên lịch làm việc cho lịch không tồn tại !");
 	if (customerIdRequestCreate != schedule.getCustomerId())
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không phải là chủ sở hữu của lịch này !");
-	if (schedule.getStatus().equals(ScheduleStatus.CANCEL) && taskRepo.findByScheduleIdAndTaskStatus(scheduleId,
-		TaskStatus.CANCELLED_CAUSE_NOT_FOUND_STAFF) != null)
+	if (schedule.getStatus().equals(ScheduleStatus.CANCEL) && taskRepo.findByScheduleIdAndTaskStatus(scheduleId, TaskStatus.CANCELLED_CAUSE_NOT_FOUND_STAFF) != null)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
 		    "Lịch này đã bị hủy vì không tìm thấy nhân viên tại thời điểm lịch của bạn đến hẹn làm việc ! Vui lòng tạo lịch mới để hệ thống lên lịch làm việc cho bạn !");
 	if (schedule.getStatus().equals(ScheduleStatus.CANCEL))
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-		    .body("Bạn đã hủy lịch này ! Vui lòng tạo lịch mới để hệ thống lên lịch làm việc cho bạn !");
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn đã hủy lịch này ! Vui lòng tạo lịch mới để hệ thống lên lịch làm việc cho bạn !");
 
 	Task createdTask = taskRepo.findExistingTaskForSchedule(scheduleId);
 	if (createdTask != null)
 	    return ResponseEntity.ok(taskBuildupServ.convertIntoTaskViewDtoFromTask(createdTask));
 
 	List<Task> task = taskBuildupServ.createTaskOnUpComingSchedule(schedule);
+	log.info("TASK LIST CREATED : ", task.stream().limit(1).toString());
 	if (task.isEmpty())
 	    return ResponseEntity.status(HttpStatus.OK).body(List.of());
 	
-	List<TaskViewDTO> taskViewDtoList = task.stream().map(x -> taskBuildupServ.convertIntoTaskViewDtoFromTask(x))
+	List<TaskViewDTO> taskViewDtoList = task.stream()
+		.map(x -> taskBuildupServ.convertIntoTaskViewDtoFromTask(x))
 		.collect(Collectors.toList());
 	
 	return ResponseEntity.ok().body(taskViewDtoList);
@@ -238,9 +238,9 @@ public class TaskService {
 	    if (userIdRequestCancel == scheduleToBeCancelled.getCustomerId()
 		    && scheduleToBeCancelled.getStatus().equals(ScheduleStatus.CANCEL))
 		return ResponseEntity.ok()
-			.body("Bạn đã hủy lịch này thày công ! Chú ý bạn, bạn được phép hủy lịch trước giờ làm việc để "
+			.body("Bạn đã hủy lịch này thày công !\nChú ý bạn, bạn được phép hủy lịch trước giờ làm việc trước "
 				+ DURATION_HOURS_CUSTOMER_SHOULD_NOT_CANCEL_TASK.getNum()
-				+ "tiếng để đảm bảo nhân viên của chúng tôi sắp xếp được lịch làm việc .\nSau khoảng thời gian này chúng tôi sẽ trừ điểm uy tín của bạn. Điểm uy tín nếu bằng 0 tài khoản sẽ bị cấm bởi hệ thống");
+				+ " tiếng để đảm bảo nhân viên của chúng tôi sắp xếp được lịch làm việc .\nSau khoảng thời gian này chúng tôi sẽ trừ điểm uy tín của bạn.\nĐiểm uy tín nếu bằng 0 tài khoản sẽ bị cấm bởi hệ thống");
 	    if (customer.isBanned())
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 			.body("Tài khoản của bạn đã bị cấm khỏi hệ thống vì đã vượt giới hạn số lần được hủy và điểm uy tín của bạn bằng 0 !");
@@ -310,32 +310,42 @@ public class TaskService {
     public ResponseEntity<?> approveStaff(HttpServletRequest request, int taskId) {
 	String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
 	if (!role.equals(Role.STAFF.name()))
-	    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Truy cập thất bại - Chỉ có tài khoản nhân viên mới được ứng tuyển");
+	    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Truy cập thất bại - Chỉ cho phép tài khoản nhân viên mới được ứng tuyển !");
 
 	int staffId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 	Staff staff = staffRepo.findById(staffId).orElse(null);
 	if (staff == null)
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(" Nhân viên không tồn tại !");
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nhân viên không tồn tại !");
 	if (staff.isBanned())
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tài khoản của bạn đã bị cấm ! Bạn không được phép mua hàng hay ứng tuyển công việc từ tài khoản này được nữa !");
-
+	log.info("====TASK IS NULL {}", staff);
 	Task task = taskRepo.findById(taskId).orElse(null);
 	if (task == null)
-	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Công việc này không tồn tại để bạn ứng tuyển");
+	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Công việc này không tồn tại hoặc chưa mở để bạn ứng tuyển");
 	if (task.getTaskStatus().name().contains("CANCELLED"))
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không thể ứng tuyển công việc này vì công việc này đã bị hủy !");
-	if (scheduleRepo.findByStaffIdAndStartDate(staff.getStaffId(), task.getSchedule().getStartDate()) != null)
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-		    .body("Bạn không thể ứng tuyển công việc này ! Lịch này đã trùng với lịch công việc khác của bạn !");
-	if (task.getStaffId() != null && task.getStaffId() != staffId)
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch này đã có nhân viên khác ứng tuyển !");
-
 	if (task.getStaffId() != null && task.getStaffId() == staffId)
 	    return ResponseEntity.ok().body(taskBuildupServ.convertIntoTaskViewDtoFromTask(task));
+	if (!scheduleRepo.findByStaffIdAndStartDate(staff.getStaffId(), task.getSchedule().getStartDate(), task.getSchedule().getEndDate()).isEmpty())
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+		    .body("Bạn không thể ứng tuyển công việc này ! Khoảng thời gian làm việc của lịch này đã trùng với khoảng thời gian của lịch công việc khác của bạn !");
+	if (task.getStaffId() != null && task.getStaffId() != staffId && task.getStaff() != null )
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch này đã có nhân viên khác ứng tuyển !");
+	
+	
+	LocalDateTime timeNow = LocalDateTime.now(dateTimeZone);
+	LocalDateTime timeStartWorking = task.getSchedule().getStartDate();
+	log.info("TASK GET START DATE: {}" ,timeStartWorking);
+	long hoursDiff = ChronoUnit.HOURS.between(timeNow, timeStartWorking);
+	if (staff.getProfiencyScore() < BAD_STAFF_PROFICIENT_SCORE.getNum()
+		&& hoursDiff > DURATION_HOURS_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY.getNum())
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+		    "Bạn không đủ điểm uy tín để ứng tuyển ! Hãy quay lại ứng tuyển trong khoảng thời gian trước lịch làm việc này  "
+			    + DURATION_HOURS_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY.getNum() + " tiếng !");
 
 	TaskRes taskRes = taskBuildupServ.approveQualifiedStaff(staff, task);
 	if (taskRes.getMessType().name().contains("REJECT"))
-	    return ResponseEntity.badRequest().body(taskRes.getMessage());
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(taskRes.getMessage());
 
 	Task approvedTask = (Task) taskRes.getObject();
 	TaskViewDTO approvedTaskView = taskBuildupServ.convertIntoTaskViewDtoFromTask(approvedTask);
@@ -376,7 +386,7 @@ public class TaskService {
 	    return ResponseEntity.status(HttpStatus.OK)
 		    .body(" Lịch này đã bị hủy ! Bạn không thể báo cáo tiến trình cho công việc này !");
 	if (taskReport.isEmpty())
-	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Hiện chưa có báo cáo cho tiến trình này !");
+	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Hiện chưa có báo cáo cho tiến trình của công việc này !");
 
 	List<TaskReport> taskReports = taskReportRepo.findAllByTaskId(task.getTaskId());
 

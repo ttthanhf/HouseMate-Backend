@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -105,9 +107,9 @@ public class TaskController {
 	@Operation(summary = "Report task progression of specific task - Role: STAFF responsible for this task")
 	public ResponseEntity<?> reportTaskByStaff(
 			HttpServletRequest request,
-			@PathVariable("id") int taskId,
-			TaskReportType taskReportType,
-			TaskReportNewDTO reportnewDTO) {
+			@PathVariable("task-id") int taskId,
+			@RequestParam(required = true) TaskReportType taskReportType,
+			@Valid @Nullable TaskReportNewDTO reportnewDTO) {
 		return taskServiceDao.reportTaskByStaff(request, taskId, taskReportType, reportnewDTO);
 	}
 	
