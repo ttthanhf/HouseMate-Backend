@@ -48,6 +48,32 @@ public class Enum {
 	    	private String fieldName;
 	}
 	
+
+	public enum AccountStatus {
+		ACTIVE,
+		INACTIVE,
+		BANNED;
+	}
+	
+	public enum TaskStatus {
+		PENDING_APPLICATION,//waiting for staff apply apply for job
+		PENDING_WORKING,//found staff - waiting for staff coming
+		INCOMING,//task status of next coming task
+		CANCELLED_CAUSE_NOT_FOUND_STAFF,//task be cancelled caused not found any staff
+		CANCELLED_BY_STAFF,//task cancelled by staff
+		CANCELLED_BY_CUSTOMER,//task cancelled by customer
+		ARRIVED,//staff arrived - start doing
+		DOING,//staff in the status of doing housework
+		DONE,//staff finish task
+		CANCELLED;
+	}
+	
+	public enum TaskReportType {
+		ARRIVED,
+		DOING,
+		DONE;
+	}
+	
 	@Getter
 	public enum ServiceConfiguration {
 	    SERVICE_GROUPS(true), SERVICE_UNITS(true),
@@ -96,27 +122,4 @@ public class Enum {
 	    }
 	}
 	
-	public enum AccountStatus {
-		ACTIVE,
-		INACTIVE,
-		BANNED;
-	}
-	
-	public enum TaskStatus {
-		PENDING_APPLICATION,//waiting for staff apply apply for job
-		PENDING_WORKING,//found staff - waiting for staff coming
-		INCOMING,//task status of next coming task
-		CANCELLED_CAUSE_NOT_FOUND_STAFF,//task be cancelled caused not found any staff
-		CANCELLED_BY_STAFF,//task cancelled by staff
-		CANCELLED_BY_CUSTOMER,//task cancelled by customer
-		ARRIVED,//staff arrived - start doing
-		DOING,//staff in the status of doing housework
-		DONE;//staff finish task
-	}
-	
-	public enum TaskReportType {
-		ARRIVED,
-		DOING,
-		DONE;
-	}
 }

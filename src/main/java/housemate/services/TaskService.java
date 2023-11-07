@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -109,40 +110,6 @@ public class TaskService {
 	return ResponseEntity.ok(taskViewList);
     }
     
-    // VIEW CANCELLED TASK BY STAFF
-    public ResponseEntity<?> getAllCancelledTaskForStaff(HttpServletRequest request,
-	    Optional<Integer> page, Optional<Integer> size) {
-	int staffId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-
-	Staff staff = staffRepo.findById(staffId).orElse(null);
-	if (staff == null)
-	    return ResponseEntity.badRequest().body("Staff not exists");
-
-	int pageNo = page.orElse(0);
-	int pageSize = size.orElse(9);
-	if (pageNo < 0 || pageSize < 1)
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Trang bắt đầu không được nhỏ hơn 1 !");
-
-	// setting sort and pageable
-	Sort sort = Sort.by(Sort.Direction.DESC, "receivedAt");
-
-	Pageable pagableTaskList = pageNo == 0 ? PageRequest.of(0, pageSize, sort)
-		: PageRequest.of(pageNo - 1, pageSize, sort);
-
-	Page<Task> taskListForStaff = taskRepo.findAllCancelledByStaffId(staffId, pagableTaskList);
-	Page<TaskViewDTO> taskViewListForStaff = Page.empty(pagableTaskList);
-
-	if (taskListForStaff.isEmpty())
-	    return ResponseEntity.ok(List.of());
-
-	Function<Task, TaskViewDTO> convertInToTaskViewDTO = task -> {
-	    return taskBuildupServ.convertIntoTaskViewDtoFromTask(task);
-	};
-	taskViewListForStaff = taskListForStaff.map(convertInToTaskViewDTO);
-
-	return ResponseEntity.ok(taskViewListForStaff);
-    }
-
     // VIEW TASK UP COMING WORING BY STAFF
     public ResponseEntity<?> getAllTaskForStaffByTaskStatus(HttpServletRequest request, @Nullable TaskStatus taskStatus,
 	    Optional<Integer> page, Optional<Integer> size) {
@@ -162,9 +129,25 @@ public class TaskService {
 
 	Pageable pagableTaskList = pageNo == 0 ? PageRequest.of(0, pageSize, sort)
 		: PageRequest.of(pageNo - 1, pageSize, sort);
-
-	Page<Task> taskListForStaff = taskRepo.findAllByTaskStatusAndStaffId(staffId, taskStatus, pagableTaskList);
-	Page<TaskViewDTO> taskViewListForStaff = Page.empty(pagableTaskList);
+	
+	Page<Task> taskListForStaff;
+	Page<TaskViewDTO> taskViewListForStaff;
+	
+	if (taskStatus.equals(TaskStatus.CANCELLED)) {
+	    taskStatus = null;
+	    taskListForStaff = taskRepo.findAllByTaskStatusAndStaffId(staffId, taskStatus, pagableTaskList);
+	    if (!taskListForStaff.getContent().isEmpty()) {
+		 List<Task> filteredTaskList = taskListForStaff
+		                .stream()
+		                .filter(t -> t.getTaskStatus().name().contains("CANCELLED"))
+		                .collect(Collectors.toList());
+		        taskListForStaff = new PageImpl<>(filteredTaskList, pagableTaskList, filteredTaskList.size());
+	    }
+		
+	} else
+	    taskListForStaff = taskRepo.findAllByTaskStatusAndStaffId(staffId, taskStatus, pagableTaskList);
+	
+	taskViewListForStaff = Page.empty(pagableTaskList);
 
 	if (taskListForStaff.isEmpty())
 	    return ResponseEntity.ok(List.of());
@@ -193,7 +176,7 @@ public class TaskService {
 	int scheduleOwner = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 	Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
 	if (!role.equals(Role.ADMIN) && !(role.equals(Role.CUSTOMER) && scheduleOwner == schedule.getCustomerId()))
-	    return ResponseEntity.badRequest().body("You are not the owner of this schedule !");
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không phải chủ sở hữu của lịch này !");
 
 	long dayDiff = ChronoUnit.DAYS.between(LocalDateTime.now(dateTimeZone), schedule.getStartDate());
 	Task task = taskRepo.findExistingTaskForSchedule(scheduleId);
@@ -440,7 +423,5 @@ public class TaskService {
 	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Hệ thống không tìm thấy nhân viên nào !");
 	return ResponseEntity.ok().body(staffs);
     }
-
     // TODO: SHUT DOWN AUTO CREATE TASK AUTO MATICALLY
-
 }

@@ -15,7 +15,7 @@ public class TaskReportNewDTO {
     @Nullable
     private String note;
     
-    @Positive
+    @Positive(message = "Điền số lượng lớn hơn 0")
     @Nullable
     private Integer qtyOfGroupReturn;
 

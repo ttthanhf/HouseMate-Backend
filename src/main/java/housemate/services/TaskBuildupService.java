@@ -180,7 +180,7 @@ public class TaskBuildupService {
 		// CREATE EVENT
 		if (savedTask != null) {
 		    this.createEventSendNotiWhenTimeComing(task, schedule.getStartDate());
-		    //TODO: remove hard code 5
+		    //TODO: REMOVE HARD CODE 5 
 		    this.createEventSendNotiUpcomingTask(task, schedule.getStartDate(), 5);
 		  //TODO: RECONSTRUCT NOTIFICATION
 			TaskBuildupService.createAndSendNotification("Your schedule will be starting soon !",
@@ -455,11 +455,11 @@ public class TaskBuildupService {
 		    if (!(serviceInUsed.getMin() == 0 && serviceInUsed.getMax() == 0))
 			if (!(quantity >= serviceInUsed.getMin() && quantity <= serviceInUsed.getMax()))
 			    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-				    "Điền giá trị số lượng cho loại dịch vụ \"Gửi trả\". Hãy điền giá trị số lượng trong khoảng [" + serviceInUsed.getMin()
+				    "Điền giá trị số lượng cho loại dịch vụ \"Gửi trả\". Hãy điền giá trị số lượng trong khoảng tối thiểu và tối đa được đặt [" + serviceInUsed.getMin()
 					    + " - " + serviceInUsed.getMax() + "]");
 		    if (!(quantity <= userUsage.getRemaining() && quantity > 0))
 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-				"Oops, Số lượng còn lại trong gói bạn chọn chỉ còn" + userUsage.getRemaining()
+				"Oops, Số lượng còn lại trong gói bạn chọn chỉ còn " + userUsage.getRemaining()
 					+ ". Hãy điền giá trị số lượng trong khoảng [" + 1 + " - "
 					+ userUsage.getRemaining() + "]");
 		    task.getSchedule().setQuantityRetrieve(quantity);
@@ -488,7 +488,7 @@ public class TaskBuildupService {
 			    "Hãy báo cáo cho trạng thái \"Đang làm việc\"");
 		if (LocalDateTime.now().isBefore(task.getSchedule().getEndDate()))
 		    return TaskRes.build(checkReportExists, TaskMessType.REJECT_REPORT_TASK,
-			    "Bạn chỉ được phép báo cáo trạng thái \"Đã hoàn thành\" sau khoảng thời gian khách hàng yêu cầu : "
+			    "Bạn chỉ được phép báo cáo trạng thái \"Đã hoàn thành\" sau thời điểm khách hàng yêu cầu : "
 				    + task.getSchedule().getEndDate());
 
 		// Set up
@@ -597,7 +597,6 @@ public class TaskBuildupService {
 		    log.info("TASK {} UPCOMING NOTI SEND - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
 			    dateFormat.format(new Date()));
 		}
-
 	    }
 	};
 	ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
