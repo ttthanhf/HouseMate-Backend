@@ -22,7 +22,6 @@ import housemate.constants.Enum.SaleStatus;
  *
  * @author ThanhF
  */
-@Transactional
 @Repository
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
 

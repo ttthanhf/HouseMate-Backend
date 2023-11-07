@@ -292,16 +292,16 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
         }
 
-        // Delete schedule
-        if (oldCycle != null) {
-            deleteSchedule(schedule, oldCycle);
-        }
-
         // Validate quantity
         int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(schedule.getUserUsageId());
         int forecastQuantity = getMaxQuantity(startDate, userUsage.getEndDate(), schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve(), totalUsed);
         if (forecastQuantity == 0 || forecastQuantity * schedule.getQuantityRetrieve() + totalUsed > userUsage.getRemaining()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage or decrease your quantity");
+        }
+
+        // Delete schedule
+        if (oldCycle != null) {
+            deleteSchedule(schedule, oldCycle);
         }
 
         // Store to database
@@ -440,10 +440,10 @@ public class ScheduleService {
             }
 
             // Store parent schedule ID
-            Schedule scheduleDb = scheduleRepository.save(newSchedule);
-            parentScheduleId = increment == 0 ? scheduleDb.getScheduleId() : parentScheduleId;
-            scheduleDb.setParentScheduleId(parentScheduleId);
-            scheduleRepository.save(scheduleDb);
+            newSchedule = increment == 0 ? scheduleRepository.save(newSchedule) : newSchedule; // Get parentScheduleId = scheduleId
+            parentScheduleId = increment == 0 ? newSchedule.getScheduleId() : parentScheduleId;
+            newSchedule.setParentScheduleId(parentScheduleId);
+            scheduleRepository.save(newSchedule);
         }
     }
 
@@ -458,8 +458,8 @@ public class ScheduleService {
             maxForCycle = (int) ChronoUnit.MONTHS.between(startDate, endDate) + 1;
         }
 
-        int minimum = remaining - totalUsed;
-        return Math.min(maxForCycle, quantity == 0 ? remaining : Math.min(minimum, Math.floorDiv(remaining, quantity)));
+        int maximum = remaining - totalUsed;
+        return Math.min(maxForCycle, quantity == 0 ? remaining : Math.floorDiv(maximum, quantity));
     }
 
     private boolean isOutsideOfficeHours(LocalDateTime date) {
