@@ -4,6 +4,7 @@ import housemate.constants.ScheduleStatus;
 import housemate.entities.Schedule;
 import housemate.entities.Service;
 import housemate.models.ScheduleDTO;
+import housemate.models.ScheduleUpdateDTO;
 import housemate.responses.EventRes;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +22,7 @@ public class ScheduleMapper {
         schedule.setNote(note == null ? "" : note.trim());
         schedule.setCycle(scheduleDTO.getCycle());
         schedule.setStatus(ScheduleStatus.PROCESSING);
-        schedule.setUserUsageId(schedule.getUserUsageId());
+        schedule.setUserUsageId(scheduleDTO.getUserUsageId());
 
         return schedule;
     }
@@ -38,4 +39,17 @@ public class ScheduleMapper {
         return event;
     }
 
+    public Schedule updateSchedule(Schedule currentSchedule, ScheduleUpdateDTO newSchedule) {
+        String note = newSchedule.getNote();
+
+        currentSchedule.setCycle(newSchedule.getCycle());
+        currentSchedule.setNote(note == null ? "" : note.trim());
+        currentSchedule.setQuantityRetrieve(newSchedule.getQuantityRetrieve());
+        currentSchedule.setServiceTypeId(newSchedule.getTypeId());
+        currentSchedule.setStartDate(newSchedule.getStartDate());
+        currentSchedule.setEndDate(newSchedule.getEndDate());
+        currentSchedule.setUserUsageId(newSchedule.getUserUsageId());
+
+        return currentSchedule;
+    }
 }
