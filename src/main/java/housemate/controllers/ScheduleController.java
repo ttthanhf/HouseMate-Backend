@@ -30,18 +30,11 @@ public class ScheduleController {
     @Autowired
     ScheduleService service;
 
-    @Operation(summary = "Get all schedule for the current customer")
-    @GetMapping("/customer")
-    public ResponseEntity<List<EventRes>> getScheduleForCustomer(HttpServletRequest request) {
-        return service.getScheduleForCustomer(request);
+    @Operation(summary = "Get all schedule for the current user")
+    @GetMapping()
+    public ResponseEntity<List<EventRes>> getScheduleForCurrentUser(HttpServletRequest request) {
+        return service.getScheduleForCurrentUser(request);
     }
-
-    @Operation(summary = "Get all schedule for the current staff")
-    @GetMapping("/staff")
-    public ResponseEntity<List<EventRes>> getScheduleForStaff(HttpServletRequest request) {
-        return service.getScheduleForStaff(request);
-    }
-
     @Operation(summary = "Get all schedule for the staff by staff ID (userId)")
     @GetMapping("/staff/{userId}")
     public ResponseEntity<List<EventRes>> getStaffScheduleByUserId(@PathVariable int userId) {
@@ -64,6 +57,14 @@ public class ScheduleController {
     @DeleteMapping("/cancel/{scheduleId}")
     public ResponseEntity<String> cancelSchedule(HttpServletRequest request, @PathVariable int scheduleId, DeleteType deleteType) {
         return service.cancelSchedule(request, scheduleId, deleteType);
+    }
+
+    @Operation(summary = "Update schedule")
+    @PutMapping("/update/{scheduleId}")
+    public ResponseEntity<String> updateSchedule(
+            HttpServletRequest request, @Valid @RequestBody ScheduleUpdateDTO scheduleUpdateDTO, @PathVariable int scheduleId
+    ) {
+        return service.updateSchedule(request, scheduleUpdateDTO, scheduleId);
     }
 
 }
