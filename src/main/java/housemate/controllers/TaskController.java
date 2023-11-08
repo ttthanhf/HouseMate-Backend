@@ -117,8 +117,11 @@ public class TaskController {
 		return taskServiceDao.getAllStaff();
 	}
 	
-	
-	
-	
-	
+	@DeleteMapping("/cancel/schedule/{schedule-id}")
+	@Operation(summary = "Cancel the task of specific schedule - Role: CUSTOMER - owner of the schedule + STAFF - reponsible for doing the task of this schedule")
+	public ResponseEntity<?> cancelTask(
+			HttpServletRequest request,
+			@PathVariable("schedule-id") int scheduleId) {
+		return taskServiceDao.cancelTask(request, scheduleId);
+	}	
 }
