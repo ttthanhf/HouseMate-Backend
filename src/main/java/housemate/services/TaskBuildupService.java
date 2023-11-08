@@ -416,9 +416,9 @@ public class TaskBuildupService {
 	TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
 		TaskStatus.valueOf(taskReport.name()));
 	if (checkReportExists != null) {
-	    if (reportNewDTO != null && reportNewDTO.getNote() != null) 
+	    if (reportNewDTO != null && reportNewDTO.getNote() != null) {
 		checkReportExists.setNote(reportNewDTO.getNote());
-
+	    }
 	    return TaskRes.build(checkReportExists, TaskMessType.OK, "Cập nhật báo cáo công việc thành công");
 	}
 	try {
@@ -518,7 +518,8 @@ public class TaskBuildupService {
 		throw new IllegalArgumentException("Unexpected value: " + taskReport);
 	    }
 	    taskRepo.save(task);
-	    TaskReport reportedTask = taskReportRepo.save(taskReportResult);
+	    scheduleRepo.save(task.getSchedule());
+	    taskReportResult = taskReportRepo.save(taskReportResult);
 	} catch (Exception e) {
 	    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 	    e.printStackTrace();
@@ -544,10 +545,12 @@ public class TaskBuildupService {
 		Task task = taskRepo.findById(theTask.getTaskId()).get();
 		if (task.getStaffId() == null) {
 		    task.setTaskStatus(TaskStatus.CANCELLED_CAUSE_NOT_FOUND_STAFF);
-		    taskRepo.save(task);
 		    Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
 		    schedule.setStatus(ScheduleStatus.CANCEL);
+		    log.info("===========");
 		    scheduleRepo.save(schedule);
+		    taskRepo.save(task);
+
 		    
 		  //TODO: RECONSTRUCT NOTIFICATION
 		    TaskBuildupService.createAndSendNotification(
@@ -568,7 +571,7 @@ public class TaskBuildupService {
 	ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
 	eventNotiList.put(theTask.getTaskId(), taskEvent);
 	
-	log.info("CREATED EVENT SEND NOTI WHEN TIME COMING ");
+	log.info("CREATED EVENT SEND NOTI WHEN TIME COMING at time {} ", timeSendNotiInstant);
     }
 
     public void createEventSendNotiUpcomingTask(Task theTask, LocalDateTime timeStartTask, int periodHourBefore) {
@@ -614,7 +617,7 @@ public class TaskBuildupService {
 	ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
 	eventNotiList.put(theTask.getTaskId(), taskEvent);
 	
-	log.info("CREATE EVENT SEND NOTI UPCOMING SHCEDULE");
+	log.info("CREATE EVENT SEND NOTI UPCOMING SHCEDULE {}", timeSendNotiInstant);
     }
 
 }
