@@ -29,22 +29,22 @@ public class FeedbackController {
 	@Autowired
 	FeedbackService feedbackDao;
 
-	@GetMapping("/service/{serviceId}/feedb-oview")
+	@GetMapping("/service/{service-id}/feedb-oview")
 	@Operation(summary = "View feedback rating overview in specific service")
-	public ResponseEntity<?> getServiceRatingOverview(@PathVariable("serviceId") int serviceId) {
+	public ResponseEntity<?> getServiceRatingOverview(@PathVariable("service-id") int serviceId) {
 		return feedbackDao.getRatingOverviewByService(serviceId);
 	}
 
-	@GetMapping("/service/{serviceId}/filter")
+	@GetMapping("/service/{service-id}/filter")
 	@Operation(summary = "Filter feedback base on rating level in specific service")
-	public ResponseEntity<?> filterServiceFeedbackByRating(@PathVariable("serviceId") int serviceId,
+	public ResponseEntity<?> filterServiceFeedbackByRating(@PathVariable("service-id") int serviceId,
 			@RequestParam("rating") int rating) {
 		return feedbackDao.filterServiceFeedbackByRating(serviceId, rating);
 	}
 
-	@GetMapping("/service/{serviceId}/feedb-list")
+	@GetMapping("/service/{service-id}/feedb-list")
 	@Operation(summary = "Get the list of feedback of specific service")
-	public ResponseEntity<?> findAllFeedbackByService(@PathVariable("serviceId") int serviceId) {
+	public ResponseEntity<?> findAllFeedbackByService(@PathVariable("service-id") int serviceId) {
 		return feedbackDao.findAllFeedbackByService(serviceId);
 	}
 
