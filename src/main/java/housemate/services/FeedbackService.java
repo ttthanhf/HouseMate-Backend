@@ -141,7 +141,7 @@ public class FeedbackService {
 	public ResponseEntity<?> getOne(int serviceFeedbackId) {
 		ServiceFeedback feedback = feedBackRepo.findById(serviceFeedbackId).orElse(null);
 		if(feedback == null)
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Thông tin về đánh giá này không tồn tại !");
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Thông tin về đánh giá này không tồn tại !");
 		
 		FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feedback, FeedbackViewDetailDTO.class);
 		UserAccount customer = userRepo.findByUserId(feedback.getCustomerId());
@@ -154,7 +154,6 @@ public class FeedbackService {
 	@Transactional
 	public ResponseEntity<?> createNewFeedback(HttpServletRequest request, FeedbackNewDTO newFeedback) {
 		ServiceFeedback feedbackToSave = null;
-		try {
 			//TODO: Constraint for comboId taskId, customerId, ServiceId In Here
 			//TODO: Allow to create when task status is DONE
 			int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
@@ -169,11 +168,7 @@ public class FeedbackService {
 			    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 				    .body("Có lỗi đã xảy ra ! Tạo đánh giá thất bại ! Hãy thử tạo lại !");
 			servRepo.updateAvgRating(feedbackToSave.getServiceId());
-		}catch(Exception e) {
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Có lỗi đã xảy ra ! Tạo đánh giá thất bại ! Hãy thử tạo lại !");
-		}
+			
 		return this.getOne(feedbackToSave.getServiceFeedbackId());
 	}
 
@@ -211,7 +206,7 @@ public class FeedbackService {
 		Role currentUserRole = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
 		ServiceFeedback feedback = feedBackRepo.findById(serviceFeedbackId).orElse(null);
 		if(feedback == null) 
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Không tồn tại đánh giá này !");
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tồn tại đánh giá này !");
 		if (!(currentUserId == feedback.getCustomerId() || currentUserRole.equals(Role.ADMIN))) 
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không có quyền xóa đánh giá này !");
 		feedBackRepo.deleteById(serviceFeedbackId);
