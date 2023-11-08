@@ -43,7 +43,7 @@ public class FeedbackViewDTO {
 		private String content;
 		private LocalDateTime createdAt;
 		private Float rating;
-		private List<Image> avatar;
+		private String avatar;
 	}
 
 }
