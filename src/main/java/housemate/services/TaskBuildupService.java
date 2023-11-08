@@ -124,6 +124,8 @@ public class TaskBuildupService {
 		return List.of();
 	    for (Schedule schedule : schedules)
 		taskList.add(this.createTask(schedule));
+	    
+	  //TODO: RECONSTRUCT NOTIFICATION
 	    TaskBuildupService.createAndSendNotification("NEW TASK COMING !", "UPCOMING TASK",
 		    List.of(staffRepo.findAll().stream().map(x -> x.getStaffId())));
 	} catch (Exception e) {
@@ -408,7 +410,6 @@ public class TaskBuildupService {
 	    if (reportNewDTO != null && reportNewDTO.getNote() != null) 
 		checkReportExists.setNote(reportNewDTO.getNote());
 
-	    
 	    return TaskRes.build(checkReportExists, TaskMessType.OK, "Cập nhật báo cáo công việc thành công");
 	}
 	try {
@@ -524,13 +525,14 @@ public class TaskBuildupService {
 	// TODO SEND NOTIFICATION
     }
 
-    public void createEventSendNotiWhenTimeComing(Task task, LocalDateTime timeStartTask) {
+    public void createEventSendNotiWhenTimeComing(Task theTask, LocalDateTime timeStartTask) {
 	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone);
 	Instant timeSendNotiInstant = timeStartTaskZone.toInstant();
 
 	Runnable runnableTask = new Runnable() {
 	    @Override
 	    public void run() {
+		Task task = taskRepo.findById(theTask.getTaskId()).get();
 		if (task.getStaffId() == null) {
 		    task.setTaskStatus(TaskStatus.CANCELLED_CAUSE_NOT_FOUND_STAFF);
 		    taskRepo.save(task);
@@ -555,12 +557,12 @@ public class TaskBuildupService {
 	    }
 	};
 	ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
-	eventNotiList.put(task.getTaskId(), taskEvent);
+	eventNotiList.put(theTask.getTaskId(), taskEvent);
 	
 	log.info("CREATED EVENT SEND NOTI WHEN TIME COMING ");
     }
 
-    public void createEventSendNotiUpcomingTask(Task task, LocalDateTime timeStartTask, int periodHourBefore) {
+    public void createEventSendNotiUpcomingTask(Task theTask, LocalDateTime timeStartTask, int periodHourBefore) {
 	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone).minusHours(periodHourBefore);
 	Instant timeSendNotiInstant = timeStartTaskZone.toInstant();
 
@@ -568,6 +570,7 @@ public class TaskBuildupService {
 
 	    @Override
 	    public void run() {
+		Task task = taskRepo.findById(theTask.getTaskId()).get();
 		if (task.getStaffId() == null) {
 		    
 		  //TODO: RECONSTRUCT NOTIFICATION
@@ -600,10 +603,9 @@ public class TaskBuildupService {
 	    }
 	};
 	ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
-	eventNotiList.put(task.getTaskId(), taskEvent);
+	eventNotiList.put(theTask.getTaskId(), taskEvent);
 	
 	log.info("CREATE EVENT SEND NOTI UPCOMING SHCEDULE");
-
     }
 
 }
