@@ -41,6 +41,7 @@ public class ScheduleService {
     private final UserRepository userRepository;
     private final OrderItemRepository orderItemRepository;
     private final ServiceConfigRepository serviceConfigRepository;
+    private final TaskService taskService;
     private final int OFFICE_HOURS_START;
     private final int OFFICE_HOURS_END;
     private final int FIND_STAFF_HOURS;
@@ -57,7 +58,8 @@ public class ScheduleService {
             UserUsageRepository userUsageRepository,
             UserRepository userRepository,
             OrderItemRepository orderItemRepository,
-            ServiceConfigRepository serviceConfigRepository
+            ServiceConfigRepository serviceConfigRepository,
+            TaskService taskService
     ) {
         this.serviceRepository = serviceRepository;
         this.scheduleRepository = scheduleRepository;
@@ -68,6 +70,7 @@ public class ScheduleService {
         this.userRepository = userRepository;
         this.orderItemRepository = orderItemRepository;
         this.serviceConfigRepository = serviceConfigRepository;
+        this.taskService = taskService;
         this.OFFICE_HOURS_START = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_START).getConfigValue());
         this.OFFICE_HOURS_END = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_END).getConfigValue());
         this.FIND_STAFF_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.FIND_STAFF_HOURS).getConfigValue());
@@ -184,7 +187,7 @@ public class ScheduleService {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
-        return validateAndProcessSchedule(schedule, null);
+        return validateAndProcessSchedule(schedule, null, request);
     }
 
     public ResponseEntity<String> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO updateSchedule, int scheduleId) {
@@ -211,7 +214,7 @@ public class ScheduleService {
         Cycle oldCycle = currentSchedule.getCycle();
         Schedule newSchedule = scheduleMapper.updateSchedule(currentSchedule, updateSchedule);
         newSchedule.setCustomerId(userId);
-        return validateAndProcessSchedule(newSchedule, oldCycle);
+        return validateAndProcessSchedule(newSchedule, oldCycle, request);
     }
 
     // ======================================== REUSABLE FUNCTIONS ========================================
@@ -258,7 +261,7 @@ public class ScheduleService {
         events.add(event);
     }
 
-    private ResponseEntity<String> validateAndProcessSchedule(Schedule schedule, Cycle oldCycle) {
+    private ResponseEntity<String> validateAndProcessSchedule(Schedule schedule, Cycle oldCycle, HttpServletRequest request) {
         int serviceId = schedule.getServiceId();
 
         // Check service not exist
@@ -300,12 +303,13 @@ public class ScheduleService {
         }
 
         // Delete schedule
-        if (oldCycle != null) {
+        boolean isCreate = oldCycle == null;
+        if (!isCreate) {
             deleteSchedule(schedule, oldCycle);
         }
 
         // Store to database
-        storeToDatabase(schedule);
+        storeToDatabase(schedule, isCreate, request);
 
         return ResponseEntity.status(HttpStatus.OK).body("Set schedule successfully! Please wait for our staff to apply this job!");
     }
@@ -401,7 +405,7 @@ public class ScheduleService {
         return null;
     }
 
-    private void storeToDatabase(Schedule schedule) {
+    private void storeToDatabase(Schedule schedule, boolean isCreate, HttpServletRequest request) {
         int customerId = schedule.getCustomerId();
         Cycle cycle = schedule.getCycle();
         int parentScheduleId = 0;
@@ -421,7 +425,11 @@ public class ScheduleService {
 
             // Update schedule parent ID
             newSchedule.setParentScheduleId(newSchedule.getScheduleId());
-            scheduleRepository.save(newSchedule);
+            Schedule scheduleDb = scheduleRepository.save(newSchedule);
+
+            if (isCreate) {
+                taskService.createNewTask(request, scheduleDb.getScheduleId());
+            }
             return;
         }
 
@@ -444,6 +452,10 @@ public class ScheduleService {
             parentScheduleId = increment == 0 ? newSchedule.getScheduleId() : parentScheduleId;
             newSchedule.setParentScheduleId(parentScheduleId);
             scheduleRepository.save(newSchedule);
+        }
+
+        if (isCreate) {
+            taskService.createNewTask(request, parentScheduleId);
         }
     }
 
