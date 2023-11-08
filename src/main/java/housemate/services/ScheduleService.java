@@ -477,7 +477,7 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this schedule");
         }
 
-        Service service = serviceRepository.findById(schedule.getScheduleId()).orElse(null);
+        Service service = serviceRepository.findById(schedule.getServiceId()).orElse(null);
         if (service == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this service");
         }
