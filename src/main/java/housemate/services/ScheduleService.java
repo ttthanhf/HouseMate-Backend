@@ -477,8 +477,17 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this schedule");
         }
 
+        Service service = serviceRepository.findById(schedule.getScheduleId()).orElse(null);
+        if (service == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this service");
+        }
+
         List<ServiceType> typeList = serviceTypeRepository.findAllByServiceId(schedule.getServiceId()).orElse(null);
         schedule.setType(typeList);
+        schedule.setServiceName(service.getTitleName());
+        UserUsage currentUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
+        schedule.setCurrentUsage(currentUsage);
+        schedule.setGroupType(service.getGroupType());
 
         Set<PurchasedServiceRes> purchases = new HashSet<>();
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
@@ -498,13 +507,11 @@ public class ScheduleService {
             int serviceId = userUsage.getServiceId();
             int orderItemId = userUsage.getOrderItemId();
             OrderItem orderItem = orderItemRepository.findById(orderItemId);
-            Service service = serviceRepository.getServiceByServiceId(serviceId);
             Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
             userUsage.setService(serviceChild);
             userUsage.setRemaining(remaining);
 
             // Store to schedule
-            schedule.setType(typeList);
             schedule.getUsages().add(userUsage);
         }
 
