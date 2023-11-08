@@ -487,6 +487,14 @@ public class ScheduleService {
         schedule.setType(typeList);
         schedule.setServiceName(service.getTitleName());
         UserUsage currentUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
+        if (currentUsage == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this user usage");
+        }
+        Service usageService = serviceRepository.findById(currentUsage.getServiceId()).orElse(null);
+        if (usageService == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find service in user usage");
+        }
+        currentUsage.setService(usageService);
         schedule.setCurrentUsage(currentUsage);
         schedule.setGroupType(service.getGroupType());
 
