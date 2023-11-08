@@ -134,10 +134,7 @@ public class FeedbackService {
 	}
 
 	public ResponseEntity<?> findAll() {
-		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAll();
-		if(serviceFeedbList.isEmpty())
-			return ResponseEntity.ok(serviceFeedbList);
-	
+		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAll();	
 		return ResponseEntity.ok(serviceFeedbList);
 	}
 
@@ -164,14 +161,14 @@ public class FeedbackService {
 			if(feedBackRepo.findByTaskId(newFeedback.getTaskId()) != null)
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Đánh giá này đã được tạo ! Hãy chuyển sang cập nhật nó nếu bạn muốn chỉnh sửa đánh giá nhé  !");
 			
-			    feedbackToSave = mapper.map(newFeedback, ServiceFeedback.class);
-			    feedbackToSave.setCreatedAt(LocalDateTime.now(datetimeZone));
-			    feedbackToSave.setCustomerId(userId);
-			    feedbackToSave = feedBackRepo.save(feedbackToSave);
-			    if (feedbackToSave == null)
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body("Có lỗi đã xảy ra ! Tạo đánh giá thất bại ! Hãy thử tạo lại !");
-			    servRepo.updateAvgRating(feedbackToSave.getServiceId());
+			feedbackToSave = mapper.map(newFeedback, ServiceFeedback.class);
+			feedbackToSave.setCreatedAt(LocalDateTime.now(datetimeZone));
+			feedbackToSave.setCustomerId(userId);
+			feedbackToSave = feedBackRepo.save(feedbackToSave);
+			if (feedbackToSave == null)
+			    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				    .body("Có lỗi đã xảy ra ! Tạo đánh giá thất bại ! Hãy thử tạo lại !");
+			servRepo.updateAvgRating(feedbackToSave.getServiceId());
 		}catch(Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			e.printStackTrace();
