@@ -85,7 +85,7 @@ public class FeedbackService {
 		for (ServiceFeedback feeback : serviceFeedbList) {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
-			feedbackViewDetail.setCustomerName(customer == null ? "Vô danh" : customer.getFullName());
+			feedbackViewDetail.setCustomerName(customer.getFullName());
 			feedbackViewDetail.setAvatar(customer.getAvatar());
 			feebackDetailList.add(feedbackViewDetail);
 		}
@@ -104,7 +104,7 @@ public class FeedbackService {
 		for (ServiceFeedback feeback : serviceFeedbList) {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
-			feedbackViewDetail.setCustomerName(customer == null ? "Vô danh" : customer.getFullName());
+			feedbackViewDetail.setCustomerName(customer.getFullName());
 			feedbackViewDetail.setAvatar(customer.getAvatar());
 			feebackDetailList.add(feedbackViewDetail);
 		}
@@ -123,7 +123,7 @@ public class FeedbackService {
 		for (ServiceFeedback feeback : serviceFeedbList) {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
-			feedbackViewDetail.setCustomerName(customer == null ? "Vô danh" : customer.getFullName());
+			feedbackViewDetail.setCustomerName(customer.getFullName());
 			feedbackViewDetail.setAvatar(customer.getAvatar());
 			feebackDetailList.add(feedbackViewDetail);
 		}
@@ -145,7 +145,7 @@ public class FeedbackService {
 		
 		FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feedback, FeedbackViewDetailDTO.class);
 		UserAccount customer = userRepo.findByUserId(feedback.getCustomerId());
-		feedbackViewDetail.setCustomerName(customer == null ? "Vô danh" : customer.getFullName());
+		feedbackViewDetail.setCustomerName(customer.getFullName());
 		feedbackViewDetail.setAvatar(customer.getAvatar());
 		
 		return ResponseEntity.ok(feedbackViewDetail);
