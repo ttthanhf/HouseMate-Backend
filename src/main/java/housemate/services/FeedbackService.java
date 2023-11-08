@@ -3,7 +3,6 @@ package housemate.services;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,7 +148,7 @@ public class FeedbackService {
 		
 		FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feedback, FeedbackViewDetailDTO.class);
 		UserAccount customer = userRepo.findByUserId(feedback.getCustomerId());
-		feedbackViewDetail.setCustomerName(customer == null ? "Anonymous" : customer.getFullName());
+		feedbackViewDetail.setCustomerName(customer == null ? "Vô danh" : customer.getFullName());
 		feedbackViewDetail.setAvatar(customer.getAvatar());
 		
 		return ResponseEntity.ok(feedbackViewDetail);
@@ -189,13 +188,15 @@ public class FeedbackService {
 			//Only the author of specific feedback is allowed to update include Admin not allow too
 			ServiceFeedback oldFeedback = feedBackRepo.findFeedback(serviceFeedbackId, currentUserId, newFeedback.getTaskId(), newFeedback.getServiceId());
 			if(oldFeedback == null)
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Không tồn tại đánh giá này !");
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tồn tại đánh giá này !");
 			
 			oldFeedback.setContent(newFeedback.getContent());
 			oldFeedback.setRating(newFeedback.getRating());
 			oldFeedback.setCreatedAt(LocalDateTime.now(datetimeZone));
 			feedbackToUpdate = feedBackRepo.save(oldFeedback);
-			Assert.notNull(feedbackToUpdate, "Có lỗi đã xảy ra ! Cập nhật đánh giá thất bại !");			
+			if (feedbackToUpdate == null)
+			    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				    .body("Có lỗi đã xảy ra ! Cập nhật đánh giá thất bại !");			
 			servRepo.updateAvgRating(oldFeedback.getServiceId());
 		}catch(Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
