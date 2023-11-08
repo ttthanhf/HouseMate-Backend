@@ -383,10 +383,19 @@ public class TaskBuildupService {
 		task.getSchedule().setStaffId(staff.getStaffId());
 		taskRes = TaskRes.build(task, TaskMessType.OK, "Ứng tuyển thành công !");
 		
+		long hours = ChronoUnit.HOURS.between(LocalDateTime.now(dateTimeZone), task.getSchedule().getStartDate());
+		log.info("KHOẢNG THỜI GIAN GIỮA THỜI ĐIỂM HIỆN TẠI VÀ THỜI ĐIỂM LÀM VIỆC {}", hours);
+		if(hours >= 0 && hours <= DURATION_HOURS_SEND_INCOMING_NOTI_BEFORE.getNum()) {
+		    task.setTaskStatus(TaskStatus.INCOMING);
+		    task.getSchedule().setStatus(ScheduleStatus.INCOMING);
+		}
+		
 		//TODO: RECONSTRUCT NOTIFICATION
 		TaskBuildupService.createAndSendNotification(
 			"We have found staff will work on your schedule. Let contact with our staff !", "FOUND STAFF",
 			List.of(task.getSchedule().getCustomerId()));
+		
+
 	    } catch (Exception e) {
 		e.printStackTrace();
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
