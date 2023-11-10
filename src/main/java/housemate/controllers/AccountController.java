@@ -3,6 +3,7 @@ package housemate.controllers;
 import housemate.constants.Role;
 import housemate.entities.UserAccount;
 import housemate.models.UpdateAccountDTO;
+import housemate.responses.CustomerRes;
 import housemate.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -59,9 +60,9 @@ public class AccountController {
         return service.changeRole(userId, role);
     }
 
-    @Operation(summary = "Get all customer account")
+    @Operation(summary = "Manage customers (Name, Order count, Revenue, Transaction/month)")
     @GetMapping("/customers")
-    public ResponseEntity<List<UserAccount>> getAllCustomer() {
+    public ResponseEntity<List<CustomerRes>> getAllCustomer() {
         return service.getAllCustomer();
     }
 

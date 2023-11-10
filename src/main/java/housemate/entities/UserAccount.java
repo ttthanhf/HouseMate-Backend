@@ -9,6 +9,8 @@ import housemate.constants.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 /**
  *
  * @author ThanhF
@@ -56,6 +58,9 @@ public class UserAccount {
     @JsonIgnore
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus, String avatar) {
         this.fullName = fullName;
