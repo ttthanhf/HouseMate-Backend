@@ -4,16 +4,24 @@ import com.google.analytics.data.v1beta.*;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
 import housemate.constants.Role;
-import housemate.models.responses.AnalyticPageResponse;
+import housemate.entities.Order;
+import housemate.models.responses.AnalyticOverviewResponse;
+import housemate.models.responses.AnalyticRevenueResponse;
+import housemate.models.responses.AnalyticRevenueResponse.AllOrderPrice;
 import housemate.models.responses.AnalyticUserResponse;
+import housemate.models.responses.AnalyticUserResponse.AnalyticUserDetail;
+import housemate.repositories.OrderRepository;
+import housemate.repositories.ServiceRepository;
+import housemate.repositories.UserRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -23,24 +31,49 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
+import housemate.entities.Service;
+import housemate.entities.UserAccount;
+import housemate.models.AnalyticPageDTO;
+import housemate.models.responses.AnalyticCustomerResponse;
+import housemate.models.responses.AnalyticServicePageResponse;
+import housemate.repositories.OrderItemRepository;
+import housemate.repositories.ScheduleRepository;
+import java.util.HashMap;
+import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
-@Service
+@org.springframework.stereotype.Service
 public class AnalyticService implements DisposableBean {
-
+    
     @Value("${google.analytic.property-id}")
     private String propertyId;
-
+    
     @Value("${google.analytic.credentials.name}")
     private String credentialsPath;
-
+    
     private GoogleCredentials credentials;
     private BetaAnalyticsDataSettings betaAnalyticsDataSettings;
     private BetaAnalyticsDataClient analyticsData;
-
+    
     @Autowired
     private AuthorizationUtil authorizationUtil;
-
+    
+    @Autowired
+    private OrderRepository orderRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private ServiceRepository serviceRepository;
+    
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+    
+    @Autowired
+    private ScheduleRepository scheduleRepository;
+    
     @PostConstruct
     public void init() {
         try {
@@ -48,13 +81,13 @@ public class AnalyticService implements DisposableBean {
             betaAnalyticsDataSettings = BetaAnalyticsDataSettings.newBuilder()
                     .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
                     .build();
-
+            
             analyticsData = BetaAnalyticsDataClient.create(betaAnalyticsDataSettings);
         } catch (IOException ex) {
             Logger.getLogger(AnalyticService.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
     @Override
     public void destroy() {
         if (analyticsData != null) {
@@ -68,90 +101,346 @@ public class AnalyticService implements DisposableBean {
             }
         }
     }
-
+    
     public ResponseEntity<?> getAnalyticUser(HttpServletRequest request, int dayAgo) {
-
+        
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
         }
-
+        
         RunReportRequest reportRequest = RunReportRequest.newBuilder()
                 .setProperty("properties/" + propertyId)
                 .addDimensions(Dimension.newBuilder().setName("day"))
                 .addDimensions(Dimension.newBuilder().setName("month"))
                 .addDimensions(Dimension.newBuilder().setName("year"))
-                .addMetrics(Metric.newBuilder().setName("sessions"))
+                .addMetrics(Metric.newBuilder().setName("active1DayUsers"))
                 .addMetrics(Metric.newBuilder().setName("newUsers"))
-                .addMetrics(Metric.newBuilder().setName("activeUsers"))
-                .addDateRanges(DateRange.newBuilder().setStartDate(dayAgo + "daysAgo").setEndDate("today"))
+                .addDateRanges(DateRange.newBuilder().setStartDate(dayAgo * 2 + 1 + "daysAgo").setEndDate("today"))
+                .addOrderBys(
+                        OrderBy.newBuilder()
+                                .setDimension(OrderBy.DimensionOrderBy.newBuilder().setDimensionName("day"))
+                                .setDesc(false))
+                .addOrderBys(
+                        OrderBy.newBuilder()
+                                .setDimension(OrderBy.DimensionOrderBy.newBuilder().setDimensionName("month"))
+                                .setDesc(false))
+                .addOrderBys(
+                        OrderBy.newBuilder()
+                                .setDimension(OrderBy.DimensionOrderBy.newBuilder().setDimensionName("year"))
+                                .setDesc(false))
                 .build();
-
+        
         RunReportResponse response = analyticsData.runReport(reportRequest);
-
-        List<AnalyticUserResponse> listAnalyticUserResponse = new ArrayList<>();
-        for (Row row : response.getRowsList()) {
-            AnalyticUserResponse analyticUserResponse = new AnalyticUserResponse();
-            analyticUserResponse.setDay(row.getDimensionValues(0).getValue());
-            analyticUserResponse.setMonth(row.getDimensionValues(1).getValue());
-            analyticUserResponse.setYear(row.getDimensionValues(2).getValue());
-            analyticUserResponse.setSessions(row.getMetricValues(0).getValue());
-            analyticUserResponse.setNewUsers(row.getMetricValues(1).getValue());
-            analyticUserResponse.setActiveUsers(row.getMetricValues(2).getValue());
-            listAnalyticUserResponse.add(analyticUserResponse);
+        
+        AnalyticUserResponse analyticUserResponse = new AnalyticUserResponse();
+        analyticUserResponse.setBefore(new ArrayList<>());
+        analyticUserResponse.setCurrent(new ArrayList<>());
+        
+        int sizeResponse = response.getRowsList().size();
+        for (int current = 0, before = sizeResponse / 2; current < sizeResponse / 2; current++, before++) {
+            
+            Row rowCurrent = response.getRowsList().get(current);
+            
+            int yearCurrent = Integer.parseInt(rowCurrent.getDimensionValues(2).getValue());
+            int monthCurrent = Integer.parseInt(rowCurrent.getDimensionValues(1).getValue());
+            int dayCurrent = Integer.parseInt(rowCurrent.getDimensionValues(0).getValue());
+            LocalDate dateCurrent = LocalDate.of(yearCurrent, monthCurrent, dayCurrent);
+            
+            int totalNewUserCurrent = Integer.parseInt(rowCurrent.getMetricValues(1).getValue());
+            int totalActiveUserCurrent = Integer.parseInt(rowCurrent.getMetricValues(0).getValue());
+            
+            Row rowBefore = response.getRowsList().get(before);
+            
+            int yearBefore = Integer.parseInt(rowBefore.getDimensionValues(2).getValue());
+            int monthBefore = Integer.parseInt(rowBefore.getDimensionValues(1).getValue());
+            int dayBefore = Integer.parseInt(rowBefore.getDimensionValues(0).getValue());
+            LocalDate dateBefore = LocalDate.of(yearBefore, monthBefore, dayBefore);
+            
+            int totalNewUserBefore = Integer.parseInt(rowBefore.getMetricValues(1).getValue());
+            int totalActiveUserBefore = Integer.parseInt(rowBefore.getMetricValues(0).getValue());
+            
+            double percentTotalNewUserCurrent;
+            if (totalNewUserBefore != 0) {
+                percentTotalNewUserCurrent = ((double) (totalNewUserCurrent - totalNewUserBefore) / totalNewUserBefore);
+            } else {
+                percentTotalNewUserCurrent = totalNewUserCurrent;
+            }
+            percentTotalNewUserCurrent *= 100;
+            
+            double percentTotalActiveUserCurrent;
+            if (totalNewUserBefore != 0) {
+                percentTotalActiveUserCurrent = ((double) (totalActiveUserCurrent - totalActiveUserBefore) / totalActiveUserBefore);
+            } else {
+                percentTotalActiveUserCurrent = totalActiveUserCurrent;
+            }
+            percentTotalActiveUserCurrent *= 100;
+            
+            double percentTotalActiveUserBefore;
+            if (totalActiveUserCurrent != 0) {
+                percentTotalActiveUserBefore = ((double) (totalActiveUserBefore - totalActiveUserCurrent) / totalActiveUserCurrent);
+            } else {
+                percentTotalActiveUserBefore = totalActiveUserBefore;
+            }
+            percentTotalActiveUserBefore *= 100;
+            
+            double percentTotalNewUserBefore;
+            if (totalActiveUserCurrent != 0) {
+                percentTotalNewUserBefore = ((double) (totalNewUserBefore - totalNewUserCurrent) / totalNewUserCurrent);
+            } else {
+                percentTotalNewUserBefore = totalActiveUserBefore;
+            }
+            percentTotalNewUserBefore *= 100;
+            
+            AnalyticUserDetail analyticUserDetailCurrent = analyticUserResponse.new AnalyticUserDetail();
+            analyticUserDetailCurrent.setDate(dateCurrent);
+            analyticUserDetailCurrent.setTotalNewUser(totalNewUserCurrent);
+            analyticUserDetailCurrent.setTotalActiveUser(totalActiveUserCurrent);
+            analyticUserDetailCurrent.setPercentNewUser(percentTotalNewUserCurrent);
+            analyticUserDetailCurrent.setPercentActiveUser(percentTotalActiveUserCurrent);
+            analyticUserResponse.getCurrent().add(analyticUserDetailCurrent);
+            
+            AnalyticUserDetail analyticUserDetailBefore = analyticUserResponse.new AnalyticUserDetail();
+            analyticUserDetailBefore.setDate(dateBefore);
+            analyticUserDetailBefore.setTotalNewUser(totalNewUserBefore);
+            analyticUserDetailBefore.setTotalActiveUser(totalActiveUserCurrent);
+            analyticUserDetailBefore.setPercentActiveUser(percentTotalActiveUserBefore);
+            analyticUserDetailBefore.setPercentNewUser(percentTotalNewUserBefore);
+            analyticUserResponse.getBefore().add(analyticUserDetailBefore);
+            
         }
-
-        Comparator<AnalyticUserResponse> comparator = Comparator
-                .comparing(AnalyticUserResponse::getYear)
-                .thenComparing(AnalyticUserResponse::getMonth)
-                .thenComparing(AnalyticUserResponse::getDay);
-        Collections.sort(listAnalyticUserResponse, comparator);
-
-        return ResponseEntity.status(HttpStatus.OK).body(listAnalyticUserResponse);
+        return ResponseEntity.status(HttpStatus.OK).body(analyticUserResponse);
     }
-
-    public ResponseEntity<?> getAnalyticPage(HttpServletRequest request, int dayAgo) {
-
+    
+    public ResponseEntity<?> getAnalyticServicePage(HttpServletRequest request, AnalyticPageDTO analyticPageDTO) {
+        
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
         }
-
+        
+        LocalDate startDate = analyticPageDTO.getStartDate();
+        LocalDate endDate = analyticPageDTO.getEndDate();
+        int size = analyticPageDTO.getSize();
+        int page = analyticPageDTO.getPage();
+        
         RunReportRequest reportRequest = RunReportRequest.newBuilder()
                 .setProperty("properties/" + propertyId)
-                .addDimensions(Dimension.newBuilder().setName("day"))
-                .addDimensions(Dimension.newBuilder().setName("month"))
-                .addDimensions(Dimension.newBuilder().setName("year"))
                 .addDimensions(Dimension.newBuilder().setName("pageTitle"))
                 .addMetrics(Metric.newBuilder().setName("sessions"))
-                .addMetrics(Metric.newBuilder().setName("newUsers"))
-                .addMetrics(Metric.newBuilder().setName("activeUsers"))
-                .addMetrics(Metric.newBuilder().setName("eventCount"))
-                .addDateRanges(DateRange.newBuilder().setStartDate(dayAgo + "daysAgo").setEndDate("today"))
+                .addDateRanges(DateRange.newBuilder().setStartDate(startDate.toString()).setEndDate(endDate.toString()))
                 .build();
-
+        
         RunReportResponse response = analyticsData.runReport(reportRequest);
-
-        List<AnalyticPageResponse> listAnalyticPageResponse = new ArrayList<>();
+        
+        List<AnalyticServicePageResponse> listAnalyticServicePageResponse = new ArrayList<>();
         for (Row row : response.getRowsList()) {
-            AnalyticPageResponse analyticPageResponse = new AnalyticPageResponse();
-            analyticPageResponse.setDay(row.getDimensionValues(0).getValue());
-            analyticPageResponse.setMonth(row.getDimensionValues(1).getValue());
-            analyticPageResponse.setYear(row.getDimensionValues(2).getValue());
-            analyticPageResponse.setPageTitle(row.getDimensionValues(3).getValue());
-            analyticPageResponse.setSessions(row.getMetricValues(0).getValue());
-            analyticPageResponse.setNewUsers(row.getMetricValues(1).getValue());
-            analyticPageResponse.setActiveUsers(row.getMetricValues(2).getValue());
-            analyticPageResponse.setEventCount(row.getMetricValues(3).getValue());
-            listAnalyticPageResponse.add(analyticPageResponse);
+            if (row.getDimensionValues(0).getValue().startsWith("Dịch Vụ | ")) {
+                AnalyticServicePageResponse analyticServicePageResponse = new AnalyticServicePageResponse();
+                
+                String serviceName = row.getDimensionValues(0).getValue().split("\\|")[1].trim();
+                analyticServicePageResponse.setServiceName(serviceName);
+                
+                int totalSessionView = Integer.parseInt(row.getMetricValues(0).getValue());
+                analyticServicePageResponse.setTotalSessionView(totalSessionView);
+                
+                Service service = serviceRepository.getServiceByFullNameService(serviceName);
+                int serviceId = service.getServiceId();
+                
+                double totalPriceOfService = orderItemRepository.sumAllPriceOfServiceByServiceIdAndRangeDate(serviceId, startDate.atTime(LocalTime.MIN), endDate.atTime(LocalTime.MAX));
+                analyticServicePageResponse.setTotalPrice(totalPriceOfService);
+                
+                int totalNumberOfSold = orderItemRepository.countAllServiceTransition(serviceId);
+                analyticServicePageResponse.setNumberOfSold(totalNumberOfSold);
+                
+                listAnalyticServicePageResponse.add(analyticServicePageResponse);
+            }
         }
-
-        Comparator<AnalyticPageResponse> comparator = Comparator
-                .comparing(AnalyticPageResponse::getYear)
-                .thenComparing(AnalyticPageResponse::getMonth)
-                .thenComparing(AnalyticPageResponse::getDay);
-        Collections.sort(listAnalyticPageResponse, comparator);
-
-        return ResponseEntity.status(HttpStatus.OK).body(listAnalyticPageResponse);
+        
+        int analyticServicePageResponseSize = listAnalyticServicePageResponse.size();
+        //paging
+        int start = (page - 1) * size;
+        int end = start + size > analyticServicePageResponseSize ? analyticServicePageResponseSize : start + size;
+        
+        List<AnalyticServicePageResponse> pagedData;
+        try {
+            pagedData = listAnalyticServicePageResponse.subList(start, end);
+        } catch (Exception ex) {
+            pagedData = new ArrayList<>();
+        }
+        
+        Map<String, Object> res = new HashMap<>();
+        res.put("data", pagedData);
+        res.put("totalPages", Math.ceil((double) analyticServicePageResponseSize / size));
+        return ResponseEntity.status(HttpStatus.OK).body(res);
+    }
+    
+    public ResponseEntity<?> getAnalyticOverview(HttpServletRequest request, int dayAgo) {
+        
+        String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
+        if (!role.equals(Role.ADMIN.name())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
+        }
+        
+        LocalDateTime endDate = LocalDateTime.now();
+        LocalDateTime startDate = endDate.minusDays(dayAgo);
+        LocalDateTime startDateBefore = startDate.minusDays(dayAgo);
+        
+        int currentAllTransition = orderRepository.countOrderFromDateInputToDateInput(startDate, endDate);
+        int beforeAllTransition = orderRepository.countOrderFromDateInputToDateInput(startDateBefore, startDate);
+        
+        double percentAllTransition;
+        if (beforeAllTransition != 0) {
+            percentAllTransition = ((double) (currentAllTransition - beforeAllTransition) / beforeAllTransition);
+        } else {
+            percentAllTransition = currentAllTransition;
+        }
+        percentAllTransition *= 100;
+        
+        double currentAllOrderPrice = orderRepository.sumOrderPriceFromDateInputToDateInput(startDate, endDate);
+        double beforeAllOrderPrice = orderRepository.sumOrderPriceFromDateInputToDateInput(startDateBefore, startDate);
+        
+        double percentAllOrderPrice;
+        if (beforeAllOrderPrice != 0) {
+            percentAllOrderPrice = ((double) (currentAllOrderPrice - beforeAllOrderPrice) / beforeAllOrderPrice);
+        } else {
+            percentAllOrderPrice = currentAllOrderPrice;
+        }
+        percentAllOrderPrice *= 100;
+        
+        int totalCustomer = userRepository.countAllUser();
+        
+        RunReportRequest reportRequest = RunReportRequest.newBuilder()
+                .setProperty("properties/" + propertyId)
+                .addMetrics(Metric.newBuilder().setName("newUsers"))
+                .addDateRanges(DateRange.newBuilder().setStartDate(startDate.toLocalDate().toString()).setEndDate(endDate.toLocalDate().toString()))
+                .addDateRanges(DateRange.newBuilder().setStartDate(startDateBefore.toLocalDate().toString()).setEndDate(startDate.toLocalDate().toString()))
+                .build();
+        
+        RunReportResponse response = analyticsData.runReport(reportRequest);
+        
+        int currentAllNewGuest = Integer.parseInt(response.getRowsList().get(1).getMetricValues(0).getValue());
+        int beforeAllNewGuest = Integer.parseInt(response.getRowsList().get(0).getMetricValues(0).getValue());
+        double percentAllNewGuest;
+        if (beforeAllOrderPrice != 0) {
+            percentAllNewGuest = ((double) (currentAllNewGuest - beforeAllNewGuest) / beforeAllNewGuest);
+        } else {
+            percentAllNewGuest = currentAllNewGuest;
+        }
+        percentAllNewGuest *= 100;
+        
+        AnalyticOverviewResponse analyticOverviewResponse = new AnalyticOverviewResponse();
+        analyticOverviewResponse.setBeforeAllOrderPrice(beforeAllOrderPrice);
+        analyticOverviewResponse.setBeforeAllTransition(beforeAllTransition);
+        analyticOverviewResponse.setCurrentAllOrderPrice(currentAllOrderPrice);
+        analyticOverviewResponse.setCurrentAllTransition(currentAllTransition);
+        analyticOverviewResponse.setPercentAllTransition(percentAllTransition);
+        analyticOverviewResponse.setPercentAllOrderPrice(percentAllOrderPrice);
+        analyticOverviewResponse.setTotalCustomer(totalCustomer);
+        analyticOverviewResponse.setCurrentAllNewGuest(currentAllNewGuest);
+        analyticOverviewResponse.setBeforeAllNewGuest(beforeAllNewGuest);
+        analyticOverviewResponse.setPercentAllNewGuest(percentAllNewGuest);
+        
+        return ResponseEntity.status(HttpStatus.OK).body(analyticOverviewResponse);
+        
+    }
+    
+    public ResponseEntity<?> getAnalyticRevenue(HttpServletRequest request, int dayAgo) {
+        
+        String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
+        if (!role.equals(Role.ADMIN.name())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
+        }
+        
+        AnalyticRevenueResponse analyticRevenueResponse = new AnalyticRevenueResponse();
+        analyticRevenueResponse.setBefore(new ArrayList<>());
+        analyticRevenueResponse.setCurrent(new ArrayList<>());
+        
+        LocalDate currentDate = LocalDate.now();
+        for (int currentDayAgo = 0, beforeDayAgo = dayAgo + 1; currentDayAgo <= dayAgo; currentDayAgo++, beforeDayAgo++) {
+            
+            AllOrderPrice allOrderPriceCurrent = analyticRevenueResponse.new AllOrderPrice();
+            AllOrderPrice allOrderPriceBefore = analyticRevenueResponse.new AllOrderPrice();
+            
+            LocalDate startDateCurrent = currentDate.minusDays(currentDayAgo);
+            LocalDate startDateBefore = currentDate.minusDays(beforeDayAgo);
+            
+            double currentAllOrderPrice = orderRepository.sumOrderPriceFromDateInputToDateInput(startDateCurrent.atStartOfDay(), startDateCurrent.atTime(LocalTime.MAX));
+            double beforeAllOrderPrice = orderRepository.sumOrderPriceFromDateInputToDateInput(startDateBefore.atStartOfDay(), startDateBefore.atTime(LocalTime.MAX));
+            
+            double percentAllOrderPriceCurrent;
+            if (beforeAllOrderPrice != 0) {
+                percentAllOrderPriceCurrent = ((double) (currentAllOrderPrice - beforeAllOrderPrice) / beforeAllOrderPrice);
+            } else {
+                percentAllOrderPriceCurrent = currentAllOrderPrice;
+            }
+            percentAllOrderPriceCurrent *= 100;
+            
+            double percentAllOrderPriceBefore;
+            if (currentAllOrderPrice != 0) {
+                percentAllOrderPriceBefore = ((double) (beforeAllOrderPrice - currentAllOrderPrice) / currentAllOrderPrice);
+            } else {
+                percentAllOrderPriceBefore = beforeAllOrderPrice;
+            }
+            percentAllOrderPriceBefore *= 100;
+            
+            allOrderPriceCurrent.setDate(startDateCurrent);
+            allOrderPriceCurrent.setAllOrderPrice(currentAllOrderPrice);
+            allOrderPriceCurrent.setPercentAllOrderPrice(percentAllOrderPriceCurrent);
+            
+            allOrderPriceBefore.setDate(startDateBefore);
+            allOrderPriceBefore.setAllOrderPrice(beforeAllOrderPrice);
+            allOrderPriceBefore.setPercentAllOrderPrice(percentAllOrderPriceBefore);
+            
+            analyticRevenueResponse.getBefore().add(allOrderPriceBefore);
+            analyticRevenueResponse.getCurrent().add(allOrderPriceCurrent);
+            
+        }
+        
+        return ResponseEntity.status(HttpStatus.OK).body(analyticRevenueResponse);
+        
+    }
+    
+    public ResponseEntity<?> getAnalyticCustomer(HttpServletRequest request, AnalyticPageDTO analyticPageDTO) {
+        String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
+        if (!role.equals(Role.ADMIN.name())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
+        }
+        
+        LocalDate startDate = analyticPageDTO.getStartDate();
+        LocalDate endDate = analyticPageDTO.getEndDate();
+        int size = analyticPageDTO.getSize();
+        int page = analyticPageDTO.getPage();
+        PageRequest pageRequest = PageRequest.of(page, size);
+        
+        List<AnalyticCustomerResponse> listAnalyticCustomerResponse = new ArrayList<>();
+        
+        Page<UserAccount> paginatedListCustomer = userRepository.getAllUserByUserRoleAndStartDateToEndDate(Role.CUSTOMER, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX), pageRequest);
+        List<UserAccount> listCustomer = paginatedListCustomer.getContent();
+        
+        for (UserAccount customer : listCustomer) {
+            
+            AnalyticCustomerResponse analyticCustomerResponse = new AnalyticCustomerResponse();
+            analyticCustomerResponse.setUserName(customer.getFullName());
+            analyticCustomerResponse.setDate(customer.getCreatedAt().toLocalDate());
+            
+            int customerId = customer.getUserId();
+            int numberOfSchedule = scheduleRepository.countAllScheduleByUserId(customerId);
+            analyticCustomerResponse.setNumberOfSchedule(numberOfSchedule);
+            
+            double totalOrderPrice = 0;
+            
+            List<Order> listOrder = orderRepository.getAllOrderCompleteByUserId(customerId);
+            for (Order order : listOrder) {
+                totalOrderPrice += order.getFinalPrice();
+            }
+            analyticCustomerResponse.setTotalOrderPrice(totalOrderPrice);
+            analyticCustomerResponse.setNumberOfOrder(listOrder.size());
+            
+            listAnalyticCustomerResponse.add(analyticCustomerResponse);
+            
+        }
+        
+        return ResponseEntity.status(HttpStatus.OK).body(listAnalyticCustomerResponse);
     }
 }

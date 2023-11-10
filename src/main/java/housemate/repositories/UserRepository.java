@@ -6,12 +6,15 @@ package housemate.repositories;
 
 import housemate.constants.Role;
 import housemate.entities.UserAccount;
+import java.time.LocalDateTime;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  *
@@ -32,4 +35,11 @@ public interface UserRepository extends JpaRepository<UserAccount, Integer> {
     UserAccount findByResetPasswordToken(String token);
 
     List<UserAccount> findByRole(Role role);
+
+    @Query(value = "SELECT COUNT(u) FROM UserAccount u")
+    int countAllUser();
+
+    @Query(value = "SELECT u FROM UserAccount u WHERE u.role = :role AND u.createdAt BETWEEN :startDate AND :endDate")
+    Page<UserAccount> getAllUserByUserRoleAndStartDateToEndDate(@Param("role") Role role, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+
 }
