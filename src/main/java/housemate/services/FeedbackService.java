@@ -52,10 +52,10 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 		
-		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.ok(serviceFeedbList);
-
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
+		if (serviceFeedbList.isEmpty())
+		    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Chưa có đánh giá tổng quát cho dịch vụ này");
+
 
 		Map<Integer, Integer> numOfReviewPerRatingLevel = new HashMap<>();
 		numOfReviewPerRatingLevel.put(1, feedBackRepo.getNumOfReviewPerRatingLevel(serviceId, 1));
@@ -113,11 +113,9 @@ public class FeedbackService {
 
 	public ResponseEntity<?> filterServiceFeedbackByRating(int serviceId, int ratingLevel) {
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByRating(serviceId, ratingLevel);
-		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.ok(serviceFeedbList);
-
-
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
+		if (serviceFeedbList.isEmpty())
+		    return ResponseEntity.ok(serviceFeedback);
 
 		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
 		for (ServiceFeedback feeback : serviceFeedbList) {
