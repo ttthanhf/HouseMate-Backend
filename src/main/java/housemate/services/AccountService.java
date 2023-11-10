@@ -3,6 +3,7 @@ package housemate.services;
 import housemate.constants.Role;
 import housemate.entities.UserAccount;
 import housemate.mappers.AccountMapper;
+import housemate.models.CreateAccountDTO;
 import housemate.models.UpdateAccountDTO;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.ScheduleRepository;
@@ -16,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -126,5 +129,26 @@ public class AccountService {
     public ResponseEntity<UserAccount> getCurrentUser(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         return getInfo(userId);
+    }
+
+    public ResponseEntity<String> createStaffAccount(CreateAccountDTO accountDTO) {
+        // Check age > 18
+        if (LocalDate.now().minusYears(18).isBefore(accountDTO.getDateOfBirth())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Age must be larger than 18!");
+        }
+
+        // Check unique of email
+        if (userRepository.findByEmailAddress(accountDTO.getEmail()) != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email address is existed before!");
+        }
+
+        // Check unique of identity card
+        if (userRepository.findByIdentityCard(accountDTO.getIdentityCard()) != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This identity card is existed before!");
+        }
+
+        UserAccount account = accountMapper.mapToEntity(accountDTO);
+        userRepository.save(account);
+        return ResponseEntity.status(HttpStatus.OK).body("Create staff successfully!");
     }
 }

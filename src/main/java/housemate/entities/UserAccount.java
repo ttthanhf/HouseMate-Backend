@@ -7,9 +7,11 @@ package housemate.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import housemate.constants.AccountStatus;
 import housemate.constants.Role;
+import housemate.constants.Sex;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -68,13 +70,23 @@ public class UserAccount {
 
     @Column(name = "account_status")
     @Enumerated(EnumType.STRING)
-    private AccountStatus accountStatus;
+    private AccountStatus accountStatus = AccountStatus.ACTIVE; // Default: active
 
     @Column(name = "is_banned")
-    private boolean isBanned;
+    private boolean isBanned = false; // Default isBanned is false
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "identity_card")
+    private String identityCard;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(name = "sex")
+    @Enumerated(EnumType.STRING)
+    private Sex sex;
 
     public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus, String avatar) {
         this.fullName = fullName;

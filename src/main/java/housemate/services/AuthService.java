@@ -105,7 +105,6 @@ public class AuthService {
         String hash = bcryptUtil.hashPassword(registerAccountDTO.getPassword());
         registerAccountDTO.setPassword(hash);
         UserAccount userAccount = accountMapper.mapToEntity(registerAccountDTO);
-        userAccount.setCreatedAt(LocalDateTime.now());
         userAccount = userRepository.save(userAccount);
 
         // Generate token

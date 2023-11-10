@@ -2,6 +2,7 @@ package housemate.controllers;
 
 import housemate.constants.Role;
 import housemate.entities.UserAccount;
+import housemate.models.CreateAccountDTO;
 import housemate.models.UpdateAccountDTO;
 import housemate.responses.CustomerRes;
 import housemate.responses.StaffRes;
@@ -61,13 +62,13 @@ public class AccountController {
         return service.changeRole(userId, role);
     }
 
-    @Operation(summary = "Manage customers (Full name, Schedule count, Spent amount, Transaction count, Join date )")
+    @Operation(summary = "Manage customers (Full name, Schedule count, Spent amount, Transaction count, Join date)")
     @GetMapping("/customers")
     public ResponseEntity<List<CustomerRes>> getAllCustomer() {
         return service.getAllCustomer();
     }
 
-    @Operation(summary = "Mange staffs (Full name, Proficiency score, Staff status, Task count)")
+    @Operation(summary = "Mange staffs (Full name, Proficiency score, Staff status, Task count, Success rate)")
     @GetMapping("/staffs")
     public ResponseEntity<List<StaffRes>> getAllStaff() {
         return service.getAllStaff();
@@ -84,6 +85,12 @@ public class AccountController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserAccount> getCurrentUser(HttpServletRequest request) {
         return service.getCurrentUser(request);
+    }
+
+    @Operation(summary = "Create staff account")
+    @PostMapping("/create-staff")
+    public ResponseEntity<String> createStaffAccount(@Valid @RequestBody CreateAccountDTO createAccountDTO) {
+        return service.createStaffAccount(createAccountDTO);
     }
 }
 
