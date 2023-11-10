@@ -18,7 +18,6 @@ import housemate.utils.JwtUtil;
 import java.net.URI;
 
 import java.io.UnsupportedEncodingException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
