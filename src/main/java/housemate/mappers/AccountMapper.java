@@ -22,7 +22,7 @@ public class AccountMapper {
 
     final String DEFAULT_AVATAR = "https://scontent.fsgn2-9.fna.fbcdn.net/v/t1.15752-9/384469032_6609223889131065_8293022876449520388_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=ae9488&_nc_ohc=gjDXwSBmi3YAX-hNO9i&_nc_ht=scontent.fsgn2-9.fna&oh=03_AdTYPieo_8M2sWscLr-rykTpN-IAaBS8JRWarwlkJQpKdA&oe=6540E586";
     final int MAX_PROFICIENCY_SCORE = 100;
-    final int MAX_AVERAGE_RATING = 5;
+    final int DEFAULT_RATING = 0;
 
     public UserAccount mapToEntity(RegisterAccountDTO registerAccountDTO) {
         UserAccount userAccount = new UserAccount();
@@ -51,7 +51,7 @@ public class AccountMapper {
         userAccount.setAddress(createAccountDTO.getAddress());
         userAccount.setRole(Role.STAFF);
         userAccount.setProficiencyScore(MAX_PROFICIENCY_SCORE);
-        userAccount.setAvgRating(MAX_AVERAGE_RATING);
+        userAccount.setAvgRating(DEFAULT_RATING);
         userAccount.setEmailValidationStatus(true);
 
         return userAccount;
