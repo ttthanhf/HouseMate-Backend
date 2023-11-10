@@ -14,9 +14,11 @@ import lombok.Data;
 @Data
 public class AnalyticCustomerResponse {
 
+    private int userId;
+    private String avatar;
     private String userName;
     private int numberOfOrder;
-    private double totalOrderPrice;
+    private double amountSpent;
     private int numberOfSchedule;
     private LocalDate date;
 }
