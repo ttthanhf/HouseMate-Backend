@@ -13,19 +13,16 @@ import lombok.Data;
  * @author ThanhF
  */
 @Data
-public class AnalyticUserResponse {
+public class AnalyticRevenueResponse {
 
-    private List<AnalyticUserDetail> current;
-    private List<AnalyticUserDetail> before;
+    private List<AllOrderPrice> current;
+    private List<AllOrderPrice> before;
 
     @Data
-    public class AnalyticUserDetail {
+    public class AllOrderPrice {
 
         private LocalDate date;
-        private int totalActiveUser;
-        private int totalNewUser;
-        private double percentActiveUser;
-        private double percentNewUser;
+        private double allOrderPrice;
+        private double percentAllOrderPrice;
     }
-
 }
