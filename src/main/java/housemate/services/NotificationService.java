@@ -1,7 +1,6 @@
 package housemate.services;
 
 import housemate.entities.Notification;
-import housemate.models.NotificationDTO;
 import housemate.repositories.NotificationRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,21 +35,19 @@ public class NotificationService {
         return ResponseEntity.status(HttpStatus.OK).body(listNotification);
     }
 
-    public ResponseEntity<Notification> createNotification(HttpServletRequest request, NotificationDTO notificationDTO) {
+    public Notification createNotification(HttpServletRequest request, String message) {
 
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 
         Notification notification = new Notification();
         notification.setUserId(userId);
-        notification.setDatetime(notificationDTO.getDatetime());
+        notification.setMessage(message);
         notification.setRead(false);
-        notification.setServiceName(notificationDTO.getServiceName());
         notification.setNotificationCreatedAt(LocalDateTime.now());
-        notification.setStatus(notificationDTO.getStatus());
 
         notificationRepository.save(notification);
 
-        return ResponseEntity.status(HttpStatus.OK).body(notification);
+        return notification;
     }
 
     public ResponseEntity<String> updateReadStatusNotification(HttpServletRequest request, int notificationId) {
