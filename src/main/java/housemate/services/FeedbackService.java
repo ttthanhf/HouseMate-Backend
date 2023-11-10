@@ -52,11 +52,11 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 		
-		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
 		if (serviceFeedbList.isEmpty())
 		    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Chưa có đánh giá tổng quát cho dịch vụ này");
 
-
+		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
+		
 		Map<Integer, Integer> numOfReviewPerRatingLevel = new HashMap<>();
 		numOfReviewPerRatingLevel.put(1, feedBackRepo.getNumOfReviewPerRatingLevel(serviceId, 1));
 		numOfReviewPerRatingLevel.put(2, feedBackRepo.getNumOfReviewPerRatingLevel(serviceId, 2));
@@ -76,10 +76,10 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 
-		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.ok(serviceFeedbList);
-
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
+
+		if (serviceFeedbList.isEmpty())
+		    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Chưa có đánh giá nào cho dịch vụ này !");
 
 		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
 		for (ServiceFeedback feeback : serviceFeedbList) {
@@ -98,9 +98,10 @@ public class FeedbackService {
 	public ResponseEntity<?> findTopFeedback(int ratingLevel) {
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findTopFeedback(ratingLevel);
 		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.ok(serviceFeedbList);
-
+			return ResponseEntity.ok(List.of());
+		
 		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
+
 		for (ServiceFeedback feeback : serviceFeedbList) {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
@@ -112,10 +113,12 @@ public class FeedbackService {
 	}
 
 	public ResponseEntity<?> filterServiceFeedbackByRating(int serviceId, int ratingLevel) {
-		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByRating(serviceId, ratingLevel);
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
+
+		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByRating(serviceId, ratingLevel);
 		if (serviceFeedbList.isEmpty())
-		    return ResponseEntity.ok(serviceFeedback);
+		    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body("Không tìm thấy đánh giá " + ratingLevel + " sao cho dịch vụ này !");
 
 		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
 		for (ServiceFeedback feeback : serviceFeedbList) {
@@ -173,8 +176,8 @@ public class FeedbackService {
 	@Transactional
 	public ResponseEntity<?> updateFeedback(HttpServletRequest request, FeedbackNewDTO newFeedback, int serviceFeedbackId) {
 		ServiceFeedback feedbackToUpdate = null;
-		try {
-			int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+
+		int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 			//TODO: Constraint for comboId taskId, customerId, ServiceId In Here
 			//TODO: Allow to create when task status is DONE
 			//Only the author of specific feedback is allowed to update include Admin not allow too
@@ -190,11 +193,7 @@ public class FeedbackService {
 			    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 				    .body("Có lỗi đã xảy ra ! Cập nhật đánh giá thất bại !");			
 			servRepo.updateAvgRating(oldFeedback.getServiceId());
-		}catch(Exception e) {
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Có lỗi đã xảy ra ! Cập nhật đánh giá thất bại !");
-		}
+
 		return this.getOne(feedbackToUpdate.getServiceFeedbackId());
 	}
 	
