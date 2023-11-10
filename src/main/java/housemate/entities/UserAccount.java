@@ -6,8 +6,8 @@ package housemate.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import housemate.constants.AccountStatus;
+import housemate.constants.Gender;
 import housemate.constants.Role;
-import housemate.constants.Sex;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -84,9 +84,9 @@ public class UserAccount {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @Column(name = "sex")
+    @Column(name = "gender")
     @Enumerated(EnumType.STRING)
-    private Sex sex;
+    private Gender gender;
 
     public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus, String avatar) {
         this.fullName = fullName;

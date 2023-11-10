@@ -1,7 +1,7 @@
 package housemate.models;
 
 import housemate.constants.RegexConstants;
-import housemate.constants.Sex;
+import housemate.constants.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
@@ -25,7 +25,7 @@ public class CreateAccountDTO {
     private LocalDate dateOfBirth;
 
     @NotNull(message = "Sex cannot be null")
-    private Sex sex;
+    private Gender gender;
 
     @Schema(example = "0987654321", description = "Phone number of an account")
     @Pattern(regexp = RegexConstants.PHONE_NUMBER_REGEX, message = "Invalid phone number format")

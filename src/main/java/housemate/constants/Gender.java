@@ -1,6 +1,6 @@
 package housemate.constants;
 
-public enum Sex {
+public enum Gender {
     MALE,
     FEMALE,
     OTHER
