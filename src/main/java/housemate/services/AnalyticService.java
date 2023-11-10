@@ -43,6 +43,7 @@ import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import housemate.constants.SortEnum;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -51,9 +52,6 @@ public class AnalyticService implements DisposableBean {
 
     @Value("${google.analytic.property-id}")
     private String propertyId;
-
-    @Value("${google.analytic.credentials.name}")
-    private String credentialsPath;
 
     private GoogleCredentials credentials;
     private BetaAnalyticsDataSettings betaAnalyticsDataSettings;
@@ -80,7 +78,8 @@ public class AnalyticService implements DisposableBean {
     @PostConstruct
     public void init() {
         try {
-            credentials = GoogleCredentials.fromStream(new FileInputStream(getClass().getClassLoader().getResource(credentialsPath).getFile()));
+            InputStream credStream = getClass().getClassLoader().getResourceAsStream("/credentials.json");
+            credentials = GoogleCredentials.fromStream(credStream);
             betaAnalyticsDataSettings = BetaAnalyticsDataSettings.newBuilder()
                     .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
                     .build();
