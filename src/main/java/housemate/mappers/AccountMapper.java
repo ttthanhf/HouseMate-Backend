@@ -44,7 +44,7 @@ public class AccountMapper {
 
         userAccount.setFullName(createAccountDTO.getFullName());
         userAccount.setDateOfBirth(createAccountDTO.getDateOfBirth());
-        userAccount.setSex(createAccountDTO.getSex());
+        userAccount.setGender(createAccountDTO.getGender());
         userAccount.setPhoneNumber(createAccountDTO.getPhone());
         userAccount.setIdentityCard(createAccountDTO.getIdentityCard());
         userAccount.setEmailAddress(createAccountDTO.getEmail());
@@ -52,7 +52,6 @@ public class AccountMapper {
         userAccount.setRole(Role.STAFF);
         userAccount.setProficiencyScore(MAX_PROFICIENCY_SCORE);
         userAccount.setAvgRating(MAX_AVERAGE_RATING);
-
         userAccount.setEmailValidationStatus(true);
 
         return userAccount;
