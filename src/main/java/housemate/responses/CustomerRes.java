@@ -1,7 +1,6 @@
 package housemate.responses;
 
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
 @Data
