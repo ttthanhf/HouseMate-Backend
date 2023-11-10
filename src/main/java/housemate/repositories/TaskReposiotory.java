@@ -13,8 +13,10 @@ public interface TaskReposiotory extends JpaRepository<Task, Integer> {
 
 	List<Task> findByScheduleId(int scheduleId);
 
-	@Query("SELECT t FROM Task t WHERE t.scheduleId = :scheduleId AND t.taskStatus NOT LIKE '%CANCELLED%'")
+	@Query("SELECT t FROM Task t WHERE t.scheduleId = :scheduleId AND (t.taskStatus NOT LIKE '%CANCELLED%' OR t.schedule.status = 'DONE')")
 	Task findExistingTaskForSchedule(@Param("scheduleId") int scheduleId);
+	
+	Task findByScheduleIdAndStaffId(int scheduleId, int staffId);
 	
 	Task findByScheduleIdAndTaskStatus(int scheduleId, TaskStatus taskStatus);
 

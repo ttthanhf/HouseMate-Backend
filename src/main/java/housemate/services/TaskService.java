@@ -1,9 +1,12 @@
 package housemate.services;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -81,6 +84,8 @@ public class TaskService {
     private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private static final Logger log = LoggerFactory.getLogger(TaskService.class);
+    
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
     // VIEW TASK PENDING APPLICATION
     public ResponseEntity<?> getAllTaskInPendingApplication(Optional<Sort.Direction> orderByCreatedDirection,
@@ -179,7 +184,14 @@ public class TaskService {
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không phải chủ sở hữu của lịch này !");
 
 	long dayDiff = ChronoUnit.DAYS.between(LocalDateTime.now(dateTimeZone), schedule.getStartDate());
-	Task task = taskRepo.findExistingTaskForSchedule(scheduleId);
+	
+	Task task = null;
+	
+	if(staffRepo.findById(schedule.getStaffId()).orElse(null) != null) {
+	    task = taskRepo.findByScheduleIdAndStaffId(scheduleId, schedule.getStaffId());
+	}
+	else
+	    task = taskRepo.findExistingTaskForSchedule(scheduleId);
 
 	if (schedule.getStatus().equals(ScheduleStatus.PROCESSING) && task == null && dayDiff > 1)
 	    return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -188,7 +200,7 @@ public class TaskService {
 	    return ResponseEntity.status(HttpStatus.NOT_FOUND)
 		    .body("Lịch này đã bị hủy từ trước. Sẽ không có thông tin về công việc của lịch này !");
 	else if (task == null)
-	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy thông tin về công việc này !");
+	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy thông tin công việc cho lịch này !");
 
 	TaskViewDTO taskViewDto = taskBuildupServ.convertIntoTaskViewDtoFromTask(task);
 
@@ -205,7 +217,9 @@ public class TaskService {
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không phải là chủ sở hữu của lịch này !");
 	if (schedule.getStatus().equals(ScheduleStatus.CANCEL) && taskRepo.findByScheduleIdAndTaskStatus(scheduleId, TaskStatus.CANCELLED_CAUSE_NOT_FOUND_STAFF) != null)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-		    "Lịch này đã bị hủy vì không tìm thấy nhân viên tại thời điểm lịch của bạn đến hẹn làm việc ! Vui lòng tạo lịch mới để hệ thống lên lịch làm việc cho bạn !");
+		    "Lịch này đã bị hủy vì không tìm thấy nhân viên tại thời"
+		    + " điểm lịch của bạn đến hẹn làm việc ! Vui lòng tạo lịch"
+		    + " mới để hệ thống lên lịch làm việc cho bạn !");
 	if (schedule.getStatus().equals(ScheduleStatus.CANCEL))
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn đã hủy lịch này ! Vui lòng tạo lịch mới để hệ thống lên lịch làm việc cho bạn !");
 
@@ -214,7 +228,6 @@ public class TaskService {
 	    return ResponseEntity.ok(taskBuildupServ.convertIntoTaskViewDtoFromTask(createdTask));
 
 	List<Task> task = taskBuildupServ.createTaskOnUpComingSchedule(schedule);
-	log.info("TASK LIST CREATED : ", task.stream().limit(1).toString());
 	if (task.isEmpty())
 	    return ResponseEntity.status(HttpStatus.OK).body(List.of());
 	
@@ -334,7 +347,6 @@ public class TaskService {
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nhân viên không tồn tại !");
 	if (staff.isBanned())
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tài khoản của bạn đã bị cấm ! Bạn không được phép mua hàng hay ứng tuyển công việc từ tài khoản này được nữa !");
-	log.info("====TASK IS NULL {}", staff);
 	Task task = taskRepo.findById(taskId).orElse(null);
 	if (task == null)
 	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Công việc này không tồn tại hoặc chưa mở để bạn ứng tuyển");
@@ -342,18 +354,21 @@ public class TaskService {
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không thể ứng tuyển công việc này vì công việc này đã bị hủy !");
 	if (task.getStaffId() != null && task.getStaffId() == staffId)
 	    return ResponseEntity.ok().body(taskBuildupServ.convertIntoTaskViewDtoFromTask(task));
-	List<Schedule> schedulesDupStartOrEnd = scheduleRepo.findDuplicatedTimeStartOrTimeEnd(staffId, task.getSchedule().getStartDate(), task.getSchedule().getEndDate());
-	
-	if (!scheduleRepo.findDuplicatedHourlySchedule(staff.getStaffId(), task.getSchedule().getStartDate(), task.getSchedule().getEndDate()).isEmpty())
+	//Check duplicate task
+	Schedule dupSchedule = taskBuildupServ.checkIsDuplicateTask(task, staff);
+	if(dupSchedule != null) 
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-		    .body("Bạn không thể ứng tuyển công việc này ! Khoảng thời gian làm việc của lịch này đã trùng với khoảng thời gian của lịch công việc khác của bạn !");
-	if (task.getStaffId() != null && task.getStaffId() != staffId && task.getStaff() != null )
+		    .body("Bạn không thể ứng tuyển công việc này !"
+		    	+ " Khoảng thời gian làm việc của lịch này đã trùng với khoảng thời gian của lịch công việc khác của bạn "
+			    + "có khung giờ bắt đầu ngày " 
+			    + dateFormat.format(Date.from(dupSchedule.getStartDate().atZone(dateTimeZone).toInstant())) + " và kết thúc ngày "
+			    + dateFormat.format(Date.from(dupSchedule.getEndDate().atZone(dateTimeZone).toInstant()))
+			    + " !");
+	if (task.getStaffId() != null && task.getStaffId() != staffId)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch này đã có nhân viên khác ứng tuyển !");
-	
 	
 	LocalDateTime timeNow = LocalDateTime.now(dateTimeZone);
 	LocalDateTime timeStartWorking = task.getSchedule().getStartDate();
-	log.info("TASK GET START DATE: {}" ,timeStartWorking);
 	long hoursDiff = ChronoUnit.HOURS.between(timeNow, timeStartWorking);
 	if (staff.getProfiencyScore() < BAD_STAFF_PROFICIENT_SCORE.getNum()
 		&& hoursDiff > DURATION_HOURS_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY.getNum())
@@ -371,8 +386,7 @@ public class TaskService {
     }
 
     // REPORT TASK
-    public ResponseEntity<?> reportTaskByStaff(HttpServletRequest request, int taskId, TaskReportType taskReportType,
-	    TaskReportNewDTO reportnewDTO) {
+    public ResponseEntity<?> reportTaskByStaff(HttpServletRequest request, int taskId, TaskReportType taskReportType, TaskReportNewDTO reportnewDTO) {
 	int userReport = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 	Role userReportRole = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
 	Task taskToBeReported = taskRepo.findById(taskId).orElse(null);
@@ -382,15 +396,12 @@ public class TaskService {
 	if (!(taskToBeReported.getStaffId() != null && !taskToBeReported.getTaskStatus().name().contains("CANCELLED")
 		&& userReportRole.equals(Role.STAFF) && userReport == taskToBeReported.getStaffId()))
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không có quyền được phép báo cáo tiến trình làm việc cho công việc này !");
-	if(taskToBeReported.getTaskNote().contains("Outdated complete task report !"))
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Đã hết hạn được phép báo cáo cho task này. Lưu ý tình trạng này ở lần làm việc kế tiếp !");
-	
-	
+
 	TaskRes<TaskReport> taskReportedRes = taskBuildupServ.reportTask(taskToBeReported, taskReportType, reportnewDTO);
 	if (taskReportedRes == null)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Có lỗi xảy ra ! Báo cáo công việc thất bại ! Hãy thử lại !");
 	if (taskReportedRes.getMessType().name().contains("REJECT"))
-	    return ResponseEntity.badRequest().body(taskReportedRes.getMessage());
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(taskReportedRes.getMessage());
 
 	return ResponseEntity.ok().body(taskReportedRes.getObject());
     }

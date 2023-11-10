@@ -29,7 +29,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     int getSumOfQuantityRetrieve(@Param("serviceId") int serviceId, @Param("customerId") int customerId);
 
     @Query("SELECT s FROM Schedule s WHERE " + "datediff(s.startDate, NOW()) BETWEEN 0 AND :duration "
-	    + "AND s.status = :status")
+	    + "AND s.status = :status ")
     List<Schedule> findAllScheduleInUpComing(@Param("status") ScheduleStatus status, @Param("duration") int duration);
 
     @Query("SELECT s FROM Schedule s WHERE " + "datediff(s.startDate, NOW()) BETWEEN 0 AND :duration "
@@ -40,17 +40,12 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     @Query(value = "SELECT COALESCE(SUM(s.quantityRetrieve), 0) FROM Schedule s WHERE s.userUsageId = :userUsageId")
     int getTotalQuantityRetrieveByUserUsageId(@Param("userUsageId") int userUsageId);
 
-    @Query("SELECT s FROM Schedule s WHERE s.staffId = :staffId AND (s.startDate <= :endDate AND s.endDate >= :startDate) AND s.status NOT LIKE '%CANCEL%'")
-    List<Schedule> findDuplicatedHourlySchedule(@Param("staffId") int staffId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+//    @Query("SELECT s FROM Schedule s WHERE s.staffId = :staffId AND (s.startDate <= :endDate AND s.endDate >= :startDate) AND s.status NOT LIKE '%CANCEL%'")
+//    List<Schedule> findDuplicatedHourlySchedule(@Param("staffId") int staffId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT s FROM Schedule s WHERE s.staffId = :staffId AND "
-    	 + "(TIMESTAMPDIFF(MINUTE, s.startDate, :startDate) BETWEEN -15 AND 0 "
-    	 + "OR TIMESTAMPDIFF(MINUTE, s.endDate, :endDate) BETWEEN 0 AND 15 "
-    	 + "OR TIMESTAMPDIFF(MINUTE, s.startDate, :endDate) BETWEEN 0 AND 15 "
-    	 + "OR TIMESTAMPDIFF(MINUTE, s.endDate, :startDate) BETWEEN -15 AND 0 "
-    	 + ") AND s.status NOT LIKE '%CANCEL%'")
-    List<Schedule> findDuplicatedTimeStartOrTimeEnd(@Param("staffId") int staffId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
-
+    @Query("SELECT s FROM Schedule s WHERE s.staffId = :staffId AND s.status NOT LIKE '%CANCEL%'")
+    List<Schedule> findAllCurrentTaskByStaffId(@Param("staffId") int staffId);
+    
     
     List<Schedule> getByStaffId(int staffId);
 
