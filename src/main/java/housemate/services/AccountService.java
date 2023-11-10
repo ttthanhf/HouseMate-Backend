@@ -4,13 +4,18 @@ import housemate.constants.Role;
 import housemate.entities.UserAccount;
 import housemate.mappers.AccountMapper;
 import housemate.models.UpdateAccountDTO;
+import housemate.repositories.OrderRepository;
+import housemate.repositories.ScheduleRepository;
 import housemate.repositories.UserRepository;
+import housemate.responses.CustomerRes;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,6 +29,12 @@ public class AccountService {
 
     @Autowired
     AuthorizationUtil authorizationUtil;
+
+    @Autowired
+    OrderRepository orderRepository;
+
+    @Autowired
+    ScheduleRepository scheduleRepository;
 
     public ResponseEntity<List<UserAccount>> getAll() {
         return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
@@ -61,8 +72,25 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body("Changed role successfully!");
     }
 
-    public ResponseEntity<List<UserAccount>> getAllCustomer() {
-        List<UserAccount> customers = userRepository.findByRole(Role.CUSTOMER);
+    public ResponseEntity<List<CustomerRes>> getAllCustomer() {
+        List<CustomerRes> customers = new ArrayList<>();
+
+        List<UserAccount> accounts = userRepository.findByRole(Role.CUSTOMER);
+        for (UserAccount account: accounts) {
+            int userId = account.getUserId();
+
+            CustomerRes customer = new CustomerRes();
+            customer.setId(userId);
+            customer.setCustomerAvatar(account.getAvatar());
+            customer.setCustomerName(account.getFullName());
+            customer.setNumberOfSchedule(scheduleRepository.countByCustomerId(userId));
+            customer.setAmountSpent(orderRepository.sumFinalPriceByUserId(userId));
+            customer.setNumberOfTransactions(orderRepository.countByUserId(userId));
+            customer.setJoinDate(account.getCreatedAt());
+
+            customers.add(customer);
+        }
+
         return ResponseEntity.status(HttpStatus.OK).body(customers);
     }
 
