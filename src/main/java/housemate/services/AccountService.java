@@ -8,6 +8,7 @@ import housemate.repositories.OrderRepository;
 import housemate.repositories.ScheduleRepository;
 import housemate.repositories.UserRepository;
 import housemate.responses.CustomerRes;
+import housemate.responses.StaffRes;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,8 +95,26 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body(customers);
     }
 
-    public ResponseEntity<List<UserAccount>> getAllStaff() {
-        List<UserAccount> staffs = userRepository.findByRole(Role.STAFF);
+    public ResponseEntity<List<StaffRes>> getAllStaff() {
+        List<StaffRes> staffs = new ArrayList<>();
+
+        List<UserAccount> accounts = userRepository.findByRole(Role.STAFF);
+        for (UserAccount account: accounts) {
+            int userId = account.getUserId();
+
+            StaffRes staff = new StaffRes();
+            staff.setId(userId);
+            staff.setStaffAvatar(account.getAvatar());
+            staff.setStaffName(account.getFullName());
+            staff.setPoint(account.getProficiencyScore());
+            staff.setStatus(account.getAccountStatus());
+            // TODO: Waiting task
+            staff.setNumberOfJobs(0);
+            staff.setSuccessRate(0);
+
+            staffs.add(staff);
+        }
+
         return ResponseEntity.status(HttpStatus.OK).body(staffs);
     }
 

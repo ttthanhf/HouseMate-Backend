@@ -5,6 +5,7 @@
 package housemate.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import housemate.constants.AccountStatus;
 import housemate.constants.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -58,6 +59,19 @@ public class UserAccount {
     @JsonIgnore
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
+
+    @Column(name = "profiency_score")
+    private int proficiencyScore;
+
+    @Column(name = "avg_rating")
+    private int avgRating;
+
+    @Column(name = "account_status")
+    @Enumerated(EnumType.STRING)
+    private AccountStatus accountStatus;
+
+    @Column(name = "is_banned")
+    private boolean isBanned;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
