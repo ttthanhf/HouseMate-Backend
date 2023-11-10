@@ -29,14 +29,8 @@ public class Notification {
 
     @Column(name = "is_read")
     private boolean isRead;
-    
-    @Column(name = "datetime")
-    private LocalDateTime datetime;
-    
-    @Column(name = "status")
-    private String status;
-    
-    @Column(name = "service_name")
-    private String serviceName;
+
+    @Column(name = "message")
+    private String message;
 
 }
