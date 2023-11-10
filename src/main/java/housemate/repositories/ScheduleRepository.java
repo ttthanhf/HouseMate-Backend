@@ -41,8 +41,17 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     int getTotalQuantityRetrieveByUserUsageId(@Param("userUsageId") int userUsageId);
 
     @Query("SELECT s FROM Schedule s WHERE s.staffId = :staffId AND (s.startDate <= :endDate AND s.endDate >= :startDate) AND s.status NOT LIKE '%CANCEL%'")
-    List<Schedule> findByStaffIdAndStartDate(@Param("staffId") int staffId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    List<Schedule> findDuplicatedHourlySchedule(@Param("staffId") int staffId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
+    @Query("SELECT s FROM Schedule s WHERE s.staffId = :staffId AND "
+    	 + "(TIMESTAMPDIFF(MINUTE, s.startDate, :startDate) BETWEEN -15 AND 0 "
+    	 + "OR TIMESTAMPDIFF(MINUTE, s.endDate, :endDate) BETWEEN 0 AND 15 "
+    	 + "OR TIMESTAMPDIFF(MINUTE, s.startDate, :endDate) BETWEEN 0 AND 15 "
+    	 + "OR TIMESTAMPDIFF(MINUTE, s.endDate, :startDate) BETWEEN -15 AND 0 "
+    	 + ") AND s.status NOT LIKE '%CANCEL%'")
+    List<Schedule> findDuplicatedTimeStartOrTimeEnd(@Param("staffId") int staffId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    
     List<Schedule> getByStaffId(int staffId);
 
     @Transactional

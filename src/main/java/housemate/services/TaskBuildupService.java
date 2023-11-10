@@ -381,8 +381,13 @@ public class TaskBuildupService {
 		task.setTaskStatus(TaskStatus.PENDING_WORKING);
 		task.getSchedule().setStatus(ScheduleStatus.PENDING);
 		task.getSchedule().setStaffId(staff.getStaffId());
+		taskRepo.save(task);
 		taskRes = TaskRes.build(task, TaskMessType.OK, "Ứng tuyển thành công !");
 		
+		//call event close report task
+		this.createEventCloseReportForm(task, task.getSchedule().getEndDate(), DURATION_HOURS_CLOSE_REPORT_TASK_FROM_DONE.getNum());
+		
+		//Change task status into incoming if the time apply in the range defined before
 		long hours = ChronoUnit.HOURS.between(LocalDateTime.now(dateTimeZone), task.getSchedule().getStartDate());
 		log.info("KHOẢNG THỜI GIAN GIỮA THỜI ĐIỂM HIỆN TẠI VÀ THỜI ĐIỂM LÀM VIỆC {}", hours);
 		if(hours >= 0 && hours <= DURATION_HOURS_SEND_INCOMING_NOTI_BEFORE.getNum()) {
@@ -395,7 +400,6 @@ public class TaskBuildupService {
 			"We have found staff will work on your schedule. Let contact with our staff !", "FOUND STAFF",
 			List.of(task.getSchedule().getCustomerId()));
 		
-
 	    } catch (Exception e) {
 		e.printStackTrace();
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -545,13 +549,13 @@ public class TaskBuildupService {
 		Task task = taskRepo.findById(theTask.getTaskId()).get();
 		if (task.getStaffId() == null) {
 		    task.setTaskStatus(TaskStatus.CANCELLED_CAUSE_NOT_FOUND_STAFF);
+		    task.setTaskNote("Not found any staff for this task");
 		    Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
 		    schedule.setStatus(ScheduleStatus.CANCEL);
 		    log.info("===========");
 		    scheduleRepo.save(schedule);
 		    taskRepo.save(task);
 
-		    
 		  //TODO: RECONSTRUCT NOTIFICATION
 		    TaskBuildupService.createAndSendNotification(
 			    "Sorry, time is coming but staff is during peak hours, there is no staff to serve you at this time !",
@@ -571,7 +575,7 @@ public class TaskBuildupService {
 	ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
 	eventNotiList.put(theTask.getTaskId(), taskEvent);
 	
-	log.info("CREATED EVENT SEND NOTI WHEN TIME COMING at time {} ", timeSendNotiInstant);
+	log.info("CREATED EVENT SEND NOTI WHEN IN TIME WORKING at time {} ", timeSendNotiInstant);
     }
 
     public void createEventSendNotiUpcomingTask(Task theTask, LocalDateTime timeStartTask, int periodHourBefore) {
@@ -594,12 +598,11 @@ public class TaskBuildupService {
 			    dateFormat.format(new Date()));
 		}
 		if (task.getStaffId() != null) {
-		    //TODO: CHANGE INTO INCOMING STATUS
 		    task.setTaskStatus(TaskStatus.INCOMING);
-		    taskRepo.save(task);
 		    Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
 		    schedule.setStatus(ScheduleStatus.INCOMING);
 		    scheduleRepo.save(schedule);
+		    taskRepo.save(task);
 		    
 		    //TODO: RECONSTRUCT NOTIFICATION
 		    TaskBuildupService.createAndSendNotification(
@@ -619,5 +622,38 @@ public class TaskBuildupService {
 	
 	log.info("CREATE EVENT SEND NOTI UPCOMING SHCEDULE {}", timeSendNotiInstant);
     }
+    public void createEventCloseReportForm(Task theTask, LocalDateTime timeEndTask, int periodHourExpand) {
+   	ZonedDateTime timeEndTaskZone = timeEndTask.atZone(dateTimeZone).plusHours(periodHourExpand);
+   	Instant timeSendNotiInstant = timeEndTaskZone.toInstant();
+
+   	Runnable runnableTask = new Runnable() {
+
+   	    @Override
+   	    public void run() {
+   		Task task = taskRepo.findById(theTask.getTaskId()).get();
+   		List<TaskReport> taskReports = taskReportRepo.findAllByTaskId(task.getTaskId());
+   		if (task.getStaffId() != null && !task.getTaskStatus().equals("CANCELLED") && taskReports.size() < 3) {
+   		    task.setTaskStatus(TaskStatus.CANCELLED_BY_STAFF);
+   		    task.setTaskNote("Outdated complete task report !");
+   		    Staff staff = staffRepo.findById(task.getStaffId()).get();
+   		    staff.setProfiencyScore(staff.getProfiencyScore() - MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK.getNum());
+   		    Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
+   		    schedule.setStatus(ScheduleStatus.DONE);
+   		    staffRepo.save(staff);
+   		    scheduleRepo.save(schedule);
+   		    taskRepo.save(task);
+   		    
+   		    //TODO: SEND NOTI FOR NOT REPORT TASK 
+   		   
+   		    log.info("TASK {} CLOSE REPORT - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
+   			    dateFormat.format(new Date()));
+   		}
+   	    }
+   	};
+   	ScheduledFuture<?> taskEvent = taskScheduler.schedule(runnableTask, timeSendNotiInstant);
+   	eventNotiList.put(theTask.getTaskId(), taskEvent);
+   	
+   	log.info("CREATE EVENT CLOSE REPORT TASK {}", timeSendNotiInstant);
+       }
 
 }
