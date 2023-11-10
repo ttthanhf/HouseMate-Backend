@@ -1,5 +1,7 @@
 package housemate.controllers;
 
+import housemate.entities.Schedule;
+import housemate.constants.DeleteType;
 import housemate.models.*;
 import housemate.responses.EventRes;
 import housemate.responses.PurchasedServiceRes;
@@ -29,16 +31,10 @@ public class ScheduleController {
     @Autowired
     ScheduleService service;
 
-    @Operation(summary = "Get all schedule for the current customer")
-    @GetMapping("/customer")
-    public ResponseEntity<List<EventRes>> getScheduleForCustomer(HttpServletRequest request) {
-        return service.getScheduleForCustomer(request);
-    }
-
-    @Operation(summary = "Get all schedule for the current staff")
-    @GetMapping("/staff")
-    public ResponseEntity<List<EventRes>> getScheduleForStaff(HttpServletRequest request) {
-        return service.getScheduleForStaff(request);
+    @Operation(summary = "Get all schedule for the current user")
+    @GetMapping()
+    public ResponseEntity<List<EventRes>> getScheduleForCurrentUser(HttpServletRequest request) {
+        return service.getScheduleForCurrentUser(request);
     }
 
     @Operation(summary = "Get all schedule for the staff by staff ID (userId)")
@@ -57,6 +53,26 @@ public class ScheduleController {
     @PostMapping("/create")
     public ResponseEntity<String> createSchedule(HttpServletRequest request, @Valid @RequestBody ScheduleDTO scheduleDTO) {
         return service.createSchedule(request, scheduleDTO);
+    }
+
+    @Operation(summary = "Get schedule by schedule ID")
+    @GetMapping("/{scheduleId}")
+    public ResponseEntity<?> getScheduleById(HttpServletRequest request, @PathVariable int scheduleId) {
+        return service.getScheduleById(request, scheduleId);
+    }
+
+    @Operation(summary = "Cancel schedule")
+    @DeleteMapping("/cancel/{scheduleId}")
+    public ResponseEntity<String> cancelSchedule(HttpServletRequest request, @PathVariable int scheduleId, DeleteType deleteType) {
+        return service.cancelSchedule(request, scheduleId, deleteType);
+    }
+
+    @Operation(summary = "Update schedule")
+    @PutMapping("/update/{scheduleId}")
+    public ResponseEntity<String> updateSchedule(
+            HttpServletRequest request, @Valid @RequestBody ScheduleUpdateDTO scheduleUpdateDTO, @PathVariable int scheduleId
+    ) {
+        return service.updateSchedule(request, scheduleUpdateDTO, scheduleId);
     }
 
 }
