@@ -6,10 +6,7 @@ import housemate.mappers.AccountMapper;
 import housemate.models.CreateAccountDTO;
 import housemate.models.UpdateAccountDTO;
 import housemate.repositories.*;
-import housemate.responses.CustomerDetailRes;
-import housemate.responses.CustomerRes;
-import housemate.responses.ReportRes;
-import housemate.responses.StaffRes;
+import housemate.responses.*;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +25,8 @@ import java.util.List;
 
 @org.springframework.stereotype.Service
 public class AccountService {
+
+    private static final String MONTH_YEAR_FORMAT = "yyyy/MM";
 
     @Autowired
     UserRepository userRepository;
@@ -168,36 +167,77 @@ public class AccountService {
     public ResponseEntity<?> getCustomerDetail(int customerId, String start, String end) {
         CustomerDetailRes customerDetailRes = new CustomerDetailRes();
 
+        // Check date format
         final String MONTH_YEAR_FORMAT = "yyyy/MM";
         if (!isValidFormat(MONTH_YEAR_FORMAT, start) && !isValidFormat(MONTH_YEAR_FORMAT, end)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Must be in format " + MONTH_YEAR_FORMAT);
         }
 
+        // Convert string to LocalDateTime
         LocalDateTime startDate = YearMonth.parse(start, DateTimeFormatter.ofPattern(MONTH_YEAR_FORMAT)).atDay(1).atStartOfDay();
         LocalDateTime endDate = YearMonth.parse(end, DateTimeFormatter.ofPattern(MONTH_YEAR_FORMAT)).atEndOfMonth().atStartOfDay();
 
-        List<ReportRes> reports = scheduleRepository.getMonthlyReport(customerId, startDate, endDate);
+        // Get monthly report
+        List<ReportRes> reports = scheduleRepository.getMonthlyReportForCustomer(customerId, startDate, endDate);
         for (ReportRes report: reports) {
             Service service = serviceRepository.getServiceByServiceId(report.getServiceId());
             report.setServiceName(service.getTitleName());
             report.setUnitOfMeasure(service.getUnitOfMeasure());
         }
 
+        // Get usage history
         List<Schedule> schedules = scheduleRepository.getHistoryUsage(customerId);
         for (Schedule schedule: schedules) {
             UserUsage userUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
             OrderItem orderItem = orderItemRepository.findById(userUsage.getOrderItemId());
             Service service = serviceRepository.findById(orderItem.getServiceId()).orElse(null);
             schedule.setService(service);
-
         }
 
+        // Set to CustomerDetailRes
         customerDetailRes.setNumberOfOrder(orderRepository.countByUserId(customerId));
         customerDetailRes.setAmountSpent(orderRepository.sumFinalPriceByUserId(customerId));
         customerDetailRes.setMonthlyReport(reports);
         customerDetailRes.setUsageHistory(schedules);
         customerDetailRes.setUserInfo(userRepository.findByUserId(customerId));
+
         return ResponseEntity.status(HttpStatus.OK).body(customerDetailRes);
+    }
+
+    public ResponseEntity<?> getStaffDetail(int staffId, String start, String end) {
+        StaffDetailRes staffDetailRes = new StaffDetailRes();
+
+        // Check date format
+        if (!isValidFormat(MONTH_YEAR_FORMAT, start) && !isValidFormat(MONTH_YEAR_FORMAT, end)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Must be in format " + MONTH_YEAR_FORMAT);
+        }
+
+        // Convert string to LocalDateTime
+        LocalDateTime startDate = YearMonth.parse(start, DateTimeFormatter.ofPattern(MONTH_YEAR_FORMAT)).atDay(1).atStartOfDay();
+        LocalDateTime endDate = YearMonth.parse(end, DateTimeFormatter.ofPattern(MONTH_YEAR_FORMAT)).atEndOfMonth().atStartOfDay();
+
+        // Get monthly report
+        List<ReportRes> reports = scheduleRepository.getMonthlyReportForStaff(staffId, startDate, endDate);
+        for (ReportRes report: reports) {
+            Service service = serviceRepository.getServiceByServiceId(report.getServiceId());
+            report.setServiceName(service.getTitleName());
+            report.setUnitOfMeasure(service.getUnitOfMeasure());
+        }
+
+        // Get monthly report
+        List<ReportRes> achievements = scheduleRepository.getStaffAchievement(staffId);
+        for (ReportRes achievement: achievements) {
+            Service service = serviceRepository.getServiceByServiceId(achievement.getServiceId());
+            achievement.setServiceName(service.getTitleName());
+            achievement.setUnitOfMeasure(service.getUnitOfMeasure());
+        }
+
+        // Set to StaffDetailRes
+        staffDetailRes.setMonthlyReport(reports);
+        staffDetailRes.setAchievement(achievements);
+        staffDetailRes.setUserInfo(userRepository.findByUserId(staffId));
+
+        return ResponseEntity.status(HttpStatus.OK).body(staffDetailRes);
     }
 
     private static boolean isValidFormat(String format, String value) {

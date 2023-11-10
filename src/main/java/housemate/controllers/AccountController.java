@@ -63,13 +63,13 @@ public class AccountController {
         return service.changeRole(userId, role);
     }
 
-    @Operation(summary = "[ADMIN] Manage customers (Full name, Schedule count, Spent amount, Transaction count, Join date)")
+    @Operation(summary = "[ADMIN] Manage customers (Full name, schedule count, spent amount, transaction count, join date)")
     @GetMapping("/customers")
     public ResponseEntity<List<CustomerRes>> getAllCustomer() {
         return service.getAllCustomer();
     }
 
-    @Operation(summary = "[ADMIN] Get customer detail")
+    @Operation(summary = "[ADMIN] Get customer details")
     @GetMapping("/customers/{customerId}")
     public ResponseEntity<?> getCustomerDetail(
             @PathVariable int customerId, @Param("start") String start, @Param("end") String end
@@ -77,7 +77,15 @@ public class AccountController {
         return service.getCustomerDetail(customerId, start, end);
     }
 
-    @Operation(summary = "[ADMIN] Mange staffs (Full name, Proficiency score, Staff status, Task count, Success rate)")
+    @Operation(summary = "[ADMIN] Get staff details")
+    @GetMapping("/staffs/{staffId}")
+    public ResponseEntity<?> getStaffDetail(
+            @PathVariable int staffId, @Param("start") String start, @Param("end") String end
+    ) {
+        return service.getStaffDetail(staffId, start, end);
+    }
+
+    @Operation(summary = "[ADMIN] Mange staffs (Full name, proficiency score, staff status, task count, success rate)")
     @GetMapping("/staffs")
     public ResponseEntity<List<StaffRes>> getAllStaff() {
         return service.getAllStaff();
