@@ -62,7 +62,7 @@ public class UserAccount {
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
 
-    @Column(name = "profiency_score")
+    @Column(name = "proficiency_score")
     private int proficiencyScore;
 
     @Column(name = "avg_rating")
