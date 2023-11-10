@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -77,13 +78,13 @@ public class TaskController {
 		return taskServiceDao.createNewTask(request, scheduleId);
 	}
 	
-	@PutMapping("/new-time/schedule")
+	@PutMapping("/new-time/schedule/{schedule-id}")
 	@Operation(summary = "Update the task timeworking based on specific schedule - Role: CUSTOMER - owner of the schedule")
 	public ResponseEntity<?> updateTaskTimeWorking(
 			HttpServletRequest request,
-			Schedule oldSchedule,
-			Schedule newSchedule) {
-		return taskServiceDao.updateTaskTimeWorking(request, oldSchedule, newSchedule);
+			@Param("schedule-id") int oldScheduleId,
+			@RequestBody Schedule newSchedule) {
+		return taskServiceDao.updateTaskTimeWorking(request, oldScheduleId, newSchedule);
 	}
 	
 	@PostMapping("{task-id}/staff/application")
