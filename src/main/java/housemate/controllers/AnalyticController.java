@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import housemate.constants.SortEnum;
 
 /**
  *
@@ -48,8 +49,11 @@ public class AnalyticController {
     }
 
     @PostMapping("/customer") //method get ko nhận requestbody nên phải xài post
-    public ResponseEntity<?> getAnalyticCustomer(HttpServletRequest request, @RequestBody AnalyticPageDTO analyticPageDTO) {
-        return analyticService.getAnalyticCustomer(request, analyticPageDTO);
+    public ResponseEntity<?> getAnalyticCustomer(HttpServletRequest request, @RequestBody AnalyticPageDTO analyticPageDTO,
+            @RequestParam(required = false) String searchCustomerName,
+            @RequestParam(required = false) SortEnum sortTotalOrderPrice,
+            @RequestParam(required = false) SortEnum sortNumberOfOrder) {
+        return analyticService.getAnalyticCustomer(request, analyticPageDTO, searchCustomerName, sortTotalOrderPrice, sortNumberOfOrder);
     }
 
 }
