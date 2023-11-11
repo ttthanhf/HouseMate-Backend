@@ -20,7 +20,7 @@ import lombok.Data;
  * @author ThanhF
  */
 @Entity
-@Table(name = "carts")
+@Table(name = "cart_item")
 @Data
 public class Cart {
 
