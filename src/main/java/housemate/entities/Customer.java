@@ -30,7 +30,7 @@ public class Customer {
 	@JoinColumn(name = "user_id", referencedColumnName = "user_id", updatable = false, insertable = false)
 	private UserAccount customerInfo;
 	
-	@Column(name = "profiency_score")
+	@Column(name = "proficiency_score")
 	private int profiencyScore;
 	
 	@Column(name = "account_status")
