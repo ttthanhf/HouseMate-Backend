@@ -19,4 +19,5 @@ public interface RegexConstants {
     String PATTERN_RESPONSE_MASSAGE_PAYMENT = "\"vnp_Message\":\"([^\"]*)\"";
     String PATTERN_TRANSACTION_STATUS_PAYMENT = "\"vnp_TransactionStatus\":\"(\\d{2})\"";
 
+    String IDENTITY_CARD = "^(0[0-9]{2})([0-9]{1})([0-9]{2})([0-9]{6})$";
 }
