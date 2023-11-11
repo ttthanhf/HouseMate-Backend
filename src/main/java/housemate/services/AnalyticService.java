@@ -47,6 +47,7 @@ import housemate.constants.SortEnum;
 import housemate.entities.Image;
 import housemate.repositories.ImageRepository;
 import java.io.InputStream;
+import java.time.Month;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -234,6 +235,11 @@ public class AnalyticService implements DisposableBean {
 
         LocalDate startDate = analyticPageDTO.getStartDate();
         LocalDate endDate = analyticPageDTO.getEndDate();
+        if (startDate == null || endDate == null) {
+            startDate = LocalDate.now().minusYears(3);
+            endDate = LocalDate.now();
+        }
+
         int size = analyticPageDTO.getSize();
         int page = analyticPageDTO.getPage();
 
