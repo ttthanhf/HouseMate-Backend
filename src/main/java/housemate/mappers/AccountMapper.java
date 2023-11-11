@@ -36,8 +36,8 @@ public class AccountMapper {
         userAccount.setAvatar(DEFAULT_AVATAR);
         userAccount.setCreatedAt(LocalDateTime.now());
 
-	    return userAccount;
-	    }
+        return userAccount;
+    }
 
     public UserAccount mapToEntity(CreateAccountDTO createAccountDTO) {
         UserAccount userAccount = new UserAccount();
@@ -57,17 +57,17 @@ public class AccountMapper {
         return userAccount;
     }
 
-	    public UserAccount updateAccount(UserAccount currentAccount, UpdateAccountDTO updatedAccount) {
-	        currentAccount.setFullName(updatedAccount.getFullName());
-            currentAccount.setDateOfBirth(updatedAccount.getDateOfBirth());
-            currentAccount.setGender(updatedAccount.getGender());
-	        currentAccount.setPhoneNumber(updatedAccount.getPhoneNumber());
-            currentAccount.setRole(updatedAccount.getRole());
-	        currentAccount.setIdentityCard(updatedAccount.getIdentityCard());
-	        currentAccount.setEmailAddress(updatedAccount.getEmail());
-            currentAccount.setAddress(updatedAccount.getAddress());
+    public UserAccount updateAccount(UserAccount currentAccount, UpdateAccountDTO updatedAccount) {
+        currentAccount.setFullName(updatedAccount.getFullName());
+        currentAccount.setDateOfBirth(updatedAccount.getDateOfBirth());
+        currentAccount.setGender(updatedAccount.getGender());
+        currentAccount.setPhoneNumber(updatedAccount.getPhoneNumber());
+        currentAccount.setRole(updatedAccount.getRole());
+        currentAccount.setIdentityCard(updatedAccount.getIdentityCard());
+        currentAccount.setEmailAddress(updatedAccount.getEmail());
+        currentAccount.setAddress(updatedAccount.getAddress());
 
-	        return currentAccount;
-	    }
+        return currentAccount;
+    }
 }
 
