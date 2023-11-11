@@ -86,8 +86,8 @@ public class AccountService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cannot find this account!");
         }
 
-        // Change status to INACTIVE
-        account.setAccountStatus(AccountStatus.INACTIVE);
+        // Change isBanned to true
+        account.setBanned(true);
         userRepository.save(account);
         return ResponseEntity.status(HttpStatus.OK).body("Deleted successfully!");
     }
