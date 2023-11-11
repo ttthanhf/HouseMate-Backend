@@ -4,6 +4,7 @@
  */
 package housemate.models.responses;
 
+import housemate.constants.AccountStatus;
 import java.time.LocalDate;
 import lombok.Data;
 
@@ -17,6 +18,7 @@ public class AnalyticCustomerResponse {
     private int userId;
     private String avatar;
     private String userName;
+    private AccountStatus accountStatus;
     private int numberOfOrder;
     private double amountSpent;
     private int numberOfSchedule;
