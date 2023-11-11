@@ -24,7 +24,7 @@ public class CreateAccountDTO {
     @NotNull(message = "Date of birth cannot be null")
     private LocalDate dateOfBirth;
 
-    @NotNull(message = "Sex cannot be null")
+    @NotNull(message = "Gender cannot be null")
     private Gender gender;
 
     @Schema(example = "0987654321", description = "Phone number of an account")
