@@ -312,7 +312,7 @@ public class TaskBuildupService {
 	
 	log.info("CALL CANCEL BY STAFF - EVENT OF TASK {} EXISTs : {}", taskToBeCancelled.getTaskId(), eventNotiList.get(taskToBeCancelled.getTaskId()));
 
-	// TODO: RECONSTRUCT NOI
+	// TODO: RECONSTRUCT NOTI
 	TaskBuildupService.createAndSendNotification(
 		"The old staff has rejected to do your schedule ! Please waiting for other staff apply on your schedule",
 		"TASK CANCELLED BY STAFF", List.of(scheduleHasTaskToBeCancelledByStaff.getCustomerId()));
@@ -571,11 +571,13 @@ public class TaskBuildupService {
 	}
 	eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 	
-	log.info("CREATED EVENT SEND NOTI WHEN IN TIME WORKING at time {} ", LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone));
+	log.info("TASK {} CREATED EVENT SEND NOTI WHEN IN TIME WORKING at time {} ", theTask.getTaskId(), LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone));
     }
 
     private void createEventSendNotiUpcomingTask(Task theTask, LocalDateTime timeStartTask, int periodHourBefore) {	
-	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone).minusHours(periodHourBefore);
+	//TODO: DELETE TRASH
+	//ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone).minusHours(periodHourBefore);
+	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone).minusMinutes(2);
 	Instant timeSendNotiInstant = timeStartTaskZone.toInstant();
 
 	Runnable runnableTask = new Runnable() {
@@ -620,7 +622,7 @@ public class TaskBuildupService {
 	}
 	eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 	
-	log.info("CREATE EVENT SEND NOTI UPCOMING SHCEDULE {}", LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone) );
+	log.info("TASK{} CREATE EVENT SEND NOTI UPCOMING SHCEDULE {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone) );
     }
     
     private void createEventForReportTask(Task theTask, LocalDateTime timeStartWorking, LocalDateTime timeEndWorking) {
@@ -633,16 +635,26 @@ public class TaskBuildupService {
 	//4. Trigger event cancel task when staff not report for status DONE after the end of day at 00 PM every day and minus the score MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK
    	ZonedDateTime timeStartWorkingZone = timeStartWorking.atZone(dateTimeZone);
    	ZonedDateTime timeEndWorkingZone = timeEndWorking.atZone(dateTimeZone);
-   	ZonedDateTime todayAtMidnight = LocalDate.now().atTime(LocalTime.MIDNIGHT).atZone(dateTimeZone);
+//  	ZonedDateTime todayAtMidnight = LocalDate.now().atTime(LocalTime.MIDNIGHT).atZone(dateTimeZone);
+//   	//Trigger 1
+//   	Instant timeMinusScoreForNotReportArrived = timeStartWorkingZone.plusMinutes(DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum()).toInstant(); 
+//   	//Trigger 2
+//   	Instant timeCancelTaskForNotReportDoing = timeEndWorkingZone.toInstant();
+//   	//Trigger 3
+//   	Instant timeAutoDoneTask = timeEndWorkingZone.plusHours(DURATION_HOURS_SYST_AUTO_DONE_TASK.getNum()).toInstant();
+//   	//Trigger 4
+//   	Instant timeCancelTaskForNotReportDone = todayAtMidnight.toInstant();
+
+   	//TODO: TRASH
+   	ZonedDateTime todayAtMidnight = timeEndWorking.atZone(dateTimeZone).plusMinutes(5);
    	//Trigger 1
-   	Instant timeMinusScoreForNotReportArrived = timeStartWorkingZone.plusMinutes(DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum()).toInstant(); 
+   	Instant timeMinusScoreForNotReportArrived = timeStartWorkingZone.plusMinutes(3).toInstant(); 
    	//Trigger 2
    	Instant timeCancelTaskForNotReportDoing = timeEndWorkingZone.toInstant();
    	//Trigger 3
-   	Instant timeAutoDoneTask = timeEndWorkingZone.plusHours(DURATION_HOURS_SYST_AUTO_DONE_TASK.getNum()).toInstant();
+   	Instant timeAutoDoneTask = timeEndWorkingZone.plusMinutes(3).toInstant();
    	//Trigger 4
    	Instant timeCancelTaskForNotReportDone = todayAtMidnight.toInstant();
-
 
  
    	//Trigger 1
@@ -671,7 +683,7 @@ public class TaskBuildupService {
 	    }
 	    eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 
-	    log.info("CREATE EVENT MINUS SCORE FOR NOT REPORT ARRIVED AT {} SEND AT {}",
+	    log.info("TASK {} CREATE EVENT MINUS SCORE FOR NOT REPORT ARRIVED AT {} SEND AT {}",theTask.getTaskId(),
 		    timeMinusScoreForNotReportArrived, LocalDate.now());
 
 	}
@@ -684,12 +696,8 @@ public class TaskBuildupService {
 		    Task task = taskRepo.findById(theTask.getTaskId()).get();
 		    TaskReport doingReport = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(), TaskStatus.DOING);
 		    List<Image> imgsOfDoingReport = List.of();
-		    if (doingReport != null) {
-			imgsOfDoingReport = imgRepo
-				.findAllByEntityIdAndImageType(doingReport.getTaskReportId(), ImageType.WORKING)
-				.orElse(List.of());
-		    }
-		    if (task.getStaffId() != null && !task.getTaskStatus().equals("CANCELLED") && (doingReport == null || imgsOfDoingReport.size() < 4)) {
+		    
+		    if (task.getStaffId() != null && !task.getTaskStatus().equals("CANCELLED") && doingReport == null ) {
 			Staff staff = staffRepo.findById(task.getStaffId()).get();
 			staff.setProfiencyScore(staff.getProfiencyScore() - MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK.getNum());
 			staff.setProfiencyScore(staff.getProfiencyScore() < 0 ? 0 : staff.getProfiencyScore());
@@ -787,12 +795,12 @@ public class TaskBuildupService {
 	    }
 	    eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 
-	    log.info("CREATE EVENT CANCEL TASK BY STAFF FOR NOT REPORT DOING AT {} SEND AT {}",
+	    log.info("TASK {} CREATE EVENT CANCEL TASK BY STAFF FOR NOT REPORT DOING AT {} SEND AT {}",
 		    eventCancelTaskForNotReportDone, LocalDate.now());
 	}
 	
    	log.info("Trigger 1 timeMinusScoreForNotReportArrived call at {}", LocalDateTime.ofInstant(timeCancelTaskForNotReportDone, dateTimeZone));
-   	log.info("Trigger  2 timeCancelTaskForNotReportDoing call at {}", LocalDateTime.ofInstant(timeMinusScoreForNotReportArrived, dateTimeZone));
+   	log.info("Trigger 2 timeCancelTaskForNotReportDoing call at {}", LocalDateTime.ofInstant(timeMinusScoreForNotReportArrived, dateTimeZone));
    	log.info("Trigger 3 timeAutoDoneTask call at {}", LocalDateTime.ofInstant(timeAutoDoneTask, dateTimeZone) );
    	log.info("Trigger 4 timeCancelTaskForNotReportDone call at {}", LocalDateTime.ofInstant(timeCancelTaskForNotReportDone, dateTimeZone));
 

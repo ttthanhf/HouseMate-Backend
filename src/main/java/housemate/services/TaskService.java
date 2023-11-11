@@ -275,6 +275,7 @@ public class TaskService {
 	    if (customer.isBanned())
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 			.body("Tài khoản của bạn đã bị cấm khỏi hệ thống vì đã vượt giới hạn số lần được hủy và điểm uy tín của bạn bằng 0 !");
+	   
 	    taskToBeCancelled = taskBuildupServ.cancelTaskByRole(Role.CUSTOMER, scheduleToBeCancelled,
 		    "Khách hàng " + customer.getCustomerInfo().getFullName() + " đã hủy công việc !");
 	    if (taskToBeCancelled == null)
