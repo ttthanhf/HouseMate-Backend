@@ -370,6 +370,7 @@ public class TaskService {
 	LocalDateTime timeNow = LocalDateTime.now(dateTimeZone);
 	LocalDateTime timeStartWorking = task.getSchedule().getStartDate();
 	long hoursDiff = ChronoUnit.HOURS.between(timeNow, timeStartWorking);
+	
 	if (staff.getProfiencyScore() < BAD_STAFF_PROFICIENT_SCORE.getNum()
 		&& hoursDiff > DURATION_HOURS_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY.getNum())
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(

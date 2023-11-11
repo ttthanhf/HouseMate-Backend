@@ -128,16 +128,20 @@ public class TaskBuildupService {
 		return List.of();
 	    for (Schedule schedule : schedules) {
 		taskList.add(this.createTask(schedule));
+		
+		//TODO: HAS SET NOTIFICTION
 		 this.createAndSendNotification(
-			    "Việc mới",
-			    "Ngày " + LocalDate.now().getDayOfMonth(),
-			   String.valueOf(schedule.getCustomerId()));
+			 "Công việc mới",
+			 "Ngày " + LocalDate.now().getDayOfMonth(),
+			 String.valueOf(schedule.getCustomerId()));
 	    }
 		
 
 	    // TODO: HAS SET NOTIFICATION
 	    this.createAndSendNotification(
-		    "Việc mới", "Ngày " + LocalDate.now().getDayOfMonth(), Role.STAFF.name());
+		    "Công việc mới",
+		    "Ngày " + LocalDate.now().getDayOfMonth(),
+		    Role.STAFF.name());
 	
 	} catch (Exception e) {
 	    e.printStackTrace();
@@ -158,7 +162,11 @@ public class TaskBuildupService {
 		taskList.add(this.createTask(theSchedule));
 	    
 	    //TODO: HAS SET NOTIFICATION
-	    this.createAndSendNotification("Việc mới", "Ngày " + LocalDate.now().toString(), Role.STAFF.name());
+	    this.createAndSendNotification(
+		    "Việc mới",
+		    "Ngày " + LocalDate.now().toString(),
+		    Role.STAFF.name());
+	    
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    return List.of();
@@ -192,10 +200,6 @@ public class TaskBuildupService {
 		if (savedTask != null) {
 		    this.createEventSendNotiWhenTimeComing(task, schedule.getStartDate());
 		    this.createEventSendNotiUpcomingTask(task, schedule.getStartDate(), DURATION_HOURS_SEND_INCOMING_NOTI_BEFORE.getNum());
-		    //TODO:  HAS SET NOTIFICATION
-		    this.createAndSendNotification(task.getSchedule().getServiceName(),
-			    "Ngày " + task.getSchedule().getStartDate().getDayOfYear()  + "đã được lên lịch làm việc  !", String.valueOf(task.getSchedule().getCustomerId()));
-			
 		}
 	    }
 	} catch (Exception e) {
@@ -270,9 +274,24 @@ public class TaskBuildupService {
 	    switch (role) {
 	    case CUSTOMER, ADMIN:
 		taskToBeCancelled = this.cancelTaskByCustomer(scheduleHasTaskToBeCancelled, taskToBeCancelled, Optional.of(cancelReason));
-		break;
+	    
+	    //TODO: HAS SET NOTIFICATION	
+	    if (taskToBeCancelled != null) {
+		if (taskToBeCancelled.getStaff() != null)
+		    this.createAndSendNotification(
+			    taskToBeCancelled.getSchedule().getServiceName(),
+			    "Khách hàng hủy lịch làm việc ngày " + taskToBeCancelled.getSchedule().getStartDate(),
+			    String.valueOf(taskToBeCancelled.getStaffId()));
+	    };
+	    break;
 	    case STAFF:
 		taskToBeCancelled = this.cancelTaskByStaff(scheduleHasTaskToBeCancelled, taskToBeCancelled, Optional.of(cancelReason));
+		
+		// TODO: HAS SET NOTIFICATION
+		if (taskToBeCancelled.getStaff() != null)
+		    this.createAndSendNotification(taskToBeCancelled.getSchedule().getServiceName(),
+			    "Nhân viên hủy lịch làm việc, vui lòng chờ nhân viên khác",
+			    String.valueOf(taskToBeCancelled.getSchedule().getCustomerId()));	
 		break;
 	    default:
 		throw new IllegalArgumentException("Unexpected value: " + role);
@@ -292,10 +311,6 @@ public class TaskBuildupService {
 	//SHUTDOWN EVENT COUNT DOWN OF OLD TASK OF OLD SCHEDULE
 	this.CancelAllEventsByTaskId(taskToBeCancelled.getTaskId());
 	
-	if (taskToBeCancelled.getStaffId() != null) {
-	    //TODO: NOTIFICATION
-	}
-
 	log.info("CALL CANCEL BY CUSTOMER - EVENT OF TASK {} EXISTs : {}", taskToBeCancelled.getTaskId(), eventNotiList.get(taskToBeCancelled.getTaskId()));
 
 	return taskToBeCancelled;
@@ -315,8 +330,6 @@ public class TaskBuildupService {
 	this.CancelAllEventsByTaskId(taskToBeCancelled.getTaskId());
 	
 	log.info("CALL CANCEL BY STAFF - EVENT OF TASK {} EXISTs : {}", taskToBeCancelled.getTaskId(), eventNotiList.get(taskToBeCancelled.getTaskId()));
-
-	// TODO: NOTIFIFCATION FOR CANCEL ANNOUNCEMENT
 
 	return renewTaskFormApplication;
     }
@@ -349,7 +362,11 @@ public class TaskBuildupService {
 		tasksOldAndNew.put("newTask", newTask);
 	    }
 	    if (oldTask.getStaffId() != null) {
-		//TODO : NOTIFICATION CHANGE TIME SUCCESS
+		// TODO: HAS SET NOTIFICATION
+		    this.createAndSendNotification(
+			    oldTask.getSchedule().getServiceName(),
+			    "Lich công việc bị hủy do khách hàng đổi giờ làm việc ",
+			    String.valueOf(oldTask.getStaffId()));
 	    }
 	} catch (Exception e) {
 	    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -383,10 +400,7 @@ public class TaskBuildupService {
 		
 		//TODO: CALL EVENTS FOR REPORT TASK
 		this.createEventForReportTask(task, task.getSchedule().getStartDate(), task.getSchedule().getEndDate());
-		
-		//TODO: NOTIFICATION TASK HAS BEEN APPROVED
-		
-		
+				
 	    } catch (Exception e) {
 		e.printStackTrace();
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -400,56 +414,64 @@ public class TaskBuildupService {
 	TaskReport taskReportResult = new TaskReport();
 	UserUsage userUsage = userUsageRepo.findById(task.getSchedule().getUserUsageId()).get();
 	Service serviceInUsed = servRepo.findByServiceId(task.getSchedule().getServiceId()).orElse(null);
-	if (serviceInUsed == null) 
+	if (serviceInUsed == null)
 	    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 		    "Loại dịch vụ này không tồn tại ! Từ chối báo cáo cho công việc với loại dịch vụ không tồn tại !");
-	
-	TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(), TaskStatus.valueOf(taskReport.name()));
+
+	TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
+		TaskStatus.valueOf(taskReport.name()));
 	if (checkReportExists != null) {
-	    if (reportNewDTO != null && reportNewDTO.getNote() != null) 
+	    if (reportNewDTO != null && reportNewDTO.getNote() != null)
 		checkReportExists.setNote(reportNewDTO.getNote());
 	    return TaskRes.build(checkReportExists, TaskMessType.OK, "Cập nhật báo cáo công việc thành công");
 	}
 	try {
-	    //set up task report result for return
+	    // set up task report result for return
 	    taskReportResult.setTaskId(task.getTaskId());
 	    taskReportResult.setReportAt(LocalDateTime.now());
-	    if (reportNewDTO != null && reportNewDTO.getNote() != null) 
+	    if (reportNewDTO != null && reportNewDTO.getNote() != null)
 		taskReportResult.setNote(reportNewDTO.getNote());
 
-	    
 	    switch (taskReport) {
 	    case ARRIVED: {
-		long minutesDiff = ChronoUnit.MINUTES.between(LocalDateTime.now(dateTimeZone), task.getSchedule().getStartDate());
+		long minutesDiff = ChronoUnit.MINUTES.between(LocalDateTime.now(dateTimeZone),
+			task.getSchedule().getStartDate());
 		if (minutesDiff > DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum())
 		    return TaskRes.build(checkReportExists, TaskMessType.REJECT_REPORT_TASK,
-			    "Tiến trình báo cáo chưa mở để bạn bắt đầu. Bạn sẽ được mở quyền báo cáo cho công việc tại thời điểm "
-				    + dateFormat.format(Date.from(task.getSchedule().getStartDate()
-					    .minusMinutes(DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum())
-					    .atZone(dateTimeZone).toInstant())));
-		
+			    		"Tiến trình báo cáo chưa mở để bạn bắt đầu. Bạn sẽ được mở quyền báo cáo cho công việc tại thời điểm "
+				         + dateFormat.format(Date.from(task.getSchedule().getStartDate()
+					 .minusMinutes(DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum())
+					 .atZone(dateTimeZone).toInstant())));
+
 		task.setTaskStatus(TaskStatus.ARRIVED);
 		task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 		taskReportResult.setTaskStatus(task.getTaskStatus());
-		
-		//TODO: NOTIFICATION ARRIVED TASK PROGRESSION
-		
+
+		// TODO: HAS SET NOTIFICATION
+		this.createAndSendNotification(task.getSchedule().getServiceName(),
+			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đã đến\"",
+			String.valueOf(task.getSchedule().getCustomerId()));
+
 		break;
 	    }
 	    case DOING: {
 		// Check if status arrvived is passed through ?
-		TaskReport checkArrivedReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(), TaskStatus.ARRIVED);
+		TaskReport checkArrivedReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
+			TaskStatus.ARRIVED);
 		if (checkArrivedReportExists == null)
 		    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 			    "Báo cáo trạng thái \"Đã Đến\" trước !");
-		
+
 		task.setTaskStatus(TaskStatus.DOING);
 		task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 		taskReportResult.setTaskStatus(task.getTaskStatus());
-		
-		//TODO: NOTIFICATION OF DOING TASK PROGRESSION
-		
-		//create event for pop up send notification for upload img
+
+		// TODO: HAS SET NOTIFICATION
+		this.createAndSendNotification(
+			task.getSchedule().getServiceName(),
+			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đang làm việc\"",
+			String.valueOf(task.getSchedule().getCustomerId()));
+		// create event for pop up send notification for upload img
 		break;
 	    }
 	    case DONE: {
@@ -466,21 +488,22 @@ public class TaskBuildupService {
 		if (LocalDateTime.now().isBefore(task.getSchedule().getEndDate()))
 		    return TaskRes.build(checkReportExists, TaskMessType.REJECT_REPORT_TASK,
 			    "Bạn sẽ được phép bắt đầu báo cáo trạng thái \"Đã hoàn thành\" tại thời điểm khách hàng yêu cầu kết thúc công việc : "
-				    + dateFormat.format(Date.from(task.getSchedule().getEndDate().atZone(dateTimeZone).toInstant())));
+				    + dateFormat.format(Date
+					    .from(task.getSchedule().getEndDate().atZone(dateTimeZone).toInstant())));
 
 		// Check for return service type
 		boolean isReturnService = serviceInUsed.getGroupType().equals("RETURN_SERVICE");
 		if (isReturnService) {
 		    Integer quantity = null;
-		    if (reportNewDTO == null || reportNewDTO.getQtyOfGroupReturn() == null) 			
+		    if (reportNewDTO == null || reportNewDTO.getQtyOfGroupReturn() == null)
 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 				"Đây là dịch vụ giặt đồ cân kí. Trước khi báo cáo hãy điền giá trị khối lượng cho loại dịch vụ thuộc \"Gửi trả\"");
 		    quantity = reportNewDTO.getQtyOfGroupReturn();
 		    if (!(serviceInUsed.getMin() == 0 && serviceInUsed.getMax() == 0))
 			if (!(quantity >= serviceInUsed.getMin() && quantity <= serviceInUsed.getMax()))
 			    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-				    "Điền giá trị số lượng cho loại dịch vụ \"Gửi trả\". Hãy điền giá trị số lượng trong khoảng tối thiểu và tối đa được đặt [" + serviceInUsed.getMin()
-					    + " - " + serviceInUsed.getMax() + "]");
+				    "Điền giá trị số lượng cho loại dịch vụ \"Gửi trả\". Hãy điền giá trị số lượng trong khoảng tối thiểu và tối đa được đặt ["
+					    + serviceInUsed.getMin() + " - " + serviceInUsed.getMax() + "]");
 		    if (!(quantity <= userUsage.getRemaining() && quantity > 0))
 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 				"Oops, Số lượng còn lại trong gói bạn chọn chỉ còn " + userUsage.getRemaining()
@@ -488,31 +511,38 @@ public class TaskBuildupService {
 					+ userUsage.getRemaining() + "]");
 		    task.getSchedule().setQuantityRetrieve(quantity);
 		}
-		
+
 		task.setTaskStatus(TaskStatus.DONE);
 		task.getSchedule().setStatus(ScheduleStatus.DONE);
 		taskReportResult.setTaskStatus(task.getTaskStatus());
 		int newQuantityRemaining = userUsage.getRemaining() - task.getSchedule().getQuantityRetrieve();
 		userUsage.setRemaining(newQuantityRemaining < 0 ? 0 : newQuantityRemaining);
 
-		//TODO: NOTIFICATION OF DONE
+		// TODO: NOTIFICATION OF DONE
+		this.createAndSendNotification(
+			task.getSchedule().getServiceName(),
+			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đã hoàn thành công việc\"",
+			String.valueOf(task.getSchedule().getCustomerId()));
 
 		break;
 	    }
 	    }
+	    
 	    taskRepo.save(task);
 	    scheduleRepo.save(task.getSchedule());
 	    taskReportResult = taskReportRepo.save(taskReportResult);
+	    
 	} catch (Exception e) {
 	    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 	    e.printStackTrace();
-	    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK, "Có lỗi xảy ra ! Báo cáo thất bại !");
+	    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
+		    "Có lỗi xảy ra ! Báo cáo thất bại !");
 	}
 	return TaskRes.build(taskReportResult, TaskMessType.OK, "Báo cáo thành công !");
     }
 
     // === SETTING TIME FOR AUTOMATIC NOTIFICATION===
-    public void createAndSendNotification(String title, String mess, String userId) {
+    public static void createAndSendNotification(String title, String mess, String userId) {
 	// TODO: BUILD MESSAGE
 	// TODO SEND NOTIFICATION
     }
@@ -531,16 +561,25 @@ public class TaskBuildupService {
 		    task.setTaskNote("Không tìm thấy nhân viên nào !");
 		    Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
 		    schedule.setStatus(ScheduleStatus.CANCEL);
-		    log.info("===========");
 		    scheduleRepo.save(schedule);
 		    taskRepo.save(task);
 
-		  //TODO: NOTIFICATION NOT FOUND STAFF
+		  //TODO: HAS SET NOTIFICATION NOT FOUND STAFF
+		    TaskBuildupService.createAndSendNotification(
+			    task.getSchedule().getServiceName(),
+			    "Rất tiếc phải hủy lịch làm việc do không tìm thấy nhân viên",
+			    String.valueOf(task.getSchedule().getCustomerId()));
 		    
 		    log.info("TASK {} CLOSED AT {} STAFF IS NULL", task.getTaskId(), dateFormat.format(new Date()));
 		}
 		if (task.getStaffId() != null) {
-		  //TODO: NOTIFICATION OF TIME COMING LET WELCOME STAFF		 
+		    
+		  //TODO: HAS SET NOTIFICATION OF UP COMING TIME FOR STAFF AND CUSTOMER
+		    TaskBuildupService.createAndSendNotification(
+			    task.getSchedule().getServiceName(),
+			    "Nhân viên đang sắp tới. Mở cửa cho nhân viên khi tới nhé",
+			    String.valueOf(task.getSchedule().getCustomerId()));
+		    
 		    log.info("TASK {} CLOSED AT {} STAFF NOT NULL", task.getTaskId(), dateFormat.format(new Date()));
 		}
 	    }
@@ -565,9 +604,17 @@ public class TaskBuildupService {
 	    @Override
 	    public void run() {
 		Task task = taskRepo.findById(theTask.getTaskId()).get();
+		
 		if (task.getStaffId() == null) {
-		    
-		  //TODO: NOTIFICATION OF UP COMING TASK
+		    //TODO: NOTIFICATION OF UP COMING TASK
+		    TaskBuildupService.createAndSendNotification(
+			    task.getSchedule().getServiceName(),
+			    "Vẫn chưa tìm được nhân viên. Hãy đợi thêm.",
+			    String.valueOf(task.getSchedule().getCustomerId()));
+		    TaskBuildupService.createAndSendNotification(
+			    task.getSchedule().getServiceName(),
+			    "Sắp đến giờ làm việc tại nhà khách hàng " + task.getSchedule().getCustomerId() + " vào lúc " + LocalDateTime.now(dateTimeZone),
+			    String.valueOf(task.getSchedule().getStaffId()));
 		  
 		    log.info("TASK {} UPCOMING NOTI SEND - STAFF IS NULL - SENT AT {}", task.getTaskId(),
 			    dateFormat.format(new Date()));
@@ -580,6 +627,14 @@ public class TaskBuildupService {
 		    taskRepo.save(task);
 		    
 		    //TODO: NOTIFICATION WAITING STAFF INCOMING
+		    TaskBuildupService.createAndSendNotification(
+			    task.getSchedule().getServiceName(),
+			    "Nhân viên sắp đến. Hãy mở cửa nhé !",
+			    String.valueOf(task.getSchedule().getCustomerId()));
+		    TaskBuildupService.createAndSendNotification(
+			    task.getSchedule().getServiceName(),
+			    "Sắp đến giờ làm việc tại nhà khách hàng " + task.getSchedule().getCustomerId() + " vào lúc " + LocalDateTime.now(dateTimeZone),
+			    String.valueOf(task.getSchedule().getStaffId()));
 		    
 		    log.info("TASK {} UPCOMING NOTI SEND - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
 			    dateFormat.format(new Date()));
@@ -670,6 +725,10 @@ public class TaskBuildupService {
 			scheduleRepo.save(schedule);
 
 			// TODO: SEND NOTI FOR STAFF FOR CANCEL THE TASK
+			 TaskBuildupService.createAndSendNotification(
+				    task.getSchedule().getServiceName(),
+				    "Hủy lịch do không báo cáo tiến trình đầy đủ ",
+				    String.valueOf(task.getSchedule().getStaffId()));
 			
 			log.info("TASK {} CANCEL TASK FOR NOT REPORT DOING - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
 				dateFormat.format(new Date()));
@@ -704,6 +763,11 @@ public class TaskBuildupService {
 			userUsageRepo.save(userUsage);
 			
 			// TODO: SEND NOTI FOR STAFF FOR REPORT STATUS DONE
+			TaskBuildupService.createAndSendNotification(
+				    task.getSchedule().getServiceName(),
+				    "Hãy báo cáo tiến trình hoàn thành  ",
+				    String.valueOf(task.getSchedule().getStaffId()));
+			
 			log.info("TASK {} AUTO DONE FOR NOT REPOR DONE - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
 				dateFormat.format(new Date()));
 		    }
@@ -739,6 +803,10 @@ public class TaskBuildupService {
 			taskRepo.save(task);
 						
 			// TODO: SEND NOTI FOR STAFF FOR NOT REPORT STATUS DONE
+			TaskBuildupService.createAndSendNotification(
+				    task.getSchedule().getServiceName(),
+				    "Hủy lịch do không hoàn thành báo cáo  ",
+				    String.valueOf(task.getSchedule().getStaffId()));
 			log.info("TASK {} CANCEL TASK FOR NOT REPORT DONE  - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
 				dateFormat.format(new Date()));
 		    }
