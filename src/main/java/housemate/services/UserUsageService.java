@@ -4,6 +4,8 @@
  */
 package housemate.services;
 
+import housemate.constants.ImageType;
+import housemate.entities.Image;
 import housemate.entities.Order;
 import housemate.entities.OrderItem;
 import housemate.entities.PackageServiceItem;
@@ -11,6 +13,7 @@ import housemate.entities.Service;
 import housemate.entities.UserUsage;
 import housemate.models.responses.MyPurchasedResponse;
 import housemate.models.responses.UserUsageResponse;
+import housemate.repositories.ImageRepository;
 import housemate.repositories.OrderItemRepository;
 import housemate.repositories.OrderRepository;
 import housemate.repositories.PackageServiceItemRepository;
@@ -51,6 +54,9 @@ public class UserUsageService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private ImageRepository imageRepository;
 
     public ResponseEntity<List<UserUsageResponse>> getAllUserUsageForSchedule(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
@@ -162,9 +168,13 @@ public class UserUsageService {
                     List<PackageServiceItem> listPackageServiceItem = packageServiceItemRepository.findAllSingleServiceIdByPackageServiceId(service.getServiceId());
                     for (PackageServiceItem packageServiceItem : listPackageServiceItem) {
                         Service singleService = serviceRepository.getServiceByServiceId(packageServiceItem.getSingleServiceId());
+                        List<Image> images = imageRepository.findAllByEntityIdAndImageType(singleService.getServiceId(), ImageType.SERVICE).orElse(List.of());
+                        singleService.setImages(images);
                         listSingleServiceName.add(singleService.getTitleName());
                     }
                 } else {
+                    List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), ImageType.SERVICE).orElse(List.of());
+                    service.setImages(images);
                     listSingleServiceName.add(service.getTitleName());
                 }
                 myPurchasedResponse.setOrderItemId(orderItem.getOrderItemId());
