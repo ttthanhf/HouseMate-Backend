@@ -66,10 +66,8 @@ public class AccountController {
 
     @Operation(summary = "[ADMIN] Get customer details")
     @GetMapping("/customers/{customerId}")
-    public ResponseEntity<?> getCustomerDetail(
-            HttpServletRequest request, @PathVariable int customerId, @Param("start") String start, @Param("end") String end
-    ) {
-        return service.getCustomerDetail(request, customerId, start, end);
+    public ResponseEntity<?> getCustomerDetail(@PathVariable int customerId, @Param("start") String start, @Param("end") String end) {
+        return service.getCustomerDetail(customerId, start, end);
     }
 
     @Operation(summary = "[ADMIN] Get staff details")

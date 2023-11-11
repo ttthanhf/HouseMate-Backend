@@ -187,12 +187,7 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body("Create staff successfully!");
     }
 
-    public ResponseEntity<?> getCustomerDetail(HttpServletRequest request, int customerId, String start, String end) {
-        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
-        if (!role.equals(Role.ADMIN)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
-        }
-
+    public ResponseEntity<?> getCustomerDetail(int customerId, String start, String end) {
         CustomerDetailRes customerDetailRes = new CustomerDetailRes();
 
         // Check date format
