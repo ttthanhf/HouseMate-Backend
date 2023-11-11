@@ -33,4 +33,8 @@ public interface UserRepository extends JpaRepository<UserAccount, Integer> {
     UserAccount findByResetPasswordToken(String token);
 
     List<UserAccount> findByRole(Role role);
+
+    UserAccount findByAddress(String address);
+
+    UserAccount findByIdentityCard(String identityCard);
 }

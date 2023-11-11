@@ -79,5 +79,4 @@ public class Service {
 	@JsonInclude(value = Include.NON_NULL)
 	@Transient
 	private Integer numberOfComment;
-
 }

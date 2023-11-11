@@ -6,6 +6,7 @@ package housemate.repositories;
 
 import housemate.constants.ScheduleStatus;
 import housemate.entities.Schedule;
+import housemate.responses.ReportRes;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -68,4 +69,23 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     @Query("UPDATE Schedule s SET s.parentScheduleId = :scheduleId + 1 " +
             "WHERE s.scheduleId <> :scheduleId AND s.parentScheduleId = :scheduleId")
     void updateChildrenSchedule(@Param("scheduleId") int scheduleId);
+
+    int countByCustomerId(int customerId);
+
+    @Query("SELECT new housemate.responses.ReportRes(s.serviceId, '', COALESCE(SUM(s.quantityRetrieve), 0), '') FROM Schedule s " +
+            "WHERE s.customerId = :customerId AND s.endDate >= :startDate AND s.endDate < :endDate AND s.status = 'DONE' " +
+            "GROUP BY s.serviceId")
+    List<ReportRes> getMonthlyReportForCustomer(int customerId, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT new housemate.responses.ReportRes(s.serviceId, '', COALESCE(SUM(s.quantityRetrieve), 0), '') FROM Schedule s " +
+            "WHERE s.staffId = :staffId AND s.endDate >= :startDate AND s.endDate < :endDate AND s.status = 'DONE' " +
+            "GROUP BY s.serviceId")
+    List<ReportRes> getMonthlyReportForStaff(int staffId, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT new housemate.responses.ReportRes(s.serviceId, '', COALESCE(SUM(s.quantityRetrieve), 0), '') FROM Schedule s " +
+            "WHERE s.staffId = :staffId AND s.status = 'DONE' GROUP BY s.serviceId")
+    List<ReportRes> getStaffAchievement(int staffId);
+
+    @Query("SELECT s FROM Schedule s WHERE s.customerId = :customerId AND s.status = 'DONE'")
+    List<Schedule> getHistoryUsage(int customerId);
 }

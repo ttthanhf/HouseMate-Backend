@@ -74,4 +74,12 @@ public class Enum {
 		DONE;
 	}
 	
+	public enum TaskMessType {
+		OK,
+		REJECT_UPDATE_TASK,
+		REJECT_CANCELLED,
+		REJECT_APPROVE_STAFF,
+		REJECT_REPORT_TASK
+	}
+	
 }

@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Function;
-
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +25,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import static housemate.constants.ServiceConfiguration.*;
+
+import housemate.constants.Enum.TaskMessType;
 import housemate.constants.Enum.TaskReportType;
 import housemate.constants.Enum.TaskStatus;
 import housemate.constants.ImageType;
@@ -61,7 +62,6 @@ import housemate.repositories.TaskReposiotory;
 import housemate.repositories.UserRepository;
 import housemate.repositories.UserUsageRepository;
 import housemate.responses.TaskRes;
-import housemate.responses.TaskRes.TaskMessType;
 import jakarta.transaction.Transactional;
 
 @Component
@@ -228,7 +228,7 @@ public class TaskBuildupService {
 		servicePackageName = parentService.getTitleName();
 	    Order order = orderRepo.findById(orderItem.getOrderId()).orElse(null);
 
-	    String addressWorking = order == null ? "No address exist" : order.getAddress();
+	    String addressWorking = order.getAddress();
 	    Service serviceInfoFrServ = servRepo.findByServiceId(schedule.getServiceId()).orElse(null);
 	    ServiceType serviceType = servTypeRepo.findById(schedule.getServiceTypeId()).orElse(null);
 	    ServiceViewOnTask service = mapper.map(serviceInfoFrServ, ServiceViewOnTask.class);
