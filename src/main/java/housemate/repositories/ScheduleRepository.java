@@ -38,7 +38,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     @Modifying
     @Query("UPDATE Schedule s SET s.status = 'CANCEL', s.quantityRetrieve = 0 " +
             "WHERE s.scheduleId >= :scheduleId AND s.parentScheduleId = :parentScheduleId")
-    void cancelThisAndFollowingSchedule(@Param("scheduleId") int scheduleId, @Param("scheduleId") int parentScheduleId);
+    void cancelThisAndFollowingSchedule(@Param("scheduleId") int scheduleId, @Param("parentScheduleId") int parentScheduleId);
 
     @Transactional
     void deleteByScheduleIdGreaterThanEqualAndParentScheduleIdEquals(int scheduleId, int parentScheduleId);
