@@ -1,12 +1,12 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+# # This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+# # This workflow uses actions that are not certified by GitHub.
+# # They are provided by a third-party and are governed by
+# # separate terms of service, privacy policy, and support
+# # documentation.
 
-name: Java CI
+# name: Java CI
 
 on:
   push:
@@ -49,21 +49,13 @@ jobs:
     - name: Deloy app to server
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -r -o StrictHostKeyChecking=no ./target/${{ secrets.FILE_JAR }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
 
-    - name: Destroy running app
-      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -9 -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}" || true
-
-    # - name: Check if app is destroyed
-    #   run: |
-    #     sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}
-    #     timeout 10s bash -c '
-    #       while [ -z "$(pidof ${{ secrets.SERVER_PATH }}/${{ secrets.FILE_JAR }})" ]; do
-    #         echo "$(ps aux | pgrep -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }})"
-    #         sleep 1
-    #     done
-    #     '
+    - name: Destroy running app and check is app destroyed
+      run: |
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}"
+        while pgrep -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }} > /dev/null; do sleep 1; done || true
 
     - name: Run app
-      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}" &
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "nohup java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}" &
 
     - name: Wait for app to start
       run: sleep 20s

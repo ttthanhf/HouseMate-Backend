@@ -471,7 +471,6 @@ public class TheService {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 						.body("Set the Final Price from 0 to upper and smaller than or equal Original Price ");
 
-			// update status //TODO: Check based on figma
 			if (serviceDTO.getSaleStatus().equals(SaleStatus.DISCONTINUED))
 				oldService.setSaleStatus(SaleStatus.DISCONTINUED);
 			else if ((serviceDTO.getOriginalPrice() - serviceDTO.getFinalPrice()) > 0)
@@ -561,8 +560,6 @@ public class TheService {
 			oldService.setOriginalPrice(serviceDTO.getOriginalPrice());
 			oldService.setFinalPrice(serviceDTO.getFinalPrice());
 			oldService.setGroupType(serviceDTO.getGroupType());
-
-			// TODO: UPDATE IMAGES
 			updatedService = serviceRepo.save(oldService);
 			
 			//Update the price cycle list of this service

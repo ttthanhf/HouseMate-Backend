@@ -28,9 +28,4 @@ public class AuthorizationUtil {
         return (String) jwtUtil.extractPayload(token).get("role");
     }
 
-    public String getEMailFromAuthorizationHeader(HttpServletRequest request) {
-        String token = request.getHeader("Authorization").substring(7);
-        return (String) jwtUtil.extractPayload(token).get("email");
-    }
-
 }
