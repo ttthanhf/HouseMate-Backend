@@ -3,6 +3,7 @@ package housemate.services;
 import com.google.analytics.data.v1beta.*;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
+import housemate.constants.ImageType;
 import housemate.constants.Role;
 import housemate.entities.Order;
 import housemate.models.responses.AnalyticOverviewResponse;
@@ -43,6 +44,8 @@ import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import housemate.constants.SortEnum;
+import housemate.entities.Image;
+import housemate.repositories.ImageRepository;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Comparator;
@@ -76,6 +79,9 @@ public class AnalyticService implements DisposableBean {
 
     @Autowired
     private ScheduleRepository scheduleRepository;
+
+    @Autowired
+    private ImageRepository imageRepository;
 
     @PostConstruct
     public void init() {
@@ -234,7 +240,7 @@ public class AnalyticService implements DisposableBean {
         RunReportRequest reportRequest = RunReportRequest.newBuilder()
                 .setProperty("properties/" + propertyId)
                 .addDimensions(Dimension.newBuilder().setName("pageTitle"))
-                .addMetrics(Metric.newBuilder().setName("sessions"))
+                .addMetrics(Metric.newBuilder().setName("eventCount"))
                 .addDateRanges(DateRange.newBuilder().setStartDate(startDate.toString()).setEndDate(endDate.toString()))
                 .build();
 
@@ -248,11 +254,16 @@ public class AnalyticService implements DisposableBean {
                 String serviceName = row.getDimensionValues(0).getValue().split("\\|")[1].trim();
                 analyticServicePageResponse.setServiceName(serviceName);
 
-                int totalSessionView = Integer.parseInt(row.getMetricValues(0).getValue());
-                analyticServicePageResponse.setTotalSessionView(totalSessionView);
+                int totalView = Integer.parseInt(row.getMetricValues(0).getValue());
+                analyticServicePageResponse.setTotalView(totalView);
 
                 Service service = serviceRepository.getServiceByFullNameService(serviceName);
                 int serviceId = service.getServiceId();
+
+                Image image = imageRepository.findFirstByEntityIdAndImageType(serviceId, ImageType.SERVICE).orElse(null);
+                if (image != null) {
+                    analyticServicePageResponse.setImage(image.getImageUrl());
+                }
 
                 double totalPriceOfService = orderItemRepository.sumAllPriceOfServiceByServiceIdAndRangeDate(serviceId, startDate.atTime(LocalTime.MIN), endDate.atTime(LocalTime.MAX));
                 analyticServicePageResponse.setTotalPrice(totalPriceOfService);
