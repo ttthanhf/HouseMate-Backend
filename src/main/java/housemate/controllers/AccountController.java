@@ -4,8 +4,6 @@ import housemate.constants.Role;
 import housemate.entities.UserAccount;
 import housemate.models.CreateAccountDTO;
 import housemate.models.UpdateAccountDTO;
-import housemate.responses.CustomerRes;
-import housemate.responses.StaffRes;
 import housemate.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -17,7 +15,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 /**
  *

@@ -40,11 +40,9 @@ public class TaskReport {
 
     @Column(name = "note", length = 3000)
     private String note;
-	
-	@Transient
-	List<Image> taskReportImages ;
 
+    @Transient
+    List<Image> taskReportImages;
 
-    
 }
 

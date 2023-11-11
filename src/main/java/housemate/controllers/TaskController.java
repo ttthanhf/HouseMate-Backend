@@ -112,12 +112,6 @@ public class TaskController {
 		return taskServiceDao.getTaskReportListByTask(taskId);
 	}
 	
-	@GetMapping("/staffs")
-	@Operation(summary = "Sắp cho cút sang staff query")
-	public ResponseEntity<?> getAllStaffs() {
-		return taskServiceDao.getAllStaff();
-	}
-	
 	@DeleteMapping("/cancel/schedule/{schedule-id}")
 	@Operation(summary = "Cancel the task of specific schedule - Role: CUSTOMER - owner of the schedule + STAFF - reponsible for doing the task of this schedule")
 	public ResponseEntity<?> cancelTask(

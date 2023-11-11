@@ -6,7 +6,6 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -26,7 +25,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import housemate.constants.ScheduleStatus;
 import static housemate.constants.ServiceConfiguration.*;
-
 import housemate.constants.Enum.TaskMessType;
 import housemate.constants.Enum.TaskReportType;
 import housemate.constants.Enum.TaskStatus;
@@ -56,31 +54,31 @@ import jakarta.servlet.http.HttpServletRequest;
 public class TaskService {
 
     @Autowired
-    TaskReposiotory taskRepo;
+    private TaskReposiotory taskRepo;
 
     @Autowired
-    TaskBuildupService taskBuildupServ;
+    private TaskBuildupService taskBuildupServ;
 
     @Autowired
-    ScheduleRepository scheduleRepo;
+    private ScheduleRepository scheduleRepo;
 
     @Autowired
-    StaffRepository staffRepo;
+    private StaffRepository staffRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    TaskReportRepository taskReportRepo;
+    private TaskReportRepository taskReportRepo;
 
     @Autowired
-    ImageRepository imgRepo;
+    private ImageRepository imgRepo;
 
     @Autowired
-    CustomerRepository customerRepo;
+    private CustomerRepository customerRepo;
 
     @Autowired
-    AuthorizationUtil authorizationUtil;
+    private AuthorizationUtil authorizationUtil;
 
     private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -365,7 +363,7 @@ public class TaskService {
 			    + "có khung giờ bắt đầu ngày " 
 			    + dateFormat.format(Date.from(dupSchedule.getStartDate().atZone(dateTimeZone).toInstant())) + " và kết thúc ngày "
 			    + dateFormat.format(Date.from(dupSchedule.getEndDate().atZone(dateTimeZone).toInstant()))
-			    + " !");
+			    + " ! ");
 	if (task.getStaffId() != null && task.getStaffId() != staffId)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch này đã có nhân viên khác ứng tuyển !");
 	

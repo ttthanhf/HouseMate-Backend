@@ -1,15 +1,6 @@
 package housemate.constants;
 
 
-import java.util.EnumSet;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-
-import housemate.repositories.ServiceConfigRepository;
-import housemate.services.ServiceConfigService;
-import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
