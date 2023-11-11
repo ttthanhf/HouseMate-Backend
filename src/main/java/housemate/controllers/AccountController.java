@@ -33,69 +33,60 @@ public class AccountController {
     @Autowired
     AccountService service;
 
-    @Operation(summary = "Get all account (customer, staff, admin)")
-    @GetMapping("/all")
-    public ResponseEntity<List<UserAccount>> getAll() {
-        return service.getAll();
-    }
-
     @Operation(summary = "Get info of an account by userId")
     @GetMapping("/info/{userId}")
     public ResponseEntity<UserAccount> getInfo(@PathVariable int userId) {
         return  service.getInfo(userId);
     }
 
-    @Operation(summary = "Update account info")
+    @Operation(summary = "[ADMIN] Update account info")
     @PutMapping("/update/{userId}")
-    public ResponseEntity<String> updateInfo(@Valid @RequestBody UpdateAccountDTO updateAccountDTO, @PathVariable int userId) {
-        return service.updateInfo(updateAccountDTO, userId);
+    public ResponseEntity<String> updateInfo(HttpServletRequest request, @Valid @RequestBody UpdateAccountDTO updateAccountDTO, @PathVariable int userId) {
+        return service.updateInfo(request, updateAccountDTO, userId);
     }
 
     @Operation(summary = "[ADMIN] Delete account by userId")
     @DeleteMapping("/delete/{userId}")
-    public ResponseEntity<String> updateInfo(@PathVariable int userId) {
-        return service.delete(userId);
+    public ResponseEntity<String> delete(HttpServletRequest request, @PathVariable int userId) {
+        return service.delete(request, userId);
     }
 
     @Operation(summary = "[ADMIN] Update role of an account")
     @PutMapping("/role")
-    public ResponseEntity<String> changeRole(@RequestParam int userId, @RequestParam Role role) {
-        return service.changeRole(userId, role);
+    public ResponseEntity<String> changeRole(HttpServletRequest request, @RequestParam int userId, @RequestParam Role role) {
+        return service.changeRole(request, userId, role);
     }
 
+    // TODO: Change type to List<CustomerRes>
     @Operation(summary = "[ADMIN] Manage customers (Full name, schedule count, spent amount, transaction count, join date)")
     @GetMapping("/customers")
-    public ResponseEntity<List<CustomerRes>> getAllCustomer() {
-        return service.getAllCustomer();
+    public ResponseEntity<?> getAllCustomer(HttpServletRequest request) {
+        return service.getAllCustomer(request);
     }
 
     @Operation(summary = "[ADMIN] Get customer details")
     @GetMapping("/customers/{customerId}")
     public ResponseEntity<?> getCustomerDetail(
-            @PathVariable int customerId, @Param("start") String start, @Param("end") String end
+            HttpServletRequest request, @PathVariable int customerId, @Param("start") String start, @Param("end") String end
     ) {
-        return service.getCustomerDetail(customerId, start, end);
+        return service.getCustomerDetail(request, customerId, start, end);
     }
 
     @Operation(summary = "[ADMIN] Get staff details")
     @GetMapping("/staffs/{staffId}")
     public ResponseEntity<?> getStaffDetail(
-            @PathVariable int staffId, @Param("start") String start, @Param("end") String end
+            HttpServletRequest request, @PathVariable int staffId, @Param("start") String start, @Param("end") String end
     ) {
-        return service.getStaffDetail(staffId, start, end);
+        return service.getStaffDetail(request, staffId, start, end);
     }
 
+    // TODO: Change type to List<StaffRes>
     @Operation(summary = "[ADMIN] Mange staffs (Full name, proficiency score, staff status, task count, success rate)")
     @GetMapping("/staffs")
-    public ResponseEntity<List<StaffRes>> getAllStaff() {
-        return service.getAllStaff();
+    public ResponseEntity<?> getAllStaff(HttpServletRequest request) {
+        return service.getAllStaff(request);
     }
 
-    @Operation(summary = "Get all admin account")
-    @GetMapping("/admins")
-    public ResponseEntity<List<UserAccount>> getAllAdmin() {
-        return service.getAllAdmin();
-    }
 
     @Operation(summary = "Get current logged in user info")
     @GetMapping("/current")
@@ -106,8 +97,8 @@ public class AccountController {
 
     @Operation(summary = "[ADMIN] Create staff account")
     @PostMapping("/create-staff")
-    public ResponseEntity<String> createStaffAccount(@Valid @RequestBody CreateAccountDTO createAccountDTO) {
-        return service.createStaffAccount(createAccountDTO);
+    public ResponseEntity<String> createStaffAccount(HttpServletRequest request, @Valid @RequestBody CreateAccountDTO createAccountDTO) {
+        return service.createStaffAccount(request, createAccountDTO);
     }
 }
 
