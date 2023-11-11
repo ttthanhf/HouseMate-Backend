@@ -74,7 +74,7 @@ public class AuthService {
         }
 
         if (accountDB.isBanned()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are banned");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are banned");
         }
 
         // Check if account logged in with Google
