@@ -82,14 +82,6 @@ public class ScheduleService {
         List<Schedule> schedules = scheduleRepository.getByCustomerId(userId);
 
         for (Schedule schedule : schedules) {
-            // Check if schedule is before current date
-            boolean isBeforeCurrentDate = schedule.getEndDate().isBefore(LocalDateTime.now());
-            if (isBeforeCurrentDate) {
-                // TODO: Notification to customer that staff haven't applied
-                schedule.setStatus(ScheduleStatus.CANCEL);
-                scheduleRepository.save(schedule);
-            }
-
             Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
             if (service.getGroupType().equals(RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
