@@ -73,12 +73,6 @@ public class Schedule implements Cloneable {
     }
 
     @Transient
-    private String staff;
-
-    @Transient
-    private String phone;
-
-    @Transient
     private List<ServiceType> type;
 
     @Transient
