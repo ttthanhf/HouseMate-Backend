@@ -24,7 +24,7 @@ public class Schedule implements Cloneable {
     @Column(name = "service_schedule_id")
     private int scheduleId;
 
-    @Column(name = "service_id", insertable = false, updatable = false)
+    @Column(name = "service_id")
     private int serviceId;
 
     @Column(name = "service_type_id")
@@ -93,6 +93,6 @@ public class Schedule implements Cloneable {
     private String serviceName;
 
     @OneToOne
-    @JoinColumn(name = "service_id")
+    @JoinColumn(name = "service_id", insertable = false, updatable = false)
     private Service service;
 }
