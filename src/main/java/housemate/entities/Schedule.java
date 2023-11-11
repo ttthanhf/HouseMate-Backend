@@ -83,4 +83,17 @@ public class Schedule implements Cloneable {
 
     @Transient
     private List<UserUsage> usages = new ArrayList<>();
+
+    @Transient
+    private String groupType;
+
+    @Transient
+    private UserUsage currentUsage;
+
+    @Transient
+    private String serviceName;
+
+    @OneToOne
+    @JoinColumn(name = "service_id", insertable = false, updatable = false)
+    private Service service;
 }

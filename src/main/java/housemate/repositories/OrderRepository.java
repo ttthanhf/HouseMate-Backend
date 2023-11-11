@@ -34,4 +34,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query(value = "SELECT COALESCE(SUM(o.finalPrice),0) FROM Order o WHERE o.date BETWEEN :startDate AND :endDate AND o.isComplete = true")
     double sumOrderPriceFromDateInputToDateInput(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
+    int countByUserId(int userId);
+
+    @Query("SELECT COALESCE(SUM(o.finalPrice), 0) FROM Order o WHERE o.userId = :userId")
+    long sumFinalPriceByUserId(int userId);
 }
