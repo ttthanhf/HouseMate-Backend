@@ -92,4 +92,8 @@ public class Schedule implements Cloneable {
 
     @Transient
     private String serviceName;
+
+    @OneToOne
+    @JoinColumn(name = "service_id", insertable = false, updatable = false)
+    private Service service;
 }
