@@ -14,8 +14,9 @@ import lombok.Data;
 public class AnalyticServicePageResponse {
 
     private String serviceName;
+    private String image;
     private double totalPrice;
     private int numberOfSold;
-    private int totalSessionView;
+    private int totalView;
 
 }
