@@ -9,13 +9,13 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
-import java.util.function.Function;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import static housemate.constants.ServiceConfiguration.*;
-
 import housemate.constants.Enum.TaskMessType;
 import housemate.constants.Enum.TaskReportType;
 import housemate.constants.Enum.TaskStatus;
@@ -68,45 +67,45 @@ import jakarta.transaction.Transactional;
 public class TaskBuildupService {
 
     @Autowired
-    ScheduleRepository scheduleRepo;
+    private ScheduleRepository scheduleRepo;
 
     @Autowired
-    TaskReposiotory taskRepo;
+    private TaskReposiotory taskRepo;
 
     @Autowired
-    StaffRepository staffRepo;
+    private StaffRepository staffRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    ImageRepository imgRepo;
+    private ImageRepository imgRepo;
 
     @Autowired
-    OrderRepository orderRepo;
+    private OrderRepository orderRepo;
 
     @Autowired
-    ServiceRepository servRepo;
+    private ServiceRepository servRepo;
 
     @Autowired
-    ServiceTypeRepository servTypeRepo;
+    private ServiceTypeRepository servTypeRepo;
 
     @Autowired
-    TaskReportRepository taskReportRepo;
+    private TaskReportRepository taskReportRepo;
 
     @Autowired
-    UserUsageRepository userUsageRepo;
+    private  UserUsageRepository userUsageRepo;
 
     @Autowired
-    OrderItemRepository orderItemRepo;
+    private OrderItemRepository orderItemRepo;
 
     @Autowired
-    FeedbackRepository feedbRepo;
+    private FeedbackRepository feedbRepo;
 
-    ModelMapper mapper = new ModelMapper();
+    private  ModelMapper mapper = new ModelMapper();
 
     @Autowired
-    TaskScheduler taskScheduler;
+    private TaskScheduler taskScheduler;
 
     private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -115,7 +114,8 @@ public class TaskBuildupService {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
     private static final Map<Integer, List<ScheduledFuture<?>>> eventNotiList = new HashMap<>();
-
+   
+    
     // ======CREATE TASK======
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Ho_Chi_Minh") // call this at every 24:00 PM
     public List<Task> createTasksOnUpcomingSchedulesAutoByFixedRate() {
@@ -126,13 +126,19 @@ public class TaskBuildupService {
 	    // generate task for these schedule
 	    if (schedules.isEmpty())
 		return List.of();
-	    for (Schedule schedule : schedules)
+	    for (Schedule schedule : schedules) {
 		taskList.add(this.createTask(schedule));
-	   
-	  //TODO: RECONSTRUCT NOTIFICATION
-	    TaskBuildupService.createAndSendNotification("NEW TASK COMING !", "UPCOMING TASK",
-		    List.of(staffRepo.findAll().stream().map(x -> x.getStaffId())));
-	    
+		 this.createAndSendNotification(
+			    "Việc mới",
+			    "Ngày " + LocalDate.now().getDayOfMonth(),
+			   String.valueOf(schedule.getCustomerId()));
+	    }
+		
+
+	    // TODO: HAS SET NOTIFICATION
+	    this.createAndSendNotification(
+		    "Việc mới", "Ngày " + LocalDate.now().getDayOfMonth(), Role.STAFF.name());
+	
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    return List.of();
@@ -151,9 +157,8 @@ public class TaskBuildupService {
 	    for (Schedule theSchedule : schedules) 
 		taskList.add(this.createTask(theSchedule));
 	    
-	    //TODO: RECONSTRUCT NOTIFICATION
-	    TaskBuildupService.createAndSendNotification("NEW TASK COMING !", "UPCOMING TASK",
-		    List.of(staffRepo.findAll().stream().map(x -> x.getStaffId())));
+	    //TODO: HAS SET NOTIFICATION
+	    this.createAndSendNotification("Việc mới", "Ngày " + LocalDate.now().toString(), Role.STAFF.name());
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    return List.of();
@@ -183,14 +188,14 @@ public class TaskBuildupService {
 		task.setSchedule(schedule);
 		savedTask = taskRepo.save(task);
 		
-		// TODO: CALL TASK EVENTS
+		// CALL TASK EVENTS
 		if (savedTask != null) {
 		    this.createEventSendNotiWhenTimeComing(task, schedule.getStartDate());
 		    this.createEventSendNotiUpcomingTask(task, schedule.getStartDate(), DURATION_HOURS_SEND_INCOMING_NOTI_BEFORE.getNum());
-		    log.info("TÔI SẼ THÊM SỰ KIỆN CHO LỊCH NÀY SAU");
-		    //TODO: RECONSTRUCT NOTIFICATION
-			TaskBuildupService.createAndSendNotification("Your schedule will be starting soon !",
-				"UPCOMING SCHEDULE", List.of(schedule.getCustomerId()));
+		    //TODO:  HAS SET NOTIFICATION
+		    this.createAndSendNotification(task.getSchedule().getServiceName(),
+			    "Ngày " + task.getSchedule().getStartDate().getDayOfYear()  + "đã được lên lịch làm việc  !", String.valueOf(task.getSchedule().getCustomerId()));
+			
 		}
 	    }
 	} catch (Exception e) {
@@ -286,11 +291,10 @@ public class TaskBuildupService {
 	
 	//SHUTDOWN EVENT COUNT DOWN OF OLD TASK OF OLD SCHEDULE
 	this.CancelAllEventsByTaskId(taskToBeCancelled.getTaskId());
-	//TODO: RECONSTRUCT NOTIFICATION
-	if (taskToBeCancelled.getStaffId() != null)
-	    TaskBuildupService.createAndSendNotification(
-		    "Khách hàng đã hủy công việc mà bạn đã ứng tuyển !",
-		    "TASK CANCELLED BY CUSTOMER", List.of(taskToBeCancelled.getStaffId()));
+	
+	if (taskToBeCancelled.getStaffId() != null) {
+	    //TODO: NOTIFICATION
+	}
 
 	log.info("CALL CANCEL BY CUSTOMER - EVENT OF TASK {} EXISTs : {}", taskToBeCancelled.getTaskId(), eventNotiList.get(taskToBeCancelled.getTaskId()));
 
@@ -312,10 +316,7 @@ public class TaskBuildupService {
 	
 	log.info("CALL CANCEL BY STAFF - EVENT OF TASK {} EXISTs : {}", taskToBeCancelled.getTaskId(), eventNotiList.get(taskToBeCancelled.getTaskId()));
 
-	// TODO: RECONSTRUCT NOTI
-	TaskBuildupService.createAndSendNotification(
-		"The old staff has rejected to do your schedule ! Please waiting for other staff apply on your schedule",
-		"TASK CANCELLED BY STAFF", List.of(scheduleHasTaskToBeCancelledByStaff.getCustomerId()));
+	// TODO: NOTIFIFCATION FOR CANCEL ANNOUNCEMENT
 
 	return renewTaskFormApplication;
     }
@@ -347,11 +348,8 @@ public class TaskBuildupService {
 		scheduleRepo.save(scheduleNewTime); // this will auto update time for oldschedle based on the same id
 		tasksOldAndNew.put("newTask", newTask);
 	    }
-	    // TODO: RECONSTRUCT NOTIFICATION
 	    if (oldTask.getStaffId() != null) {
-		TaskBuildupService.createAndSendNotification(
-			"The task has been cancelled because the customer has changed time working !",
-			"TASK CANCELLED BY CUSTOMER", List.of(oldTask.getStaffId()));
+		//TODO : NOTIFICATION CHANGE TIME SUCCESS
 	    }
 	} catch (Exception e) {
 	    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -374,10 +372,7 @@ public class TaskBuildupService {
 		task.getSchedule().setStaffId(staff.getStaffId());
 		taskRepo.save(task);
 		taskRes = TaskRes.build(task, TaskMessType.OK, "Ứng tuyển thành công !");
-		
-		//call event close report task
-		//this.createEventCloseReportForm(task, task.getSchedule().getEndDate(), DURATION_HOURS_CLOSE_REPORT_TASK_FROM_DONE.getNum());
-		
+				
 		//Change task status into incoming if the time apply in the range defined before
 		long hours = ChronoUnit.HOURS.between(LocalDateTime.now(dateTimeZone), task.getSchedule().getStartDate());
 		log.info("KHOẢNG THỜI GIAN GIỮA THỜI ĐIỂM HIỆN TẠI VÀ THỜI ĐIỂM LÀM VIỆC {}", hours);
@@ -389,10 +384,8 @@ public class TaskBuildupService {
 		//TODO: CALL EVENTS FOR REPORT TASK
 		this.createEventForReportTask(task, task.getSchedule().getStartDate(), task.getSchedule().getEndDate());
 		
-		//TODO: RECONSTRUCT NOTIFICATION
-		TaskBuildupService.createAndSendNotification(
-			"We have found staff will work on your schedule. Let contact with our staff !", "FOUND STAFF",
-			List.of(task.getSchedule().getCustomerId()));
+		//TODO: NOTIFICATION TASK HAS BEEN APPROVED
+		
 		
 	    } catch (Exception e) {
 		e.printStackTrace();
@@ -439,10 +432,8 @@ public class TaskBuildupService {
 		task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 		taskReportResult.setTaskStatus(task.getTaskStatus());
 		
-		//TODO: RECONSTRUCT NOTIFICATION
-		TaskBuildupService.createAndSendNotification(
-			"Your task is being processed by our staff. Please wait for our staff done their job !",
-			"ARRIVED TASK PROGRESSION", List.of(task.getSchedule().getCustomerId()));
+		//TODO: NOTIFICATION ARRIVED TASK PROGRESSION
+		
 		break;
 	    }
 	    case DOING: {
@@ -456,10 +447,8 @@ public class TaskBuildupService {
 		task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 		taskReportResult.setTaskStatus(task.getTaskStatus());
 		
-		//TODO: RECONSTRUCT NOTIFICATION
-		TaskBuildupService.createAndSendNotification(
-			"Your task is being processed by our staff. Please wait for our staff done their job !",
-			"DOING TASK PROGRESSION", List.of(task.getSchedule().getCustomerId()));
+		//TODO: NOTIFICATION OF DOING TASK PROGRESSION
+		
 		//create event for pop up send notification for upload img
 		break;
 	    }
@@ -506,10 +495,8 @@ public class TaskBuildupService {
 		int newQuantityRemaining = userUsage.getRemaining() - task.getSchedule().getQuantityRetrieve();
 		userUsage.setRemaining(newQuantityRemaining < 0 ? 0 : newQuantityRemaining);
 
-		//TODO: RECONSTRUCT NOTIFICATION
-		TaskBuildupService.createAndSendNotification(
-			"Your task has been done by our staff. Let enjoy the result !", "DONE TASK PROGRESSION",
-			List.of(task.getSchedule().getCustomerId()));
+		//TODO: NOTIFICATION OF DONE
+
 		break;
 	    }
 	    }
@@ -525,7 +512,7 @@ public class TaskBuildupService {
     }
 
     // === SETTING TIME FOR AUTOMATIC NOTIFICATION===
-    public static void createAndSendNotification(String mess, String title, List<?> receivers) {
+    public void createAndSendNotification(String title, String mess, String userId) {
 	// TODO: BUILD MESSAGE
 	// TODO SEND NOTIFICATION
     }
@@ -548,18 +535,12 @@ public class TaskBuildupService {
 		    scheduleRepo.save(schedule);
 		    taskRepo.save(task);
 
-		  //TODO: RECONSTRUCT NOTIFICATION
-		    TaskBuildupService.createAndSendNotification(
-			    "Sorry, time is coming but staff is during peak hours, there is no staff to serve you at this time !",
-			    "NOT FOUND STAFF", List.of(task.getSchedule().getCustomerId()));
+		  //TODO: NOTIFICATION NOT FOUND STAFF
 		    
 		    log.info("TASK {} CLOSED AT {} STAFF IS NULL", task.getTaskId(), dateFormat.format(new Date()));
 		}
 		if (task.getStaffId() != null) {
-		  //TODO: RECONSTRUCT NOTIFICATION
-		    TaskBuildupService.createAndSendNotification("Let go to welcome your staff coming to your home ! !",
-			    "STAFF COMING", List.of(task.getSchedule().getCustomerId()));
-		    
+		  //TODO: NOTIFICATION OF TIME COMING LET WELCOME STAFF		 
 		    log.info("TASK {} CLOSED AT {} STAFF NOT NULL", task.getTaskId(), dateFormat.format(new Date()));
 		}
 	    }
@@ -571,13 +552,12 @@ public class TaskBuildupService {
 	}
 	eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 	
-	log.info("TASK {} CREATED EVENT SEND NOTI WHEN IN TIME WORKING at time {} ", theTask.getTaskId(), LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone));
+	log.info("TASK {} CREATED EVENT SEND NOTI WHEN IN TIME WORKING at time {} ", theTask.getTaskId(),
+		LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone));
     }
 
     private void createEventSendNotiUpcomingTask(Task theTask, LocalDateTime timeStartTask, int periodHourBefore) {	
-	//TODO: DELETE TRASH
-	//ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone).minusHours(periodHourBefore);
-	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone).minusMinutes(2);
+	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone).minusMinutes(periodHourBefore);
 	Instant timeSendNotiInstant = timeStartTaskZone.toInstant();
 
 	Runnable runnableTask = new Runnable() {
@@ -587,10 +567,7 @@ public class TaskBuildupService {
 		Task task = taskRepo.findById(theTask.getTaskId()).get();
 		if (task.getStaffId() == null) {
 		    
-		  //TODO: RECONSTRUCT NOTIFICATION
-		    TaskBuildupService.createAndSendNotification(
-			    "We are trying to find the staff for your task, please waiting for staff apply !",
-			    "NOT FOUND STAFF", List.of(task.getSchedule().getCustomerId()));
+		  //TODO: NOTIFICATION OF UP COMING TASK
 		  
 		    log.info("TASK {} UPCOMING NOTI SEND - STAFF IS NULL - SENT AT {}", task.getTaskId(),
 			    dateFormat.format(new Date()));
@@ -602,14 +579,8 @@ public class TaskBuildupService {
 		    scheduleRepo.save(schedule);
 		    taskRepo.save(task);
 		    
-		    //TODO: RECONSTRUCT NOTIFICATION
-		    TaskBuildupService.createAndSendNotification(
-			    "Our staff will coming to your house, please wait for our staff coming !", "INCOMING ",
-			    List.of(task.getSchedule().getCustomerId()));
-		    TaskBuildupService.createAndSendNotification("You have the task today at "
-			    + userRepo.findByUserId(task.getSchedule().getCustomerId()).getFullName() + "'s house !",
-			    "INCOMING ", List.of(task.getStaffId()));
-		   
+		    //TODO: NOTIFICATION WAITING STAFF INCOMING
+		    
 		    log.info("TASK {} UPCOMING NOTI SEND - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
 			    dateFormat.format(new Date()));
 		}
@@ -635,27 +606,15 @@ public class TaskBuildupService {
 	//4. Trigger event cancel task when staff not report for status DONE after the end of day at 00 PM every day and minus the score MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK
    	ZonedDateTime timeStartWorkingZone = timeStartWorking.atZone(dateTimeZone);
    	ZonedDateTime timeEndWorkingZone = timeEndWorking.atZone(dateTimeZone);
-//  	ZonedDateTime todayAtMidnight = LocalDate.now().atTime(LocalTime.MIDNIGHT).atZone(dateTimeZone);
-//   	//Trigger 1
-//   	Instant timeMinusScoreForNotReportArrived = timeStartWorkingZone.plusMinutes(DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum()).toInstant(); 
-//   	//Trigger 2
-//   	Instant timeCancelTaskForNotReportDoing = timeEndWorkingZone.toInstant();
-//   	//Trigger 3
-//   	Instant timeAutoDoneTask = timeEndWorkingZone.plusHours(DURATION_HOURS_SYST_AUTO_DONE_TASK.getNum()).toInstant();
-//   	//Trigger 4
-//   	Instant timeCancelTaskForNotReportDone = todayAtMidnight.toInstant();
-
-   	//TODO: TRASH
-   	ZonedDateTime todayAtMidnight = timeEndWorking.atZone(dateTimeZone).plusMinutes(5);
+  	ZonedDateTime todayAtMidnight = LocalDate.now().atTime(LocalTime.MIDNIGHT).atZone(dateTimeZone);
    	//Trigger 1
-   	Instant timeMinusScoreForNotReportArrived = timeStartWorkingZone.plusMinutes(3).toInstant(); 
+   	Instant timeMinusScoreForNotReportArrived = timeStartWorkingZone.plusMinutes(DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum()).toInstant(); 
    	//Trigger 2
    	Instant timeCancelTaskForNotReportDoing = timeEndWorkingZone.toInstant();
    	//Trigger 3
-   	Instant timeAutoDoneTask = timeEndWorkingZone.plusMinutes(3).toInstant();
+   	Instant timeAutoDoneTask = timeEndWorkingZone.plusMinutes(DURATION_HOURS_SYST_AUTO_DONE_TASK.getNum()).toInstant();
    	//Trigger 4
    	Instant timeCancelTaskForNotReportDone = todayAtMidnight.toInstant();
-
  
    	//Trigger 1
 	{
@@ -685,7 +644,6 @@ public class TaskBuildupService {
 
 	    log.info("TASK {} CREATE EVENT MINUS SCORE FOR NOT REPORT ARRIVED AT {} SEND AT {}",theTask.getTaskId(),
 		    timeMinusScoreForNotReportArrived, LocalDate.now());
-
 	}
 
 	//Trigger 2
@@ -695,7 +653,6 @@ public class TaskBuildupService {
 		public void run() {
 		    Task task = taskRepo.findById(theTask.getTaskId()).get();
 		    TaskReport doingReport = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(), TaskStatus.DOING);
-		    List<Image> imgsOfDoingReport = List.of();
 		    
 		    if (task.getStaffId() != null && !task.getTaskStatus().equals("CANCELLED") && doingReport == null ) {
 			Staff staff = staffRepo.findById(task.getStaffId()).get();
@@ -727,8 +684,7 @@ public class TaskBuildupService {
 	    eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 
 	    log.info("CREATE EVENT CANCELT TASK BY STAFF FOR NOT REPORT DOING AT {} SEND AT {}",
-		    timeCancelTaskForNotReportDoing, LocalDate.now());
-	    
+		    timeCancelTaskForNotReportDoing, LocalDate.now());    
 	}
 	// trigger 3
 	{
@@ -847,11 +803,10 @@ public class TaskBuildupService {
 			&&
 			(
 				(scheduleOfNewTask.getStartDate().isBefore(x.getStartDate()) || scheduleOfNewTask.getStartDate().isEqual(x.getStartDate()))
-				  && (scheduleOfNewTask.getEndDate().isAfter(x.getStartDate()) || scheduleOfNewTask.getEndDate().isEqual(x.getStartDate()))
+				&& (scheduleOfNewTask.getEndDate().isAfter(x.getStartDate()) || scheduleOfNewTask.getEndDate().isEqual(x.getStartDate()))
 				||
 				(scheduleOfNewTask.getStartDate().isBefore(x.getEndDate()) || scheduleOfNewTask.getStartDate().isEqual(x.getEndDate()))
-				  && (scheduleOfNewTask.getEndDate().isAfter(x.getEndDate()) || scheduleOfNewTask.getEndDate().isEqual(x.getEndDate()))
-				
+				&& (scheduleOfNewTask.getEndDate().isAfter(x.getEndDate()) || scheduleOfNewTask.getEndDate().isEqual(x.getEndDate()))
 			);
 			
 			return isDuplicate;

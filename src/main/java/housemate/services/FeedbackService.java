@@ -29,24 +29,25 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class FeedbackService {
-	@Autowired
-	FeedbackRepository feedBackRepo;
-
-	@Autowired
-	UserRepository userRepo;
-
-	@Autowired
-	ServiceRepository servRepo;
-
-	@Autowired
-	AuthorizationUtil authorizationUtil;
-
-	@Autowired
-	ImageRepository imgRepo;
-
-	ModelMapper mapper = new ModelMapper();
-	
-	ZoneId datetimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
+    
+        @Autowired
+        private FeedbackRepository feedBackRepo;
+    
+        @Autowired
+        private UserRepository userRepo;
+    
+        @Autowired
+        private ServiceRepository servRepo;
+    
+        @Autowired
+        private AuthorizationUtil authorizationUtil;
+    
+        @Autowired
+        private ImageRepository imgRepo;
+    
+        private ModelMapper mapper = new ModelMapper();
+    
+        private final ZoneId datetimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
 	public ResponseEntity<?> getRatingOverviewByService(int serviceId) {
 

@@ -6,7 +6,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
 import housemate.constants.ServiceConfiguration;
@@ -19,16 +19,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import net.minidev.json.JSONObject;
 
-@Component
+@Service
 public class ServiceConfigService {
 
 	@Autowired
-	ServiceConfigRepository servConfRepo;
+	private ServiceConfigRepository servConfRepo;
 
 	@Autowired
-	AuthorizationUtil authorizationUtil;
+	private AuthorizationUtil authorizationUtil;
 	
-	ModelMapper mapper = new ModelMapper();
+	private ModelMapper mapper = new ModelMapper();
 
 	public ResponseEntity<?> getAllByServiceConfigType(ServiceConfiguration serviceConfiguration) {
 	    List<ServiceConfig> serviceConfigList = servConfRepo.findAllByConfigType(serviceConfiguration);
@@ -98,18 +98,15 @@ public class ServiceConfigService {
 				existedServConf.setConfigType(newServiceConf.getConfigType());
 				existedServConf.setConfigValue(newServiceConf.getConfigValue());
 		}
-		
 		return ResponseEntity.ok(existedServConf);
 	}
 
 	@Transactional
 	public ResponseEntity<?> deleteConfigValue(HttpServletRequest request, int serviceConfigId) {
 	    ServiceConfig existedServConf = servConfRepo.findById(serviceConfigId).orElse(null);
-	    try {
-		servConfRepo.delete(existedServConf);
-	    } catch (Exception e) {
+	    if (existedServConf != null)
 		return ResponseEntity.badRequest().body("Not found to delete !");
-	    }
+	    servConfRepo.delete(existedServConf);
 	    return ResponseEntity.ok("Deleted Successfully");
 	}
 	

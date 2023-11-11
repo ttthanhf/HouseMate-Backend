@@ -41,13 +41,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     @Query(value = "SELECT COALESCE(SUM(s.quantityRetrieve), 0) FROM Schedule s WHERE s.userUsageId = :userUsageId")
     int getTotalQuantityRetrieveByUserUsageId(@Param("userUsageId") int userUsageId);
 
-//    @Query("SELECT s FROM Schedule s WHERE s.staffId = :staffId AND (s.startDate <= :endDate AND s.endDate >= :startDate) AND s.status NOT LIKE '%CANCEL%'")
-//    List<Schedule> findDuplicatedHourlySchedule(@Param("staffId") int staffId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
-
     @Query("SELECT s FROM Schedule s WHERE s.staffId = :staffId AND s.status NOT LIKE '%CANCEL%'")
     List<Schedule> findAllCurrentTaskByStaffId(@Param("staffId") int staffId);
-    
-    
+
     List<Schedule> getByStaffId(int staffId);
 
     @Transactional
@@ -57,8 +53,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 
     @Transactional
     @Modifying
-    @Query("UPDATE Schedule s SET s.status = 'CANCEL', s.quantityRetrieve = 0 " +
-            "WHERE s.scheduleId >= :scheduleId AND s.parentScheduleId = :parentScheduleId")
+    @Query("UPDATE Schedule s SET s.status = 'CANCEL', s.quantityRetrieve = 0 "
+	    + "WHERE s.scheduleId >= :scheduleId AND s.parentScheduleId = :parentScheduleId")
     void cancelThisAndFollowingSchedule(@Param("scheduleId") int scheduleId, @Param("scheduleId") int parentScheduleId);
 
     @Transactional
@@ -66,27 +62,27 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 
     @Modifying
     @Transactional
-    @Query("UPDATE Schedule s SET s.parentScheduleId = :scheduleId + 1 " +
-            "WHERE s.scheduleId <> :scheduleId AND s.parentScheduleId = :scheduleId")
+    @Query("UPDATE Schedule s SET s.parentScheduleId = :scheduleId + 1 "
+	    + "WHERE s.scheduleId <> :scheduleId AND s.parentScheduleId = :scheduleId")
     void updateChildrenSchedule(@Param("scheduleId") int scheduleId);
-    
+
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.customerId = :customerId")
     int countAllScheduleByUserId(@Param("customerId") int customerId);
 
     int countByCustomerId(int customerId);
 
-    @Query("SELECT new housemate.responses.ReportRes(s.serviceId, '', COALESCE(SUM(s.quantityRetrieve), 0), '') FROM Schedule s " +
-            "WHERE s.customerId = :customerId AND s.endDate >= :startDate AND s.endDate < :endDate AND s.status = 'DONE' " +
-            "GROUP BY s.serviceId")
+    @Query("SELECT new housemate.responses.ReportRes(s.serviceId, '', COALESCE(SUM(s.quantityRetrieve), 0), '') FROM Schedule s "
+	    + "WHERE s.customerId = :customerId AND s.endDate >= :startDate AND s.endDate < :endDate AND s.status = 'DONE' "
+	    + "GROUP BY s.serviceId")
     List<ReportRes> getMonthlyReportForCustomer(int customerId, LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query("SELECT new housemate.responses.ReportRes(s.serviceId, '', COALESCE(SUM(s.quantityRetrieve), 0), '') FROM Schedule s " +
-            "WHERE s.staffId = :staffId AND s.endDate >= :startDate AND s.endDate < :endDate AND s.status = 'DONE' " +
-            "GROUP BY s.serviceId")
+    @Query("SELECT new housemate.responses.ReportRes(s.serviceId, '', COALESCE(SUM(s.quantityRetrieve), 0), '') FROM Schedule s "
+	    + "WHERE s.staffId = :staffId AND s.endDate >= :startDate AND s.endDate < :endDate AND s.status = 'DONE' "
+	    + "GROUP BY s.serviceId")
     List<ReportRes> getMonthlyReportForStaff(int staffId, LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query("SELECT new housemate.responses.ReportRes(s.serviceId, '', COALESCE(SUM(s.quantityRetrieve), 0), '') FROM Schedule s " +
-            "WHERE s.staffId = :staffId AND s.status = 'DONE' GROUP BY s.serviceId")
+    @Query("SELECT new housemate.responses.ReportRes(s.serviceId, '', COALESCE(SUM(s.quantityRetrieve), 0), '') FROM Schedule s "
+	    + "WHERE s.staffId = :staffId AND s.status = 'DONE' GROUP BY s.serviceId")
     List<ReportRes> getStaffAchievement(int staffId);
 
     @Query("SELECT s FROM Schedule s WHERE s.customerId = :customerId AND s.status = 'DONE'")
