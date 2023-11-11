@@ -37,7 +37,7 @@ public class TaskController {
 	@Autowired
 	TaskService taskServiceDao;
 	
-	@GetMapping("/tasks-pending-application")
+	@GetMapping
 	@Operation(summary = "Get all tasks are opening for application")
 	public ResponseEntity<?> getAllTaskInPendingApplication(
 			@RequestParam(required = false) Optional<Sort.Direction> directionSort,

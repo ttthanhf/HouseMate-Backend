@@ -26,6 +26,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import housemate.constants.ScheduleStatus;
 import static housemate.constants.ServiceConfiguration.*;
+
+import housemate.constants.Enum.TaskMessType;
 import housemate.constants.Enum.TaskReportType;
 import housemate.constants.Enum.TaskStatus;
 import housemate.constants.ImageType;
@@ -47,7 +49,6 @@ import housemate.repositories.TaskReportRepository;
 import housemate.repositories.TaskReposiotory;
 import housemate.repositories.UserRepository;
 import housemate.responses.TaskRes;
-import housemate.responses.TaskRes.TaskMessType;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 
