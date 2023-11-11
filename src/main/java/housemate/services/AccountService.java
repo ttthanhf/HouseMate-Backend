@@ -1,5 +1,6 @@
 package housemate.services;
 
+import housemate.constants.AccountStatus;
 import housemate.constants.Role;
 import housemate.entities.*;
 import housemate.mappers.AccountMapper;
@@ -52,16 +53,17 @@ public class AccountService {
     @Autowired
     UserUsageRepository userUsageRepository;
 
-    public ResponseEntity<List<UserAccount>> getAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
-    }
-
     public ResponseEntity<UserAccount> getInfo(int userId) {
         UserAccount account = userRepository.findByUserId(userId);
         return ResponseEntity.status(HttpStatus.OK).body(account);
     }
 
-    public ResponseEntity<String> updateInfo(UpdateAccountDTO updateAccountDTO, int userId) {
+    public ResponseEntity<String> updateInfo(HttpServletRequest request, UpdateAccountDTO updateAccountDTO, int userId) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (!role.equals(Role.ADMIN)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        }
+
         // Get account in database
         UserAccount accountDB = userRepository.findByUserId(userId);
 
@@ -72,23 +74,39 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body("Updated successfully!");
     }
 
-    public ResponseEntity<String> delete(int userId) {
+    public ResponseEntity<String> delete(HttpServletRequest request, int userId) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (!role.equals(Role.ADMIN)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        }
+
         // Find account in database
         UserAccount account = userRepository.findByUserId(userId);
         if (account == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cannot find this account!");
         }
 
-        // Delete account
-        userRepository.deleteById(userId);
+        // Change status to INACTIVE
+        account.setAccountStatus(AccountStatus.INACTIVE);
+        userRepository.save(account);
         return ResponseEntity.status(HttpStatus.OK).body("Deleted successfully!");
     }
-    public ResponseEntity<String> changeRole(int userId, Role role) {
-        userRepository.updateRole(userId, role);
+    public ResponseEntity<String> changeRole(HttpServletRequest request, int userId, Role updateRole) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (!role.equals(Role.ADMIN)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        }
+
+        userRepository.updateRole(userId, updateRole);
         return ResponseEntity.status(HttpStatus.OK).body("Changed role successfully!");
     }
 
-    public ResponseEntity<List<CustomerRes>> getAllCustomer() {
+    public ResponseEntity<?> getAllCustomer(HttpServletRequest request) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (!role.equals(Role.ADMIN)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        }
+
         List<CustomerRes> customers = new ArrayList<>();
 
         List<UserAccount> accounts = userRepository.findByRole(Role.CUSTOMER);
@@ -110,7 +128,12 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body(customers);
     }
 
-    public ResponseEntity<List<StaffRes>> getAllStaff() {
+    public ResponseEntity<?> getAllStaff(HttpServletRequest request) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (!role.equals(Role.ADMIN)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        }
+
         List<StaffRes> staffs = new ArrayList<>();
 
         List<UserAccount> accounts = userRepository.findByRole(Role.STAFF);
@@ -133,17 +156,17 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body(staffs);
     }
 
-    public ResponseEntity<List<UserAccount>> getAllAdmin() {
-        List<UserAccount> staffs = userRepository.findByRole(Role.ADMIN);
-        return ResponseEntity.status(HttpStatus.OK).body(staffs);
-    }
-
     public ResponseEntity<UserAccount> getCurrentUser(HttpServletRequest request) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         return getInfo(userId);
     }
 
-    public ResponseEntity<String> createStaffAccount(CreateAccountDTO accountDTO) {
+    public ResponseEntity<String> createStaffAccount(HttpServletRequest request, CreateAccountDTO accountDTO) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (!role.equals(Role.ADMIN)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        }
+
         // Check age > 18
         if (LocalDate.now().minusYears(18).isBefore(accountDTO.getDateOfBirth())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Age must be larger than 18!");
@@ -164,7 +187,12 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body("Create staff successfully!");
     }
 
-    public ResponseEntity<?> getCustomerDetail(int customerId, String start, String end) {
+    public ResponseEntity<?> getCustomerDetail(HttpServletRequest request, int customerId, String start, String end) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (!role.equals(Role.ADMIN)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        }
+
         CustomerDetailRes customerDetailRes = new CustomerDetailRes();
 
         // Check date format
@@ -204,7 +232,12 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body(customerDetailRes);
     }
 
-    public ResponseEntity<?> getStaffDetail(int staffId, String start, String end) {
+    public ResponseEntity<?> getStaffDetail(HttpServletRequest request, int staffId, String start, String end) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (!role.equals(Role.ADMIN)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        }
+
         StaffDetailRes staffDetailRes = new StaffDetailRes();
 
         // Check date format
