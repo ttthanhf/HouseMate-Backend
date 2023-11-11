@@ -9,7 +9,6 @@ import housemate.constants.AccountStatus;
 import housemate.constants.Gender;
 import housemate.constants.Role;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import lombok.*;
 
 import java.time.LocalDate;

@@ -87,9 +87,9 @@ public class AnalyticService implements DisposableBean {
     @PostConstruct
     public void init() {
         try {
-            InputStream credStream = getClass().getClassLoader().getResourceAsStream("/" + credentialsFileName); //cho deloy server lấy kèm data
-            if (credStream == null) { //do chạy trong môi trường dev nên sẽ ko lấy được dạng build nên check null để kiểm tra xem dang ở dev hay deloy
-                credStream = new FileInputStream(getClass().getClassLoader().getResource(credentialsFileName).getFile()); //lấy cho dạng dev đọc được file
+            InputStream credStream = getClass().getClassLoader().getResourceAsStream("/" + credentialsFileName); //for deloy server to save json data in target jar
+            if (credStream == null) { //check null when not using jar build to get data in jar build
+                credStream = new FileInputStream(getClass().getClassLoader().getResource(credentialsFileName).getFile()); //get data json for development
             }
             credentials = GoogleCredentials.fromStream(credStream);
             betaAnalyticsDataSettings = BetaAnalyticsDataSettings.newBuilder()

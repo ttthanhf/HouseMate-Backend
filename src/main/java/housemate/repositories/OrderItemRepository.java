@@ -34,7 +34,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
     @Query("SELECT COALESCE(SUM(o.finalPrice), 0) FROM OrderItem o WHERE o.serviceId = :serviceId AND o.createDate BETWEEN :startDate AND :endDate")
     double sumAllPriceOfServiceByServiceIdAndRangeDate(@Param("serviceId") int serviceId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT COUNT(o) FROM OrderItem o WHERE  o.serviceId = :serviceId AND o.createDate BETWEEN :startDate AND :endDate")
+    @Query("SELECT COUNT(o) FROM OrderItem o WHERE o.serviceId = :serviceId AND o.createDate BETWEEN :startDate AND :endDate")
     int countAllServiceTransitionByServiceIdAndRangeDate(@Param("serviceId") int serviceId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
 }
