@@ -257,7 +257,7 @@ public class AnalyticService implements DisposableBean {
                 double totalPriceOfService = orderItemRepository.sumAllPriceOfServiceByServiceIdAndRangeDate(serviceId, startDate.atTime(LocalTime.MIN), endDate.atTime(LocalTime.MAX));
                 analyticServicePageResponse.setTotalPrice(totalPriceOfService);
 
-                int totalNumberOfSold = orderItemRepository.countAllServiceTransition(serviceId);
+                int totalNumberOfSold = orderItemRepository.countAllServiceTransitionByServiceIdAndRangeDate(serviceId, startDate.atTime(LocalTime.MIN), endDate.atTime(LocalTime.MAX));
                 analyticServicePageResponse.setNumberOfSold(totalNumberOfSold);
 
                 listAnalyticServicePageResponse.add(analyticServicePageResponse);
