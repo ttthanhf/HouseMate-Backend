@@ -23,6 +23,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query("SELECT o FROM Order o WHERE o.userId = :userId AND o.isComplete = true")
     List<Order> getAllOrderCompleteByUserId(int userId);
 
-    @Query("SELECT o FROM Order o WHERE o.transactionId = :transactionId AND o.transactionDate = :transactionDate")
-    Order getOrderByTransactionIdAndTransactionDate(String transactionId, String transactionDate);
+    int countByUserId(int userId);
+
+    @Query("SELECT COALESCE(SUM(o.finalPrice), 0) FROM Order o WHERE o.userId = :userId")
+    long sumFinalPriceByUserId(int userId);
 }

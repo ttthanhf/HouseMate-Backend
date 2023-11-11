@@ -47,8 +47,6 @@ public class ServiceNewDTO {
 	@Schema(description = "Description of your service")
 	private String description;
 
-	// TODO: FE not allow user set this sale status, system automatically sets bases
-	// on the salePercent value exists or not
 	@Schema(description = "Default: AVAILABLE If salePrice Exist -> ONSALE")
 	@JsonInclude(value = Include.NON_NULL)
 	private SaleStatus saleStatus;
@@ -62,13 +60,11 @@ public class ServiceNewDTO {
 	@Schema(description = "Is package: true ? false")
 	private Boolean isPackage;
 
-	// TODO: FE constraint to pop up only for creating single service
 	@Schema(example = "[\r\n" + "\"type 1\",\r\n" + "\"type 2\"\r\n"
 			+ "]", description = "how many types this service has")
 	@JsonInclude(value = Include.NON_NULL)
 	private Set<String> typeNameList;
 
-	// TODO: FE constraint to pop up only for creating single service
 	@Schema(example = "{\r\n" + "\"1\": 0,\r\n" + "\"2\": 0,\r\n" + "\"3\": 0\r\n"
 			+ "}", description = "Choose single services from single service list and set the quantity")
 	@JsonInclude(value = Include.NON_NULL)
