@@ -527,8 +527,8 @@ public class ScheduleService {
         }
 
         // Check if schedule is on task
-        if (schedule.isOnTask() || schedule.getStaffId() != 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch này đã được lên danh sách nhận việc hoặc đã có nhân việc nhận công việc này!");
+        if (schedule.getStaffId() != 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Không thể hủy lịch vì đã có nhân việc nhận công việc này!");
         }
 
         // Check if status is invalid or not
