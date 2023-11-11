@@ -6,6 +6,7 @@ package housemate.repositories;
 
 import housemate.entities.OrderItem;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -29,5 +30,11 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
     List<OrderItem> getAllOrderItemByOrderId(@Param("orderId") int orderId);
 
     OrderItem findById(int orderItem);
+
+    @Query("SELECT COALESCE(SUM(o.finalPrice), 0) FROM OrderItem o WHERE o.serviceId = :serviceId AND o.createDate BETWEEN :startDate AND :endDate")
+    double sumAllPriceOfServiceByServiceIdAndRangeDate(@Param("serviceId") int serviceId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(o) FROM OrderItem o WHERE o.serviceId = :serviceId AND o.createDate BETWEEN :startDate AND :endDate")
+    int countAllServiceTransitionByServiceIdAndRangeDate(@Param("serviceId") int serviceId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
 }
