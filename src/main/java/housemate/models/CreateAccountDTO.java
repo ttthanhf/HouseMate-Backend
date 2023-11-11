@@ -1,8 +1,7 @@
 package housemate.models;
 
-import housemate.constants.Gender;
 import housemate.constants.RegexConstants;
-import housemate.constants.Role;
+import housemate.constants.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
@@ -17,7 +16,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class UpdateAccountDTO {
+public class CreateAccountDTO {
     @NotNull(message = "Full name cannot be null")
     @NotEmpty(message = "Full name cannot be empty")
     private String fullName;
@@ -28,12 +27,9 @@ public class UpdateAccountDTO {
     @NotNull(message = "Gender cannot be null")
     private Gender gender;
 
-    @Schema(example = "0866123456", description = "Phone number of an account")
+    @Schema(example = "0987654321", description = "Phone number of an account")
     @Pattern(regexp = RegexConstants.PHONE_NUMBER_REGEX, message = "Invalid phone number format")
-    private String phoneNumber;
-
-    @NotNull(message = "Role cannot be null")
-    private Role role;
+    private String phone;
 
     @NotNull(message = "Identity card cannot be null")
     @Pattern(regexp = RegexConstants.IDENTITY_CARD, message = "Invalid identity card format")

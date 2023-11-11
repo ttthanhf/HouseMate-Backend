@@ -45,4 +45,7 @@ public interface UserRepository extends JpaRepository<UserAccount, Integer> {
     @Query("SELECT u FROM UserAccount u WHERE u.fullName LIKE %:fullName%")
     Page<UserAccount> getAllUserByFullName(@Param("fullName") String fullName, Pageable pageable);
 
+    UserAccount findByAddress(String address);
+
+    UserAccount findByIdentityCard(String identityCard);
 }

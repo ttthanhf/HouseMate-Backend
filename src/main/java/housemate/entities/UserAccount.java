@@ -5,10 +5,15 @@
 package housemate.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import housemate.constants.AccountStatus;
+import housemate.constants.Gender;
 import housemate.constants.Role;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  *
@@ -58,8 +63,31 @@ public class UserAccount {
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
 
+    @Column(name = "proficiency_score")
+    private int proficiencyScore;
+
+    @Column(name = "avg_rating")
+    private int avgRating;
+
+    @Column(name = "account_status")
+    @Enumerated(EnumType.STRING)
+    private AccountStatus accountStatus = AccountStatus.ACTIVE; // Default: active
+
+    @Column(name = "is_banned")
+    private boolean isBanned = false; // Default isBanned is false
+
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "identity_card")
+    private String identityCard;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(name = "gender")
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
 
     public UserAccount(String fullName, String emailAddress, boolean emailValidationStatus, String avatar) {
         this.fullName = fullName;
