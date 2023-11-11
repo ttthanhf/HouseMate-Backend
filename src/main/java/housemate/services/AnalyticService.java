@@ -53,6 +53,8 @@ public class AnalyticService implements DisposableBean {
     @Value("${google.analytic.property-id}")
     private String propertyId;
 
+    private final String credentialsFileName = "credentials.json";
+
     private GoogleCredentials credentials;
     private BetaAnalyticsDataSettings betaAnalyticsDataSettings;
     private BetaAnalyticsDataClient analyticsData;
@@ -78,7 +80,10 @@ public class AnalyticService implements DisposableBean {
     @PostConstruct
     public void init() {
         try {
-            InputStream credStream = getClass().getClassLoader().getResourceAsStream("/credentials.json");
+            InputStream credStream = getClass().getClassLoader().getResourceAsStream("/" + credentialsFileName); //cho deloy server lấy kèm data
+            if (credStream == null) { //do chạy trong môi trường dev nên sẽ ko lấy được dạng build nên check null để kiểm tra xem dang ở dev hay deloy
+                credStream = new FileInputStream(getClass().getClassLoader().getResource(credentialsFileName).getFile()); //lấy cho dạng dev đọc được file
+            }
             credentials = GoogleCredentials.fromStream(credStream);
             betaAnalyticsDataSettings = BetaAnalyticsDataSettings.newBuilder()
                     .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
@@ -121,7 +126,7 @@ public class AnalyticService implements DisposableBean {
                 .addDateRanges(DateRange.newBuilder().setStartDate(dayAgo * 2 + 1 + "daysAgo").setEndDate("today"))
                 .addOrderBys(
                         OrderBy.newBuilder()
-                                .setDimension(OrderBy.DimensionOrderBy.newBuilder().setDimensionName("day"))
+                                .setDimension(OrderBy.DimensionOrderBy.newBuilder().setDimensionName("year"))
                                 .setDesc(false))
                 .addOrderBys(
                         OrderBy.newBuilder()
@@ -129,7 +134,7 @@ public class AnalyticService implements DisposableBean {
                                 .setDesc(false))
                 .addOrderBys(
                         OrderBy.newBuilder()
-                                .setDimension(OrderBy.DimensionOrderBy.newBuilder().setDimensionName("year"))
+                                .setDimension(OrderBy.DimensionOrderBy.newBuilder().setDimensionName("day"))
                                 .setDesc(false))
                 .build();
 
@@ -140,7 +145,7 @@ public class AnalyticService implements DisposableBean {
         analyticUserResponse.setCurrent(new ArrayList<>());
 
         int sizeResponse = response.getRowsList().size();
-        for (int current = 0, before = sizeResponse / 2; current < sizeResponse / 2; current++, before++) {
+        for (int before = 0, current = sizeResponse / 2; before < sizeResponse / 2; current++, before++) {
 
             Row rowCurrent = response.getRowsList().get(current);
 
@@ -187,10 +192,10 @@ public class AnalyticService implements DisposableBean {
             percentTotalActiveUserBefore *= 100;
 
             double percentTotalNewUserBefore;
-            if (totalActiveUserCurrent != 0) {
+            if (totalNewUserCurrent != 0) {
                 percentTotalNewUserBefore = ((double) (totalNewUserBefore - totalNewUserCurrent) / totalNewUserCurrent);
             } else {
-                percentTotalNewUserBefore = totalActiveUserBefore;
+                percentTotalNewUserBefore = totalNewUserBefore;
             }
             percentTotalNewUserBefore *= 100;
 
@@ -273,7 +278,7 @@ public class AnalyticService implements DisposableBean {
 
         Map<String, Object> res = new HashMap<>();
         res.put("data", pagedData);
-        res.put("totalPages", Math.ceil((double) analyticServicePageResponseSize / size));
+        res.put("totalPage", Math.ceil((double) analyticServicePageResponseSize / size));
         return ResponseEntity.status(HttpStatus.OK).body(res);
     }
 
@@ -418,7 +423,7 @@ public class AnalyticService implements DisposableBean {
 
         int size = analyticPageDTO.getSize();
         int page = analyticPageDTO.getPage();
-        PageRequest pageRequest = PageRequest.of(page, size);
+        PageRequest pageRequest = PageRequest.of(page - 1, size);
 
         List<AnalyticCustomerResponse> listAnalyticCustomerResponse = new ArrayList<>();
 
