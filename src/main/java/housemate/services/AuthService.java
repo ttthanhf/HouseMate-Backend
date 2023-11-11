@@ -73,6 +73,10 @@ public class AuthService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't been created");
         }
 
+        if (accountDB.isBanned()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are banned");
+        }
+
         // Check if account logged in with Google
         if (accountDB.getPasswordHash() == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Username or password not found");
@@ -194,6 +198,14 @@ public class AuthService {
         if (userAccount == null) {
             UserAccount newUser = new UserAccount(fullName, email, emailVerified, avatar);
             userAccount = userRepository.save(newUser);
+        }
+
+        if (userAccount.isBanned()) {
+            //Create uri with token for redirect
+            String url = URL_CLIENT + "/" + "?success=false&message=You%20are%20banned";
+            URI uri = URI.create(url);
+
+            return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
         }
 
         //Create jwt payload
