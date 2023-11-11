@@ -69,6 +69,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     @Query("UPDATE Schedule s SET s.parentScheduleId = :scheduleId + 1 " +
             "WHERE s.scheduleId <> :scheduleId AND s.parentScheduleId = :scheduleId")
     void updateChildrenSchedule(@Param("scheduleId") int scheduleId);
+    
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.customerId = :customerId")
+    int countAllScheduleByUserId(@Param("customerId") int customerId);
 
     int countByCustomerId(int customerId);
 
