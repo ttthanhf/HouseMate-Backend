@@ -59,9 +59,13 @@ public class AccountMapper {
 
 	    public UserAccount updateAccount(UserAccount currentAccount, UpdateAccountDTO updatedAccount) {
 	        currentAccount.setFullName(updatedAccount.getFullName());
+            currentAccount.setDateOfBirth(updatedAccount.getDateOfBirth());
+            currentAccount.setGender(updatedAccount.getGender());
 	        currentAccount.setPhoneNumber(updatedAccount.getPhoneNumber());
-	        currentAccount.setEmailAddress(updatedAccount.getEmailAddress());
-	        currentAccount.setEmailAddress(updatedAccount.getEmailAddress());
+            currentAccount.setRole(updatedAccount.getRole());
+	        currentAccount.setIdentityCard(updatedAccount.getIdentityCard());
+	        currentAccount.setEmailAddress(updatedAccount.getEmail());
+            currentAccount.setAddress(updatedAccount.getAddress());
 
 	        return currentAccount;
 	    }
