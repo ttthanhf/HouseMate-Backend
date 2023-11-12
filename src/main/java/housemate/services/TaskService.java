@@ -313,6 +313,7 @@ public class TaskService {
 	if (newSchedule == null)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch không tồn tại");
 	
+
 	TaskRes taskRes = taskBuildupServ.updateTaskOnScheduleChangeTime(scheduleNewTimeWorking);
 	if (taskRes.getMessType().equals(TaskMessType.REJECT_UPDATE_TASK)) {
 	    return ResponseEntity.badRequest().body(taskRes.getMessage());
