@@ -199,8 +199,8 @@ public class AccountService {
         UserAccount account = accountMapper.mapToEntity(accountDTO);
         String hash = bcryptUtil.hashPassword(DEFAULT_STAFF_PASSWORD);
         account.setPasswordHash(hash);
-        userRepository.save(account);
-        return ResponseEntity.status(HttpStatus.OK).body("Tạo tài khoản thành công! Mật khẩu cho tài khoản này là " + DEFAULT_STAFF_PASSWORD);
+        UserAccount accountDb = userRepository.save(account);
+        return ResponseEntity.status(HttpStatus.OK).body(String.valueOf(accountDb.getUserId()));
     }
 
     public ResponseEntity<?> getCustomerDetail(int customerId, String start, String end) {
