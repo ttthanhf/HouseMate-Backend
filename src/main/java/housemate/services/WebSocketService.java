@@ -4,7 +4,7 @@
  */
 package housemate.services;
 
-import housemate.models.WebSocketDTO;
+import housemate.entities.Notification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -19,23 +19,12 @@ public class WebSocketService {
     @Autowired
     private SimpMessagingTemplate template;
 
-    public void sendNotificationToUser(String userId, WebSocketDTO webSocketDTO) {
-        template.convertAndSendToUser(userId, "/queue/notification", webSocketDTO);
+    public void sendNotificationToUser(String userId, Notification notification) {
+        template.convertAndSendToUser(userId, "/queue/notification", notification);
     }
 
-    public void sendNotificationToEveryone(WebSocketDTO webSocketDTO) {
-        template.convertAndSend("/topic/messages", webSocketDTO);
-    }
-
-    public void sendNotification(WebSocketDTO webSocketDTO) {
-        String userId = webSocketDTO.getUserId();
-        if (userId == null || userId.equals("")) {
-            webSocketDTO.setType("New Task");
-            template.convertAndSend("/topic/messages", webSocketDTO);
-        } else {
-            webSocketDTO.setType("Notification for customer");
-            template.convertAndSendToUser(userId, "/queue/notification", webSocketDTO);
-        }
+    public void sendNotificationToEveryone(Notification notification) {
+        template.convertAndSend("/topic/messages", notification);
     }
 
 }
