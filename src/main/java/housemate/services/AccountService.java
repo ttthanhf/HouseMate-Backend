@@ -1,14 +1,17 @@
 package housemate.services;
 
 import housemate.constants.AccountStatus;
+import housemate.constants.ImageType;
 import housemate.constants.Role;
 import housemate.entities.*;
 import housemate.mappers.AccountMapper;
 import housemate.models.CreateAccountDTO;
 import housemate.models.UpdateAccountDTO;
+import housemate.models.responses.MyPurchasedResponse;
 import housemate.repositories.*;
 import housemate.responses.*;
 import housemate.utils.AuthorizationUtil;
+import housemate.utils.BcryptUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,6 +31,7 @@ import java.util.List;
 public class AccountService {
 
     private static final String MONTH_YEAR_FORMAT = "yyyy/MM";
+    private static final String DEFAULT_STAFF_PASSWORD = "Password123";
 
     @Autowired
     UserRepository userRepository;
@@ -52,6 +56,15 @@ public class AccountService {
 
     @Autowired
     UserUsageRepository userUsageRepository;
+
+    @Autowired
+    ImageRepository imageRepository;
+
+    @Autowired
+    PackageServiceItemRepository packageServiceItemRepository;
+
+    @Autowired
+    BcryptUtil bcryptUtil;
 
     public ResponseEntity<UserAccount> getInfo(int userId) {
         UserAccount account = userRepository.findByUserId(userId);
@@ -182,18 +195,41 @@ public class AccountService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This identity card is existed before!");
         }
 
+        // Store to database
         UserAccount account = accountMapper.mapToEntity(accountDTO);
-        userRepository.save(account);
-        return ResponseEntity.status(HttpStatus.OK).body("Create staff successfully!");
+        String hash = bcryptUtil.hashPassword(DEFAULT_STAFF_PASSWORD);
+        account.setPasswordHash(hash);
+        UserAccount accountDb = userRepository.save(account);
+        return ResponseEntity.status(HttpStatus.OK).body(String.valueOf(accountDb.getUserId()));
     }
 
     public ResponseEntity<?> getCustomerDetail(HttpServletRequest request, int customerId, String start, String end) {
         Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
-        if (!role.equals(Role.ADMIN)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        if (role.equals(Role.STAFF)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admin and current customer can get details.");
+        }
+
+        // Check can't view another customer
+        int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        if (role.equals(Role.CUSTOMER) && customerId != currentUserId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can't view another customer");
+        }
+
+        // Only can get detail for role staff
+        UserAccount account = userRepository.findByUserId(customerId);
+        if (!account.getRole().equals(Role.CUSTOMER)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You only can get details for role customer");
         }
 
         CustomerDetailRes customerDetailRes = new CustomerDetailRes();
+
+        // Default sort
+        if (start == null) {
+            start = "1990/01";
+        }
+        if (end == null) {
+            end = "3000/12";
+        }
 
         // Check date format
         final String MONTH_YEAR_FORMAT = "yyyy/MM";
@@ -216,10 +252,63 @@ public class AccountService {
         // Get usage history
         List<Schedule> schedules = scheduleRepository.getHistoryUsage(customerId);
         for (Schedule schedule: schedules) {
+            schedule.setServiceName(schedule.getService().getTitleName());
             UserUsage userUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
             OrderItem orderItem = orderItemRepository.findById(userUsage.getOrderItemId());
+
+            // Get images service
             Service service = serviceRepository.findById(orderItem.getServiceId()).orElse(null);
+            if (service.isPackage()) {
+                List<PackageServiceItem> listPackageServiceItem = packageServiceItemRepository.findAllSingleServiceIdByPackageServiceId(service.getServiceId());
+                for (PackageServiceItem packageServiceItem : listPackageServiceItem) {
+                    Service singleService = serviceRepository.getServiceByServiceId(packageServiceItem.getSingleServiceId());
+                    List<Image> images = imageRepository.findAllByEntityIdAndImageType(singleService.getServiceId(), housemate.constants.ImageType.SERVICE).orElse(List.of());
+                    singleService.setImages(images);
+                }
+            } else {
+                List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), ImageType.SERVICE).orElse(List.of());
+                service.setImages(images);
+            }
+
+            // Add to shedules
             schedule.setService(service);
+        }
+
+        // Get purchase history
+        List<MyPurchasedResponse> purchaseHistory = new ArrayList<>();
+
+        List<Order> listOrder = orderRepository.getAllOrderCompleteByUserId(customerId);
+        for (Order order : listOrder) {
+            List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
+            for (OrderItem orderItem : listOrderItem) {
+
+                List<String> listSingleServiceName = new ArrayList<>();
+
+                MyPurchasedResponse myPurchasedResponse = new MyPurchasedResponse();
+
+                Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
+                if (service.isPackage()) {
+                    List<PackageServiceItem> listPackageServiceItem = packageServiceItemRepository.findAllSingleServiceIdByPackageServiceId(service.getServiceId());
+                    for (PackageServiceItem packageServiceItem : listPackageServiceItem) {
+                        Service singleService = serviceRepository.getServiceByServiceId(packageServiceItem.getSingleServiceId());
+                        List<Image> images = imageRepository.findAllByEntityIdAndImageType(singleService.getServiceId(), housemate.constants.ImageType.SERVICE).orElse(List.of());
+                        singleService.setImages(images);
+                        listSingleServiceName.add(singleService.getTitleName());
+                    }
+                } else {
+                    List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), ImageType.SERVICE).orElse(List.of());
+                    service.setImages(images);
+                    listSingleServiceName.add(service.getTitleName());
+                }
+
+                myPurchasedResponse.setOrderItemId(orderItem.getOrderItemId());
+                myPurchasedResponse.setEndDate(orderItem.getExpireDate());
+                myPurchasedResponse.setStartDate(orderItem.getCreateDate());
+                myPurchasedResponse.setSingleServiceName(listSingleServiceName);
+                myPurchasedResponse.setService(service);
+
+                purchaseHistory.add(myPurchasedResponse);
+            }
         }
 
         // Set to CustomerDetailRes
@@ -228,6 +317,7 @@ public class AccountService {
         customerDetailRes.setMonthlyReport(reports);
         customerDetailRes.setUsageHistory(schedules);
         customerDetailRes.setUserInfo(userRepository.findByUserId(customerId));
+        customerDetailRes.setPurchaseHistory(purchaseHistory);
 
         return ResponseEntity.status(HttpStatus.OK).body(customerDetailRes);
     }
@@ -238,7 +328,21 @@ public class AccountService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
         }
 
+        // Only can get detail for role staff
+        UserAccount account = userRepository.findByUserId(staffId);
+        if (!account.getRole().equals(Role.STAFF)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You only can get details for role staff");
+        }
+
         StaffDetailRes staffDetailRes = new StaffDetailRes();
+
+        // Default sort
+        if (start == null) {
+            start = "1990/01";
+        }
+        if (end == null) {
+            end = "3000/12";
+        }
 
         // Check date format
         if (!isValidFormat(MONTH_YEAR_FORMAT, start) && !isValidFormat(MONTH_YEAR_FORMAT, end)) {
@@ -268,7 +372,7 @@ public class AccountService {
         // Set to StaffDetailRes
         staffDetailRes.setMonthlyReport(reports);
         staffDetailRes.setAchievement(achievements);
-        staffDetailRes.setUserInfo(userRepository.findByUserId(staffId));
+        staffDetailRes.setUserInfo(account);
 
         return ResponseEntity.status(HttpStatus.OK).body(staffDetailRes);
     }
