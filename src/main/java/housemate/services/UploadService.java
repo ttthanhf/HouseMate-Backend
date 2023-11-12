@@ -96,7 +96,7 @@ public class UploadService {
             if (files.length > 1) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Only one image for set avatar");
             }
-            if (uploadDTO.getEntityId() != userId) {
+            if (uploadDTO.getEntityId() != userId && !role.equals(Role.ADMIN.toString())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Entity ID not match with User Id when set avatar");
             }
         }
@@ -157,7 +157,7 @@ public class UploadService {
             s3client.completeMultipartUpload(completeRequest);
 
             if (uploadDTO.getImageType().equals(ImageType.AVATAR)) {
-                UserAccount user = userRepository.findByUserId(userId);
+                UserAccount user = userRepository.findByUserId(uploadDTO.getEntityId());
                 user.setAvatar(domainCDN + imageName);
                 userRepository.save(user);
                 break;

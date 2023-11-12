@@ -1,8 +1,8 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
-    import housemate.constants.DeleteType;
-import housemate.constants.Enum.ServiceConfiguration;
+import housemate.constants.DeleteType;
+import housemate.constants.ServiceConfiguration;
 import housemate.constants.Role;
 import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -42,10 +41,7 @@ public class ScheduleService {
     private final UserRepository userRepository;
     private final OrderItemRepository orderItemRepository;
     private final ServiceConfigRepository serviceConfigRepository;
-    private final int OFFICE_HOURS_START;
-    private final int OFFICE_HOURS_END;
-    private final int FIND_STAFF_HOURS;
-    private final int MINIMUM_RETURN_HOURS;
+    private final TaskService taskService;
 
 
     @Autowired
@@ -58,7 +54,8 @@ public class ScheduleService {
             UserUsageRepository userUsageRepository,
             UserRepository userRepository,
             OrderItemRepository orderItemRepository,
-            ServiceConfigRepository serviceConfigRepository
+            ServiceConfigRepository serviceConfigRepository,
+            TaskService taskService
     ) {
         this.serviceRepository = serviceRepository;
         this.scheduleRepository = scheduleRepository;
@@ -69,10 +66,7 @@ public class ScheduleService {
         this.userRepository = userRepository;
         this.orderItemRepository = orderItemRepository;
         this.serviceConfigRepository = serviceConfigRepository;
-        this.OFFICE_HOURS_START = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_START).getConfigValue());
-        this.OFFICE_HOURS_END = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_END).getConfigValue());
-        this.FIND_STAFF_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.FIND_STAFF_HOURS).getConfigValue());
-        this.MINIMUM_RETURN_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.MINIMUM_RETURN_HOURS).getConfigValue());
+        this.taskService = taskService;
     }
 
     private List<EventRes> getCustomerSchedule(int userId) {
@@ -80,23 +74,19 @@ public class ScheduleService {
         List<Schedule> schedules = scheduleRepository.getByCustomerId(userId);
 
         for (Schedule schedule : schedules) {
-            // Check if schedule is before current date
-            boolean isBeforeCurrentDate = schedule.getEndDate().isBefore(LocalDateTime.now());
-            if (isBeforeCurrentDate) {
-                // TODO: Notification to customer that staff haven't applied
-                schedule.setStatus(ScheduleStatus.CANCEL);
-                scheduleRepository.save(schedule);
-            }
-
             Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
+
             if (service.getGroupType().equals(RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
-                pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
+                pickupEvent.setStart(pickupEvent.getStart());
+                pickupEvent.setEnd(pickupEvent.getStart());
+                pickupEvent.setTitle("[Nhận] " + pickupEvent.getTitle());
                 setStaffInfo(events, schedule, pickupEvent);
 
                 EventRes receivedEvent = scheduleMapper.mapToEventRes(schedule, service);
                 receivedEvent.setStart(receivedEvent.getEnd());
-                receivedEvent.setEnd(receivedEvent.getEnd().plusHours(1));
+                receivedEvent.setEnd(receivedEvent.getEnd());
+                receivedEvent.setTitle("[Trả] " + receivedEvent.getTitle());
                 setStaffInfo(events, schedule, receivedEvent);
             } else {
                 EventRes event = scheduleMapper.mapToEventRes(schedule, service);
@@ -185,7 +175,7 @@ public class ScheduleService {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
-        return validateAndProcessSchedule(schedule, null);
+        return validateAndProcessSchedule(schedule, null, request);
     }
 
     public ResponseEntity<String> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO updateSchedule, int scheduleId) {
@@ -194,25 +184,25 @@ public class ScheduleService {
 
         // Check if schedule ID is not exist
         if (currentSchedule == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find this schedule with schedule ID + " + scheduleId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm lịch này với ID: + " + scheduleId);
         }
 
         // Check if status is allowed or not
         ScheduleStatus status = currentSchedule.getStatus();
         if (status != ScheduleStatus.PROCESSING && status != ScheduleStatus.PENDING) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update schedule!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Không thể cập nhật lịch!");
         }
 
         // Check is valid cycle
         boolean isValidCycle = currentSchedule.getCycle().equals(updateSchedule.getCycle()) || updateSchedule.getCycle().equals(Cycle.ONLY_ONE_TIME);
         if (!isValidCycle) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can not update with cycle " + updateSchedule.getCycle());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Không thể cập nhật lịch với chu kỳ " + updateSchedule.getCycle());
         }
 
         Cycle oldCycle = currentSchedule.getCycle();
         Schedule newSchedule = scheduleMapper.updateSchedule(currentSchedule, updateSchedule);
         newSchedule.setCustomerId(userId);
-        return validateAndProcessSchedule(newSchedule, oldCycle);
+        return validateAndProcessSchedule(newSchedule, oldCycle, request);
     }
 
     // ======================================== REUSABLE FUNCTIONS ========================================
@@ -227,11 +217,13 @@ public class ScheduleService {
             if (service.getGroupType().equals(RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
                 pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
+                pickupEvent.setTitle("[Nhận] " + pickupEvent.getTitle());
                 setCustomerInfo(events, schedule, pickupEvent);
 
                 EventRes receivedEvent = scheduleMapper.mapToEventRes(schedule, service);
                 receivedEvent.setStart(receivedEvent.getEnd());
                 receivedEvent.setEnd(receivedEvent.getEnd().plusHours(1));
+                receivedEvent.setTitle("[Trả] " + receivedEvent.getTitle());
                 setCustomerInfo(events, schedule, receivedEvent);
             } else {
                 EventRes event = scheduleMapper.mapToEventRes(schedule, service);
@@ -259,22 +251,22 @@ public class ScheduleService {
         events.add(event);
     }
 
-    private ResponseEntity<String> validateAndProcessSchedule(Schedule schedule, Cycle oldCycle) {
+    private ResponseEntity<String> validateAndProcessSchedule(Schedule schedule, Cycle oldCycle, HttpServletRequest request) {
         int serviceId = schedule.getServiceId();
 
         // Check service not exist
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can not find that service ID");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm dịch vụ với ID này");
         }
 
         // Check correct user usage ID
         UserUsage userUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
         if (userUsage == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Please input correct userUsageID");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Vui lòng nhập đúng ID của lượng sử dụng");
         }
         if (userUsage.getServiceId() != serviceId) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User usage ID is not correct from service ID");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("ID của lượng sử dụng không khớp với ID của dịch vụ");
         }
 
         // Validate service ID
@@ -290,25 +282,26 @@ public class ScheduleService {
         // Validate out range of cycle
         if (endDate.isAfter(userUsage.getEndDate())) {
             String formattedDate = userUsage.getEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You have set your date out of range. Please set before " + formattedDate);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn đã đặt lịch ngoài phạm vi của lượng sử dụng. Vui lòng đặt lịch trước " + formattedDate);
         }
 
         // Validate quantity
         int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(schedule.getUserUsageId());
         int forecastQuantity = getMaxQuantity(startDate, userUsage.getEndDate(), schedule.getCycle(), userUsage.getRemaining(), schedule.getQuantityRetrieve(), totalUsed);
         if (forecastQuantity == 0 || forecastQuantity * schedule.getQuantityRetrieve() + totalUsed > userUsage.getRemaining()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are out of quantity. Please choose another User Usage or decrease your quantity");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn đã hết số lượng hoặc không đủ. Vui lòng chọn lượng sử dụng khác hoặc giảm số lượng!");
         }
 
         // Delete schedule
-        if (oldCycle != null) {
+        boolean isCreate = oldCycle == null;
+        if (!isCreate) {
             deleteSchedule(schedule, oldCycle);
         }
 
         // Store to database
-        storeToDatabase(schedule);
+        storeToDatabase(schedule, isCreate, request);
 
-        return ResponseEntity.status(HttpStatus.OK).body("Set schedule successfully! Please wait for our staff to apply this job!");
+        return ResponseEntity.status(HttpStatus.OK).body("Đặt lịch thành công! Vui lòng đợi nhân viên chúng tôi nhận công việc này.");
     }
 
     void deleteSchedule(Schedule newSchedule, Cycle oldCycle) {
@@ -332,7 +325,7 @@ public class ScheduleService {
         // Validate service ID
         Service service = serviceRepository.getServiceByServiceId(serviceId);
         if (service == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this service ID");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm ID của dịch vụ này!");
         }
 
         // Get all service ID that user has purchased
@@ -344,7 +337,7 @@ public class ScheduleService {
 
         // Validate serviceId is in order
         if (isNotContainsServiceId(purchasedServiceIds, serviceId)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("You haven't buy this service");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bạn chưa mua dịch vụ này");
         }
 
         // TODO: Check serviceID is correct type (Waiting feature/services ...)
@@ -357,24 +350,29 @@ public class ScheduleService {
     }
 
     private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, String groupType) {
+        // Config
+        int FIND_STAFF_MINUTES = ServiceConfiguration.FIND_STAFF_HOURS.getNum();
+        int MINIMUM_RETURN_MINUTES = ServiceConfiguration.MINIMUM_RETURN_HOURS.getNum();
+        int OFFICE_HOURS_START = ServiceConfiguration.OFFICE_HOURS_START.getNum();
+
         // Check startDate < endDate
         if (!startDate.isBefore(endDate)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your start date is before end date");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn phải đặt ngày bắt đầu trước ngày kết thúc");
         }
 
         // Validate startDate in office hours
         if (isOutsideOfficeHours(startDate)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your start date in range from 7:00 to 18:00");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn vui lòng đặt ngày bắt đầu trong giờ hành chính (7:00 - 18:00)");
         }
 
         // Validate endDate in office hours
         if (isOutsideOfficeHours(endDate)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set your end date in range from 7:00 to 18:00");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn vui lòng đặt ngày kết thúc trong giờ hành chính (7:00 - 18:00)");
         }
 
         // Check if endDate is outside office hours => startDate in new day
-        int differenceHours = groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_HOURS : 1;
-        LocalDateTime minimumEndDate = LocalDateTime.now().plusHours(FIND_STAFF_HOURS + differenceHours);
+        int minimumWorkingMinutes = groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_MINUTES : 0;
+        LocalDateTime minimumEndDate = LocalDateTime.now().plusMinutes(FIND_STAFF_MINUTES + minimumWorkingMinutes);
         if (isOutsideOfficeHours(minimumEndDate)) {
             // If minimumEndDate started on a next day
             boolean isNextDate = minimumEndDate.getHour() > OFFICE_HOURS_START;
@@ -383,26 +381,26 @@ public class ScheduleService {
             LocalDateTime newDate = minimumEndDate.withHour(7).withMinute(0).withSecond(0).withNano(0).plusDays(isNextDate ? 1 : 0);
 
             if (startDate.isBefore(newDate)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your start date after " + formatDateTime((newDate)));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn vui lòng đặt ngày bắt đầu sau " + formatDateTime((newDate)));
             }
         }
 
         // Validate startDate >= now + FIND_STAFF_HOURS
-        LocalDateTime startWorkingDate = LocalDateTime.now().plusHours(FIND_STAFF_HOURS);
+        LocalDateTime startWorkingDate = LocalDateTime.now().plusMinutes(FIND_STAFF_MINUTES);
         if (startDate.isBefore(startWorkingDate)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your start date after " + formatDateTime(startWorkingDate));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn vui lòng đặt ngày bắt đầu sau " + formatDateTime(startWorkingDate));
         }
 
         // Validate startDate >= now + differenceHours
-        LocalDateTime endWorkingDate = startDate.plusHours(differenceHours);
+        LocalDateTime endWorkingDate = startDate.plusMinutes(minimumWorkingMinutes);
         if (endDate.isBefore(endWorkingDate)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must set your end date after " + formatDateTime(endWorkingDate));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn vui lòng đặt ngày kết thúc sau " + formatDateTime(endWorkingDate));
         }
 
         return null;
     }
 
-    private void storeToDatabase(Schedule schedule) {
+    private void storeToDatabase(Schedule schedule, boolean isCreate, HttpServletRequest request) {
         int customerId = schedule.getCustomerId();
         Cycle cycle = schedule.getCycle();
         int parentScheduleId = 0;
@@ -422,7 +420,11 @@ public class ScheduleService {
 
             // Update schedule parent ID
             newSchedule.setParentScheduleId(newSchedule.getScheduleId());
-            scheduleRepository.save(newSchedule);
+            Schedule scheduleDb = scheduleRepository.save(newSchedule);
+
+            if (isCreate) {
+                taskService.createNewTask(request, scheduleDb.getScheduleId());
+            }
             return;
         }
 
@@ -446,6 +448,10 @@ public class ScheduleService {
             newSchedule.setParentScheduleId(parentScheduleId);
             scheduleRepository.save(newSchedule);
         }
+
+        if (isCreate) {
+            taskService.createNewTask(request, parentScheduleId);
+        }
     }
 
     private int getMaxQuantity(LocalDateTime startDate, LocalDateTime endDate, Cycle cycle, int remaining, int quantity, int totalUsed) {
@@ -464,6 +470,10 @@ public class ScheduleService {
     }
 
     private boolean isOutsideOfficeHours(LocalDateTime date) {
+        // Config
+        int OFFICE_HOURS_START = ServiceConfiguration.OFFICE_HOURS_START.getNum();
+        int OFFICE_HOURS_END = ServiceConfiguration.OFFICE_HOURS_END.getNum();
+
         int hour = date.getHour();
         return hour <= OFFICE_HOURS_START || hour >= OFFICE_HOURS_END;
     }
@@ -475,12 +485,12 @@ public class ScheduleService {
     public ResponseEntity<?> getScheduleById(HttpServletRequest request, int scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
         if (schedule == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this schedule");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm thấy lịch này!");
         }
 
         Service service = serviceRepository.findById(schedule.getServiceId()).orElse(null);
         if (service == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this service");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm thấy dịch vụ này!");
         }
 
         List<ServiceType> typeList = serviceTypeRepository.findAllByServiceId(schedule.getServiceId()).orElse(null);
@@ -488,11 +498,11 @@ public class ScheduleService {
         schedule.setServiceName(service.getTitleName());
         UserUsage currentUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
         if (currentUsage == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this user usage");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm thấy lượng sử dụng này");
         }
         Service usageService = serviceRepository.findById(currentUsage.getServiceId()).orElse(null);
         if (usageService == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find service in user usage");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm thấy dịch vụ trong lượng sử dụng này");
         }
         currentUsage.setService(usageService);
         schedule.setCurrentUsage(currentUsage);
@@ -531,18 +541,18 @@ public class ScheduleService {
         Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
 
         if (schedule == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Can't find this schedule");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm thấy lịch này");
         }
 
         // Check if schedule is on task
-        if (schedule.isOnTask() || schedule.getStaffId() != 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error! This schedule is on task or already have staff");
+        if (schedule.getStaffId() != 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Không thể hủy lịch vì đã có nhân việc nhận công việc này!");
         }
 
         // Check if status is invalid or not
         ScheduleStatus status = schedule.getStatus();
         if (status != ScheduleStatus.PROCESSING && status != ScheduleStatus.PENDING) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You can't cancel this schedule");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không thể hủy lịch này");
         }
 
         // Cancel schedule
@@ -552,8 +562,9 @@ public class ScheduleService {
             scheduleRepository.cancelThisAndFollowingSchedule(scheduleId, schedule.getParentScheduleId());
         }
 
-        // TODO: Fetch API /tasks/cancel/schedule/{schedule-id}
+        // Cancel schedule => Cancel task
+        taskService.cancelTask(request, scheduleId);
 
-        return ResponseEntity.status(HttpStatus.OK).body("Cancel schedule successfully");
+        return ResponseEntity.status(HttpStatus.OK).body("Hủy lịch thành công");
     }
 }

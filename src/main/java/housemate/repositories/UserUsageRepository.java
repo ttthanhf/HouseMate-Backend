@@ -5,6 +5,7 @@
 package housemate.repositories;
 
 import housemate.entities.UserUsage;
+
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;

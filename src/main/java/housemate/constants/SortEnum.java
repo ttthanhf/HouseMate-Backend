@@ -2,12 +2,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package housemate.services;
+package housemate.constants;
 
 /**
  *
  * @author ThanhF
  */
-class ImageType {
-    
+public enum SortEnum {
+    ASC,
+    DESC
 }

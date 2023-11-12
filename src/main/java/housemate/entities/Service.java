@@ -4,9 +4,7 @@
  */
 package housemate.entities;
 
-import java.util.Collections;
 import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import housemate.constants.Enum.SaleStatus;
@@ -72,7 +70,7 @@ public class Service {
 	private int max;
 
 	@Transient
-	private List<Image> images = Collections.EMPTY_LIST;
+	private List<Image> images;
 	
 	@JsonInclude(value = Include.NON_NULL)
 	@Transient
@@ -81,5 +79,4 @@ public class Service {
 	@JsonInclude(value = Include.NON_NULL)
 	@Transient
 	private Integer numberOfComment;
-
 }
