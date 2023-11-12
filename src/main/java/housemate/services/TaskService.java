@@ -383,7 +383,7 @@ public class TaskService {
 	return ResponseEntity.ok().body(approvedTaskView);
     }
 
-    // REPORT TASK
+    //REPORT TASK
     public ResponseEntity<?> reportTaskByStaff(HttpServletRequest request, int taskId, TaskReportType taskReportType, TaskReportNewDTO reportnewDTO) {
 	int userReport = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 	Role userReportRole = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
@@ -428,10 +428,5 @@ public class TaskService {
 	return ResponseEntity.ok().body(taskReport);
     }
 
-    public ResponseEntity<?> getAllStaff() {
-	List<Staff> staffs = staffRepo.findAll();
-	if (staffs.isEmpty())
-	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Hệ thống không tìm thấy nhân viên nào !");
-	return ResponseEntity.ok().body(staffs);
-    }
+ 
 }

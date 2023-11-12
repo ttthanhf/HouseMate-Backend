@@ -1,7 +1,6 @@
 package housemate.services;
 
 import java.text.SimpleDateFormat;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import static housemate.constants.ServiceConfiguration.*;
@@ -115,7 +113,7 @@ public class TaskBuildupService {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
     private static final Map<Integer, List<ScheduledFuture<?>>> eventNotiList = new HashMap<>();
-    
+       
     private static final String notiTitleForTaskStatus = "Trạng thái công việc";
    
     
@@ -155,7 +153,8 @@ public class TaskBuildupService {
 	}
 	return taskList;
     }
-
+    
+    
     public List<Task> createTaskOnUpComingSchedule(Schedule newSchedule) {
 	List<Schedule> schedules = scheduleRepo.findAllByParentScheduleAndInUpComing(ScheduleStatus.PROCESSING, 1, newSchedule.getParentScheduleId());	
 	log.info("IS SCHEDULES EMPTY {} ", schedules.size());
@@ -387,7 +386,7 @@ public class TaskBuildupService {
 	return TaskRes.build(tasksOldAndNew, TaskMessType.OK, "Cập nhật thời gian cho task thành công !");
     }
 
-    // ======APPROVE STAFF======
+    //MARKUP ======APPROVE STAFF======
     @Transactional
     public TaskRes<Task> approveQualifiedStaff(Staff staff, Task task) {
 	TaskRes<Task> taskRes = null;
@@ -520,7 +519,7 @@ public class TaskBuildupService {
 			if (quantity < serviceInUsed.getMin())
 			    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 				    "Điền giá trị số lượng cho loại dịch vụ \"Gửi trả\". Hãy điền giá trị số lượng trong khoảng tối thiểu là "
-					    + serviceInUsed.getMin() + " - " + serviceInUsed.getMax());
+					    + serviceInUsed.getMin() + " - " + serviceInUsed.getMax() + "\nLớn hơn khoảng này bạn sẽ phải trả thêm số tiền cho lượng dư thêm !");
 			if (quantity > serviceInUsed.getMax())
 			   taskReportResult.setQuantityRemainder(quantity - serviceInUsed.getMax());
 			   taskReportResult.setQutyRemainderPayment(taskReportResult.getQuantityRemainder() * serviceInUsed.getFinalPrice());
@@ -557,13 +556,13 @@ public class TaskBuildupService {
 	return TaskRes.build(taskReportResult, TaskMessType.OK, "Báo cáo thành công !");
     }
 
-    // === SETTING NOTIFICATION===
+    //MARKUP === SETTING NOTIFICATION===
     public static void createAndSendNotification(Task task, String title, String mess, String userId) {
 	// TODO: BUILD MESSAGE
 	// TODO SEND NOTIFICATION
     }
     
-   // ===CREATE EVENTS===
+   //MARKUP ===CREATE EVENTS===
     private void createEventSendNotiWhenTimeComing(Task theTask, LocalDateTime timeStartTask) {
 	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone);
 	Instant timeSendNotiInstant = timeStartTaskZone.toInstant();
