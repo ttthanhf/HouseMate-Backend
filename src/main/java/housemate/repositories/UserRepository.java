@@ -42,8 +42,8 @@ public interface UserRepository extends JpaRepository<UserAccount, Integer> {
     @Query(value = "SELECT u FROM UserAccount u WHERE u.role = :role AND u.createdAt BETWEEN :startDate AND :endDate ORDER BY u.createdAt DESC")
     Page<UserAccount> getAllUserByUserRoleAndStartDateToEndDate(@Param("role") Role role, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
 
-    @Query("SELECT u FROM UserAccount u WHERE u.fullName LIKE %:fullName%")
-    Page<UserAccount> getAllUserByFullName(@Param("fullName") String fullName, Pageable pageable);
+    @Query("SELECT u FROM UserAccount u WHERE  u.role = :role AND u.fullName LIKE %:fullName%")
+    Page<UserAccount> getAllUserByUserRoleAndFullName(@Param("role") Role role, @Param("fullName") String fullName, Pageable pageable);
 
     UserAccount findByAddress(String address);
 

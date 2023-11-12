@@ -53,37 +53,37 @@ import java.util.Comparator;
 
 @org.springframework.stereotype.Service
 public class AnalyticService implements DisposableBean {
-    
+
     @Value("${google.analytic.property-id}")
     private String propertyId;
-    
+
     private final String credentialsFileName = "credentials.json";
-    
+
     private GoogleCredentials credentials;
     private BetaAnalyticsDataSettings betaAnalyticsDataSettings;
     private BetaAnalyticsDataClient analyticsData;
-    
+
     @Autowired
     private AuthorizationUtil authorizationUtil;
-    
+
     @Autowired
     private OrderRepository orderRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private ServiceRepository serviceRepository;
-    
+
     @Autowired
     private OrderItemRepository orderItemRepository;
-    
+
     @Autowired
     private ScheduleRepository scheduleRepository;
-    
+
     @Autowired
     private ImageRepository imageRepository;
-    
+
     @PostConstruct
     public void init() {
         try {
@@ -95,13 +95,13 @@ public class AnalyticService implements DisposableBean {
             betaAnalyticsDataSettings = BetaAnalyticsDataSettings.newBuilder()
                     .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
                     .build();
-            
+
             analyticsData = BetaAnalyticsDataClient.create(betaAnalyticsDataSettings);
         } catch (IOException ex) {
             Logger.getLogger(AnalyticService.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     @Override
     public void destroy() {
         if (analyticsData != null) {
@@ -115,14 +115,14 @@ public class AnalyticService implements DisposableBean {
             }
         }
     }
-    
+
     public ResponseEntity<?> getAnalyticUser(HttpServletRequest request, int dayAgo) {
-        
+
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
         }
-        
+
         RunReportRequest reportRequest = RunReportRequest.newBuilder()
                 .setProperty("properties/" + propertyId)
                 .addDimensions(Dimension.newBuilder().setName("day"))
@@ -144,36 +144,36 @@ public class AnalyticService implements DisposableBean {
                                 .setDimension(OrderBy.DimensionOrderBy.newBuilder().setDimensionName("day"))
                                 .setDesc(false))
                 .build();
-        
+
         RunReportResponse response = analyticsData.runReport(reportRequest);
-        
+
         AnalyticUserResponse analyticUserResponse = new AnalyticUserResponse();
         analyticUserResponse.setBefore(new ArrayList<>());
         analyticUserResponse.setCurrent(new ArrayList<>());
-        
+
         int sizeResponse = response.getRowsList().size();
         for (int before = 0, current = sizeResponse / 2; before < sizeResponse / 2; current++, before++) {
-            
+
             Row rowCurrent = response.getRowsList().get(current);
-            
+
             int yearCurrent = Integer.parseInt(rowCurrent.getDimensionValues(2).getValue());
             int monthCurrent = Integer.parseInt(rowCurrent.getDimensionValues(1).getValue());
             int dayCurrent = Integer.parseInt(rowCurrent.getDimensionValues(0).getValue());
             LocalDate dateCurrent = LocalDate.of(yearCurrent, monthCurrent, dayCurrent);
-            
+
             int totalNewUserCurrent = Integer.parseInt(rowCurrent.getMetricValues(1).getValue());
             int totalActiveUserCurrent = Integer.parseInt(rowCurrent.getMetricValues(0).getValue());
-            
+
             Row rowBefore = response.getRowsList().get(before);
-            
+
             int yearBefore = Integer.parseInt(rowBefore.getDimensionValues(2).getValue());
             int monthBefore = Integer.parseInt(rowBefore.getDimensionValues(1).getValue());
             int dayBefore = Integer.parseInt(rowBefore.getDimensionValues(0).getValue());
             LocalDate dateBefore = LocalDate.of(yearBefore, monthBefore, dayBefore);
-            
+
             int totalNewUserBefore = Integer.parseInt(rowBefore.getMetricValues(1).getValue());
             int totalActiveUserBefore = Integer.parseInt(rowBefore.getMetricValues(0).getValue());
-            
+
             double percentTotalNewUserCurrent;
             if (totalNewUserBefore != 0) {
                 percentTotalNewUserCurrent = ((double) (totalNewUserCurrent - totalNewUserBefore) / totalNewUserBefore);
@@ -181,7 +181,7 @@ public class AnalyticService implements DisposableBean {
                 percentTotalNewUserCurrent = totalNewUserCurrent;
             }
             percentTotalNewUserCurrent *= 100;
-            
+
             double percentTotalActiveUserCurrent;
             if (totalNewUserBefore != 0) {
                 percentTotalActiveUserCurrent = ((double) (totalActiveUserCurrent - totalActiveUserBefore) / totalActiveUserBefore);
@@ -189,7 +189,7 @@ public class AnalyticService implements DisposableBean {
                 percentTotalActiveUserCurrent = totalActiveUserCurrent;
             }
             percentTotalActiveUserCurrent *= 100;
-            
+
             double percentTotalActiveUserBefore;
             if (totalActiveUserCurrent != 0) {
                 percentTotalActiveUserBefore = ((double) (totalActiveUserBefore - totalActiveUserCurrent) / totalActiveUserCurrent);
@@ -197,7 +197,7 @@ public class AnalyticService implements DisposableBean {
                 percentTotalActiveUserBefore = totalActiveUserBefore;
             }
             percentTotalActiveUserBefore *= 100;
-            
+
             double percentTotalNewUserBefore;
             if (totalNewUserCurrent != 0) {
                 percentTotalNewUserBefore = ((double) (totalNewUserBefore - totalNewUserCurrent) / totalNewUserCurrent);
@@ -205,7 +205,7 @@ public class AnalyticService implements DisposableBean {
                 percentTotalNewUserBefore = totalNewUserBefore;
             }
             percentTotalNewUserBefore *= 100;
-            
+
             AnalyticUserDetail analyticUserDetailCurrent = analyticUserResponse.new AnalyticUserDetail();
             analyticUserDetailCurrent.setDate(dateCurrent);
             analyticUserDetailCurrent.setTotalNewUser(totalNewUserCurrent);
@@ -213,7 +213,7 @@ public class AnalyticService implements DisposableBean {
             analyticUserDetailCurrent.setPercentNewUser(percentTotalNewUserCurrent);
             analyticUserDetailCurrent.setPercentActiveUser(percentTotalActiveUserCurrent);
             analyticUserResponse.getCurrent().add(analyticUserDetailCurrent);
-            
+
             AnalyticUserDetail analyticUserDetailBefore = analyticUserResponse.new AnalyticUserDetail();
             analyticUserDetailBefore.setDate(dateBefore);
             analyticUserDetailBefore.setTotalNewUser(totalNewUserBefore);
@@ -221,98 +221,98 @@ public class AnalyticService implements DisposableBean {
             analyticUserDetailBefore.setPercentActiveUser(percentTotalActiveUserBefore);
             analyticUserDetailBefore.setPercentNewUser(percentTotalNewUserBefore);
             analyticUserResponse.getBefore().add(analyticUserDetailBefore);
-            
+
         }
         return ResponseEntity.status(HttpStatus.OK).body(analyticUserResponse);
     }
-    
+
     public ResponseEntity<?> getAnalyticServicePage(HttpServletRequest request, AnalyticPageDTO analyticPageDTO) {
-        
+
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
         }
-        
+
         LocalDate startDate = analyticPageDTO.getStartDate();
         LocalDate endDate = analyticPageDTO.getEndDate();
         if (startDate == null || endDate == null) {
             startDate = LocalDate.now().minusYears(3);
             endDate = LocalDate.now();
         }
-        
+
         int size = analyticPageDTO.getSize();
         int page = analyticPageDTO.getPage();
-        
+
         RunReportRequest reportRequest = RunReportRequest.newBuilder()
                 .setProperty("properties/" + propertyId)
                 .addDimensions(Dimension.newBuilder().setName("pageTitle"))
                 .addMetrics(Metric.newBuilder().setName("eventCount"))
                 .addDateRanges(DateRange.newBuilder().setStartDate(startDate.toString()).setEndDate(endDate.toString()))
                 .build();
-        
+
         RunReportResponse response = analyticsData.runReport(reportRequest);
-        
+
         List<AnalyticServicePageResponse> listAnalyticServicePageResponse = new ArrayList<>();
         for (Row row : response.getRowsList()) {
             if (row.getDimensionValues(0).getValue().startsWith("Dịch Vụ | ")) {
                 AnalyticServicePageResponse analyticServicePageResponse = new AnalyticServicePageResponse();
-                
+
                 String serviceName = row.getDimensionValues(0).getValue().split("\\|")[1].trim();
                 analyticServicePageResponse.setServiceName(serviceName);
-                
+
                 int totalView = Integer.parseInt(row.getMetricValues(0).getValue());
                 analyticServicePageResponse.setTotalView(totalView);
-                
+
                 Service service = serviceRepository.getServiceByFullNameService(serviceName);
                 int serviceId = service.getServiceId();
-                
+
                 Image image = imageRepository.findFirstByEntityIdAndImageType(serviceId, ImageType.SERVICE).orElse(null);
                 if (image != null) {
                     analyticServicePageResponse.setImage(image.getImageUrl());
                 }
-                
+
                 double totalPriceOfService = orderItemRepository.sumAllPriceOfServiceByServiceIdAndRangeDate(serviceId, startDate.atTime(LocalTime.MIN), endDate.atTime(LocalTime.MAX));
                 analyticServicePageResponse.setTotalPrice(totalPriceOfService);
-                
+
                 int totalNumberOfSold = orderItemRepository.countAllServiceTransitionByServiceIdAndRangeDate(serviceId, startDate.atTime(LocalTime.MIN), endDate.atTime(LocalTime.MAX));
                 analyticServicePageResponse.setNumberOfSold(totalNumberOfSold);
-                
+
                 listAnalyticServicePageResponse.add(analyticServicePageResponse);
             }
         }
-        
+
         int analyticServicePageResponseSize = listAnalyticServicePageResponse.size();
         //paging
         int start = (page - 1) * size;
         int end = start + size > analyticServicePageResponseSize ? analyticServicePageResponseSize : start + size;
-        
+
         List<AnalyticServicePageResponse> pagedData;
         try {
             pagedData = listAnalyticServicePageResponse.subList(start, end);
         } catch (Exception ex) {
             pagedData = new ArrayList<>();
         }
-        
+
         Map<String, Object> res = new HashMap<>();
         res.put("data", pagedData);
         res.put("totalPage", Math.ceil((double) analyticServicePageResponseSize / size));
         return ResponseEntity.status(HttpStatus.OK).body(res);
     }
-    
+
     public ResponseEntity<?> getAnalyticOverview(HttpServletRequest request, int dayAgo) {
-        
+
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
         }
-        
+
         LocalDateTime endDate = LocalDateTime.now();
         LocalDateTime startDate = endDate.minusDays(dayAgo);
         LocalDateTime startDateBefore = startDate.minusDays(dayAgo);
-        
+
         int currentAllTransition = orderRepository.countOrderFromDateInputToDateInput(startDate, endDate);
         int beforeAllTransition = orderRepository.countOrderFromDateInputToDateInput(startDateBefore, startDate);
-        
+
         double percentAllTransition;
         if (beforeAllTransition != 0) {
             percentAllTransition = ((double) (currentAllTransition - beforeAllTransition) / beforeAllTransition);
@@ -320,10 +320,10 @@ public class AnalyticService implements DisposableBean {
             percentAllTransition = currentAllTransition;
         }
         percentAllTransition *= 100;
-        
+
         double currentAllOrderPrice = orderRepository.sumOrderPriceFromDateInputToDateInput(startDate, endDate);
         double beforeAllOrderPrice = orderRepository.sumOrderPriceFromDateInputToDateInput(startDateBefore, startDate);
-        
+
         double percentAllOrderPrice;
         if (beforeAllOrderPrice != 0) {
             percentAllOrderPrice = ((double) (currentAllOrderPrice - beforeAllOrderPrice) / beforeAllOrderPrice);
@@ -331,18 +331,18 @@ public class AnalyticService implements DisposableBean {
             percentAllOrderPrice = currentAllOrderPrice;
         }
         percentAllOrderPrice *= 100;
-        
+
         int totalCustomer = userRepository.countAllUser();
-        
+
         RunReportRequest reportRequest = RunReportRequest.newBuilder()
                 .setProperty("properties/" + propertyId)
                 .addMetrics(Metric.newBuilder().setName("newUsers"))
                 .addDateRanges(DateRange.newBuilder().setStartDate(startDate.toLocalDate().toString()).setEndDate(endDate.toLocalDate().toString()))
                 .addDateRanges(DateRange.newBuilder().setStartDate(startDateBefore.toLocalDate().toString()).setEndDate(startDate.toLocalDate().toString()))
                 .build();
-        
+
         RunReportResponse response = analyticsData.runReport(reportRequest);
-        
+
         int currentAllNewGuest = Integer.parseInt(response.getRowsList().get(1).getMetricValues(0).getValue());
         int beforeAllNewGuest = Integer.parseInt(response.getRowsList().get(0).getMetricValues(0).getValue());
         double percentAllNewGuest;
@@ -352,7 +352,7 @@ public class AnalyticService implements DisposableBean {
             percentAllNewGuest = currentAllNewGuest;
         }
         percentAllNewGuest *= 100;
-        
+
         AnalyticOverviewResponse analyticOverviewResponse = new AnalyticOverviewResponse();
         analyticOverviewResponse.setBeforeAllOrderPrice(beforeAllOrderPrice);
         analyticOverviewResponse.setBeforeAllTransition(beforeAllTransition);
@@ -364,34 +364,34 @@ public class AnalyticService implements DisposableBean {
         analyticOverviewResponse.setCurrentAllNewGuest(currentAllNewGuest);
         analyticOverviewResponse.setBeforeAllNewGuest(beforeAllNewGuest);
         analyticOverviewResponse.setPercentAllNewGuest(percentAllNewGuest);
-        
+
         return ResponseEntity.status(HttpStatus.OK).body(analyticOverviewResponse);
-        
+
     }
-    
+
     public ResponseEntity<?> getAnalyticRevenue(HttpServletRequest request, int dayAgo) {
-        
+
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
         }
-        
+
         AnalyticRevenueResponse analyticRevenueResponse = new AnalyticRevenueResponse();
         analyticRevenueResponse.setBefore(new ArrayList<>());
         analyticRevenueResponse.setCurrent(new ArrayList<>());
-        
+
         LocalDate currentDate = LocalDate.now();
         for (int currentDayAgo = 0, beforeDayAgo = dayAgo + 1; currentDayAgo <= dayAgo; currentDayAgo++, beforeDayAgo++) {
-            
+
             AllOrderPrice allOrderPriceCurrent = analyticRevenueResponse.new AllOrderPrice();
             AllOrderPrice allOrderPriceBefore = analyticRevenueResponse.new AllOrderPrice();
-            
+
             LocalDate startDateCurrent = currentDate.minusDays(currentDayAgo);
             LocalDate startDateBefore = currentDate.minusDays(beforeDayAgo);
-            
+
             double currentAllOrderPrice = orderRepository.sumOrderPriceFromDateInputToDateInput(startDateCurrent.atStartOfDay(), startDateCurrent.atTime(LocalTime.MAX));
             double beforeAllOrderPrice = orderRepository.sumOrderPriceFromDateInputToDateInput(startDateBefore.atStartOfDay(), startDateBefore.atTime(LocalTime.MAX));
-            
+
             double percentAllOrderPriceCurrent;
             if (beforeAllOrderPrice != 0) {
                 percentAllOrderPriceCurrent = ((double) (currentAllOrderPrice - beforeAllOrderPrice) / beforeAllOrderPrice);
@@ -399,7 +399,7 @@ public class AnalyticService implements DisposableBean {
                 percentAllOrderPriceCurrent = currentAllOrderPrice;
             }
             percentAllOrderPriceCurrent *= 100;
-            
+
             double percentAllOrderPriceBefore;
             if (currentAllOrderPrice != 0) {
                 percentAllOrderPriceBefore = ((double) (beforeAllOrderPrice - currentAllOrderPrice) / currentAllOrderPrice);
@@ -407,86 +407,86 @@ public class AnalyticService implements DisposableBean {
                 percentAllOrderPriceBefore = beforeAllOrderPrice;
             }
             percentAllOrderPriceBefore *= 100;
-            
+
             allOrderPriceCurrent.setDate(startDateCurrent);
             allOrderPriceCurrent.setAllOrderPrice(currentAllOrderPrice);
             allOrderPriceCurrent.setPercentAllOrderPrice(percentAllOrderPriceCurrent);
-            
+
             allOrderPriceBefore.setDate(startDateBefore);
             allOrderPriceBefore.setAllOrderPrice(beforeAllOrderPrice);
             allOrderPriceBefore.setPercentAllOrderPrice(percentAllOrderPriceBefore);
-            
+
             analyticRevenueResponse.getBefore().add(allOrderPriceBefore);
             analyticRevenueResponse.getCurrent().add(allOrderPriceCurrent);
-            
+
         }
-        
+
         return ResponseEntity.status(HttpStatus.OK).body(analyticRevenueResponse);
-        
+
     }
-    
+
     public ResponseEntity<?> getAnalyticCustomer(HttpServletRequest request, AnalyticPageDTO analyticPageDTO, String searchCustomerName, SortEnum sortTotalOrderPrice, SortEnum sortNumberOfOrder) {
         String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
         if (!role.equals(Role.ADMIN.name())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Insufficient authority");
         }
-        
+
         LocalDate startDate = analyticPageDTO.getStartDate();
         LocalDate endDate = analyticPageDTO.getEndDate();
         if (startDate == null || endDate == null) {
             startDate = LocalDate.of(1, 1, 1);
             endDate = LocalDate.now();
         }
-        
+
         int size = analyticPageDTO.getSize();
         int page = analyticPageDTO.getPage();
         PageRequest pageRequest = PageRequest.of(page - 1, size);
-        
+
         List<AnalyticCustomerResponse> listAnalyticCustomerResponse = new ArrayList<>();
-        
+
         List<UserAccount> listCustomer;
         Page<UserAccount> paginatedListCustomer;
         if (searchCustomerName == null) {
             paginatedListCustomer = userRepository.getAllUserByUserRoleAndStartDateToEndDate(Role.CUSTOMER, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX), pageRequest);
         } else {
-            paginatedListCustomer = userRepository.getAllUserByFullName(searchCustomerName, pageRequest);
+            paginatedListCustomer = userRepository.getAllUserByUserRoleAndFullName(Role.CUSTOMER, searchCustomerName, pageRequest);
         }
         listCustomer = paginatedListCustomer.getContent();
-        
+
         for (UserAccount customer : listCustomer) {
-            
+
             AnalyticCustomerResponse analyticCustomerResponse = new AnalyticCustomerResponse();
             analyticCustomerResponse.setUserName(customer.getFullName());
             analyticCustomerResponse.setDate(customer.getCreatedAt().toLocalDate());
             analyticCustomerResponse.setAvatar(customer.getAvatar());
             analyticCustomerResponse.setAccountStatus(customer.getAccountStatus());
-            
+
             int customerId = customer.getUserId();
             analyticCustomerResponse.setUserId(customerId);
-            
+
             int numberOfSchedule = scheduleRepository.countAllScheduleByUserId(customerId);
             analyticCustomerResponse.setNumberOfSchedule(numberOfSchedule);
-            
+
             double totalOrderPrice = 0;
-            
+
             List<Order> listOrder = orderRepository.getAllOrderCompleteByUserId(customerId);
             for (Order order : listOrder) {
                 totalOrderPrice += order.getFinalPrice();
             }
             analyticCustomerResponse.setAmountSpent(totalOrderPrice);
             analyticCustomerResponse.setNumberOfOrder(listOrder.size());
-            
+
             listAnalyticCustomerResponse.add(analyticCustomerResponse);
-            
+
         }
-        
+
         if (sortTotalOrderPrice != null) {
             if (sortTotalOrderPrice.equals(SortEnum.ASC)) {
                 Collections.sort(listAnalyticCustomerResponse, Comparator.comparingDouble(AnalyticCustomerResponse::getAmountSpent));
             } else {
                 Collections.sort(listAnalyticCustomerResponse, Comparator.comparingDouble(AnalyticCustomerResponse::getAmountSpent).reversed());
             }
-            
+
         } else if (sortNumberOfOrder != null) {
             if (sortNumberOfOrder.equals(SortEnum.ASC)) {
                 Collections.sort(listAnalyticCustomerResponse, Comparator.comparingInt(AnalyticCustomerResponse::getNumberOfOrder));
