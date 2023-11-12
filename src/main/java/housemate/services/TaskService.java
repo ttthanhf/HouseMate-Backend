@@ -255,7 +255,7 @@ public class TaskService {
 	Customer customer = customerRepo.findById(userCancel.getUserId()).orElse(null);
 	LocalDateTime timeStartOfScheduleToBeCancel = scheduleToBeCancelled.getStartDate();
 	LocalDateTime timeNow = LocalDateTime.now(dateTimeZone);
-	long hours = ChronoUnit.HOURS.between(timeNow, timeStartOfScheduleToBeCancel);
+	long hoursFrMinutes = ChronoUnit.MINUTES.between(timeNow, timeStartOfScheduleToBeCancel);
 
 	if (role.equals(Role.CUSTOMER) || role.equals(Role.ADMIN)) {
 	    if (userIdRequestCancel != scheduleToBeCancelled.getCustomerId())
@@ -278,7 +278,7 @@ public class TaskService {
 		    "Khách hàng " + customer.getCustomerInfo().getFullName() + " đã hủy công việc !");
 	    if (taskToBeCancelled == null)
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Có lỗi xảy ra ! Hủy lịch thất bại !");
-	    if (hours < DURATION_HOURS_CUSTOMER_SHOULD_NOT_CANCEL_TASK.getNum()) {
+	    if (hoursFrMinutes < DURATION_HOURS_CUSTOMER_SHOULD_NOT_CANCEL_TASK.getNum()) {
 		if (taskToBeCancelled.getStaff() != null) {
 		    int subtract = customer.getProfiencyScore() - MINUS_POINTS_FOR_CUSTOMER_CANCEL_TASK.getNum();
 		    customer.setProfiencyScore(subtract < 0 ? 0 : subtract);
@@ -295,7 +295,7 @@ public class TaskService {
 		    "The staff has cancelled the task !");
 	    if (taskToBeCancelled == null)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Có lỗi xảy ra ! Hủy lịch thất bại !");
-	    if (hours < DURATION_HOURS_STAFF_SHOULD_NOT_CANCEL_TASK.getNum()) {
+	    if (hoursFrMinutes < DURATION_HOURS_STAFF_SHOULD_NOT_CANCEL_TASK.getNum()) {
 		Staff staff = staffRepo.findById(userCancel.getUserId()).get();
 		int subtract = staff.getProfiencyScore() - MINUS_POINTS_FOR_STAFF_CANCEL_TASK.getNum();
 		staff.setProfiencyScore(subtract < 0 ? 0 : subtract);
@@ -328,10 +328,7 @@ public class TaskService {
 
 	Map<String, Task> tasksOldAndNew = (Map<String, Task>) taskRes.getObject();
 	Task newTask = tasksOldAndNew.get("newTask");
-	if (newTask != null) {
-	    // TODO: SEND ASYNC NOTIFICATION EVENT - RECEIVER: ALL STAFF FOR NEW TASK OF NEW
-	    // SCHEDULE
-	}
+	
 	return ResponseEntity.ok().body(newTask);
     }
 
@@ -369,10 +366,10 @@ public class TaskService {
 	
 	LocalDateTime timeNow = LocalDateTime.now(dateTimeZone);
 	LocalDateTime timeStartWorking = task.getSchedule().getStartDate();
-	long hoursDiff = ChronoUnit.HOURS.between(timeNow, timeStartWorking);
+	long hoursDiffFrMinutes = ChronoUnit.MINUTES.between(timeNow, timeStartWorking);
 	
 	if (staff.getProfiencyScore() < BAD_STAFF_PROFICIENT_SCORE.getNum()
-		&& hoursDiff > DURATION_HOURS_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY.getNum())
+		&& hoursDiffFrMinutes > DURATION_HOURS_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY.getNum())
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
 		    "Bạn không đủ điểm uy tín để ứng tuyển ! Hãy quay lại ứng tuyển trong khoảng thời gian trước lịch làm việc này  "
 			    + DURATION_HOURS_ALLOW_BAD_STAFF_PROFICENT_SCORE_APPLY.getNum() + " tiếng !");

@@ -1,6 +1,7 @@
 package housemate.services;
 
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -9,7 +10,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import static housemate.constants.ServiceConfiguration.*;
@@ -114,9 +115,11 @@ public class TaskBuildupService {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
     private static final Map<Integer, List<ScheduledFuture<?>>> eventNotiList = new HashMap<>();
+    
+    private static final String notiTitleForTaskStatus = "Trạng thái công việc";
    
     
-    // ======CREATE TASK======
+    //MARKUP ======CREATE TASK======
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Ho_Chi_Minh") // call this at every 24:00 PM
     public List<Task> createTasksOnUpcomingSchedulesAutoByFixedRate() {
 	List<Task> taskList = new ArrayList<>();
@@ -127,22 +130,25 @@ public class TaskBuildupService {
 	    if (schedules.isEmpty())
 		return List.of();
 	    for (Schedule schedule : schedules) {
-		taskList.add(this.createTask(schedule));
-		
-		//TODO: HAS SET NOTIFICTION
-		 this.createAndSendNotification(
-			 "Công việc mới",
-			 "Ngày " + LocalDate.now().getDayOfMonth(),
-			 String.valueOf(schedule.getCustomerId()));
+		taskList.add(this.createTask(schedule));		 
 	    }
-		
 
-	    // TODO: HAS SET NOTIFICATION
-	    this.createAndSendNotification(
-		    "Công việc mới",
-		    "Ngày " + LocalDate.now().getDayOfMonth(),
-		    Role.STAFF.name());
-	
+	    if (!taskList.isEmpty()) {
+		// TODO: NOTI TO CUSTOMER FOR TASK
+		taskList.stream().forEach(x -> {
+		    TaskBuildupService.createAndSendNotification(
+			    x, // Task
+			    "Chờ tìm nhân viên",
+			    "Đang tìm kiếm nhân viên", // Mess
+			    String.valueOf(x.getSchedule().getCustomerId())); // Receiver
+		});
+		// TODO: NOTI NEW TASK LIST FOR STAFF
+		TaskBuildupService.createAndSendNotification(
+			null,
+			"Việc mới",
+			"Việc mới ngày " + LocalDate.now().getDayOfMonth(),
+			Role.STAFF.name());
+	    }
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    return List.of();
@@ -151,8 +157,8 @@ public class TaskBuildupService {
     }
 
     public List<Task> createTaskOnUpComingSchedule(Schedule newSchedule) {
-	List<Schedule> schedules = scheduleRepo.findAllByParentScheduleAndInUpComing(ScheduleStatus.PROCESSING, 1, newSchedule.getParentScheduleId());
-	log.info("IS SCHEDULE IN CREATE IS NULL {} ", schedules.size());
+	List<Schedule> schedules = scheduleRepo.findAllByParentScheduleAndInUpComing(ScheduleStatus.PROCESSING, 1, newSchedule.getParentScheduleId());	
+	log.info("IS SCHEDULES EMPTY {} ", schedules.size());
 	List<Task> taskList = new ArrayList<>();
 	try {
 		log.debug("SCHEDULES WHEN FIND ALL BY PARENTS - IS EMPTY {} | IS NULL: {}", schedules.isEmpty(), schedules == null);
@@ -161,17 +167,18 @@ public class TaskBuildupService {
 	    for (Schedule theSchedule : schedules) 
 		taskList.add(this.createTask(theSchedule));
 	    
-	    //TODO: HAS SET NOTIFICATION
-	    this.createAndSendNotification(
-		    "Việc mới",
-		    "Ngày " + LocalDate.now().toString(),
-		    Role.STAFF.name());
-	    
+	    if (!taskList.isEmpty()) {
+		// TODO: NOTI NEW TASK LIST FOR STAFF
+		TaskBuildupService.createAndSendNotification(
+			null,
+			"Việc mới",
+			"Việc mới ngày " + LocalDate.now().getDayOfMonth(),
+			Role.STAFF.name());
+	    }
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    return List.of();
 	}
-	
 	return taskList;
     }
 
@@ -196,7 +203,7 @@ public class TaskBuildupService {
 		task.setSchedule(schedule);
 		savedTask = taskRepo.save(task);
 		
-		// CALL TASK EVENTS
+		//MARKUP CALL EVENTS WHEN CREATE TASK
 		if (savedTask != null) {
 		    this.createEventSendNotiWhenTimeComing(task, schedule.getStartDate());
 		    this.createEventSendNotiUpcomingTask(task, schedule.getStartDate(), DURATION_HOURS_SEND_INCOMING_NOTI_BEFORE.getNum());
@@ -210,7 +217,7 @@ public class TaskBuildupService {
 	return savedTask;
     }
 
-    // ======VIEW TASK IN DETAILS======
+    //MARKUP ======VIEW TASK IN DETAILS======
     public TaskViewDTO convertIntoTaskViewDtoFromTask(Task task) {
 	TaskViewDTO taskView = new TaskViewDTO();
 	try {
@@ -266,7 +273,7 @@ public class TaskBuildupService {
 	return taskView;
     }
 
-    // ======CANCEL TASK======
+    //MARKUP ======CANCEL TASK======
     public Task cancelTaskByRole(Role role, Schedule scheduleHasTaskToBeCancelled, String cancelReason) {
 	Task taskToBeCancelled = taskRepo.findExistingTaskForSchedule(scheduleHasTaskToBeCancelled.getScheduleId());
 	log.info("CANCEL THE TASK {}" + taskToBeCancelled);
@@ -275,21 +282,24 @@ public class TaskBuildupService {
 	    case CUSTOMER, ADMIN:
 		taskToBeCancelled = this.cancelTaskByCustomer(scheduleHasTaskToBeCancelled, taskToBeCancelled, Optional.of(cancelReason));
 	    
-	    //TODO: HAS SET NOTIFICATION	
-	    if (taskToBeCancelled != null) {
-		if (taskToBeCancelled.getStaff() != null)
-		    this.createAndSendNotification(
-			    taskToBeCancelled.getSchedule().getServiceName(),
-			    "Khách hàng hủy lịch làm việc ngày " + taskToBeCancelled.getSchedule().getStartDate(),
-			    String.valueOf(taskToBeCancelled.getStaffId()));
+	    //TODO: NOTI CANCEL TO STAFF	
+	    if (taskToBeCancelled != null && taskToBeCancelled.getStaff() != null) {
+		TaskBuildupService.createAndSendNotification(
+			taskToBeCancelled,
+			"Hủy lịch",
+			"Khách hàng hủy lịch làm việc ngày " + dateFormat.format(
+				Date.from(taskToBeCancelled.getSchedule().getStartDate().toInstant(null))),
+			String.valueOf(taskToBeCancelled.getStaffId()));
 	    };
 	    break;
 	    case STAFF:
 		taskToBeCancelled = this.cancelTaskByStaff(scheduleHasTaskToBeCancelled, taskToBeCancelled, Optional.of(cancelReason));
 		
-		// TODO: HAS SET NOTIFICATION
-		if (taskToBeCancelled.getStaff() != null)
-		    this.createAndSendNotification(taskToBeCancelled.getSchedule().getServiceName(),
+		// TODO: NOTI CANCEL TO CUSTOMER
+		if (taskToBeCancelled != null && taskToBeCancelled.getStaff() != null)
+		    TaskBuildupService.createAndSendNotification(
+			    taskToBeCancelled,
+			    "Hủy công việc",
 			    "Nhân viên hủy lịch làm việc, vui lòng chờ nhân viên khác",
 			    String.valueOf(taskToBeCancelled.getSchedule().getCustomerId()));	
 		break;
@@ -308,7 +318,7 @@ public class TaskBuildupService {
 	scheduleHasTaskToBeCancelledByCustomer.setStatus(ScheduleStatus.CANCEL);
 	taskRepo.save(taskToBeCancelled);
 	
-	//SHUTDOWN EVENT COUNT DOWN OF OLD TASK OF OLD SCHEDULE
+	//MARKUP CALL EVENTS WHEN CANCEL TASK
 	this.CancelAllEventsByTaskId(taskToBeCancelled.getTaskId());
 	
 	log.info("CALL CANCEL BY CUSTOMER - EVENT OF TASK {} EXISTs : {}", taskToBeCancelled.getTaskId(), eventNotiList.get(taskToBeCancelled.getTaskId()));
@@ -326,7 +336,7 @@ public class TaskBuildupService {
 	taskRepo.save(taskToBeCancelled);
 	renewTaskFormApplication = this.createTask(scheduleHasTaskToBeCancelledByStaff);
 	
-	//CALL CANCEL EVENTS FOR TASK
+	//MARKUP CALL EVENTS WHEN CANCEL TASK
 	this.CancelAllEventsByTaskId(taskToBeCancelled.getTaskId());
 	
 	log.info("CALL CANCEL BY STAFF - EVENT OF TASK {} EXISTs : {}", taskToBeCancelled.getTaskId(), eventNotiList.get(taskToBeCancelled.getTaskId()));
@@ -334,24 +344,22 @@ public class TaskBuildupService {
 	return renewTaskFormApplication;
     }
 
-    // ======UPDATE TASK TIME WORKING======
+    //MARKUP ======UPDATE TASK TIME WORKING======
     @Transactional
     public TaskRes<Map<String, Task>> updateTaskOnScheduleChangeTime(Schedule scheduleNewTime) {
-	TaskRes taskRes = null;
+	Map<String, Task> tasksOldAndNew = new HashMap<>();
 	LocalDateTime timeNow = LocalDateTime.now(dateTimeZone);
 	LocalDateTime newTimeScheduleStart = scheduleNewTime.getStartDate();
-	long hoursDiff = ChronoUnit.HOURS.between(timeNow, newTimeScheduleStart);
 	long dayDiff = ChronoUnit.DAYS.between(timeNow, newTimeScheduleStart);
-	Map<String, Task> tasksOldAndNew = new HashMap<>();
+	Task oldTask = null;
+	Task newTask = null;
 
 	Task taskToBeChangedTime = taskRepo.findExistingTaskForSchedule(scheduleNewTime.getScheduleId());
 	if (taskToBeChangedTime == null)
-	    return TaskRes.build(tasksOldAndNew, TaskMessType.REJECT_UPDATE_TASK, "Lịch này không có task hoặc task chưa set !");
+	    return TaskRes.build(tasksOldAndNew, TaskMessType.REJECT_UPDATE_TASK, "Lịch này chưa được đăng lên thành công việc!");
 
-	Task oldTask = null;
-	Task newTask = null;
 	try {
-	    oldTask = cancelTaskByRole(Role.CUSTOMER, scheduleNewTime, "Khách hàng đã đổi lịch làm việc!");
+	    oldTask = cancelTaskByRole(Role.CUSTOMER, scheduleNewTime, "Khách hàng đổi lịch làm việc !");
 	    if (oldTask == null) {
 		throw new NullPointerException("Hủy lịch cũ thất bại");
 	    }
@@ -361,13 +369,16 @@ public class TaskBuildupService {
 		scheduleRepo.save(scheduleNewTime); // this will auto update time for oldschedle based on the same id
 		tasksOldAndNew.put("newTask", newTask);
 	    }
+	
+	    // TODO: NOTI CANCEL TASK FOR CHANGE TIME WORKING TO STAFF
 	    if (oldTask.getStaffId() != null) {
-		// TODO: HAS SET NOTIFICATION
-		    this.createAndSendNotification(
-			    oldTask.getSchedule().getServiceName(),
+		    TaskBuildupService.createAndSendNotification(
+			    oldTask,
+			    "Hủy công việc",
 			    "Lich công việc bị hủy do khách hàng đổi giờ làm việc ",
 			    String.valueOf(oldTask.getStaffId()));
 	    }
+	    
 	} catch (Exception e) {
 	    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 	    return TaskRes.build(tasksOldAndNew, TaskMessType.REJECT_UPDATE_TASK,
@@ -391,14 +402,14 @@ public class TaskBuildupService {
 		taskRes = TaskRes.build(task, TaskMessType.OK, "Ứng tuyển thành công !");
 				
 		//Change task status into incoming if the time apply in the range defined before
-		long hours = ChronoUnit.HOURS.between(LocalDateTime.now(dateTimeZone), task.getSchedule().getStartDate());
-		log.info("KHOẢNG THỜI GIAN GIỮA THỜI ĐIỂM HIỆN TẠI VÀ THỜI ĐIỂM LÀM VIỆC {}", hours);
-		if(hours >= 0 && hours <= DURATION_HOURS_SEND_INCOMING_NOTI_BEFORE.getNum()) {
+		long hoursfrMinutes = ChronoUnit.MINUTES.between(LocalDateTime.now(dateTimeZone), task.getSchedule().getStartDate());
+		log.info("KHOẢNG THỜI GIAN GIỮA THỜI ĐIỂM HIỆN TẠI VÀ THỜI ĐIỂM LÀM VIỆC {}", hoursfrMinutes);
+		if(hoursfrMinutes >= 0 && hoursfrMinutes <= DURATION_HOURS_SEND_INCOMING_NOTI_BEFORE.getNum()) {
 		    task.setTaskStatus(TaskStatus.INCOMING);
 		    task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 		}
-		
-		//TODO: CALL EVENTS FOR REPORT TASK
+
+		//MARKUP CALL EVENTS FOR REPORT TASK
 		this.createEventForReportTask(task, task.getSchedule().getStartDate(), task.getSchedule().getEndDate());
 				
 	    } catch (Exception e) {
@@ -417,16 +428,15 @@ public class TaskBuildupService {
 	if (serviceInUsed == null)
 	    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 		    "Loại dịch vụ này không tồn tại ! Từ chối báo cáo cho công việc với loại dịch vụ không tồn tại !");
-
-	TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
-		TaskStatus.valueOf(taskReport.name()));
+	//Check report exists before
+	TaskReport checkReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(), TaskStatus.valueOf(taskReport.name()));
 	if (checkReportExists != null) {
 	    if (reportNewDTO != null && reportNewDTO.getNote() != null)
 		checkReportExists.setNote(reportNewDTO.getNote());
 	    return TaskRes.build(checkReportExists, TaskMessType.OK, "Cập nhật báo cáo công việc thành công");
 	}
 	try {
-	    // set up task report result for return
+	    //Set up task report result for return
 	    taskReportResult.setTaskId(task.getTaskId());
 	    taskReportResult.setReportAt(LocalDateTime.now());
 	    if (reportNewDTO != null && reportNewDTO.getNote() != null)
@@ -447,11 +457,13 @@ public class TaskBuildupService {
 		task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 		taskReportResult.setTaskStatus(task.getTaskStatus());
 
-		// TODO: HAS SET NOTIFICATION
-		this.createAndSendNotification(task.getSchedule().getServiceName(),
-			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đã đến\"",
+		// TODO: NOTI STAFF ARRIVED TO CUSTOMER
+		TaskBuildupService.createAndSendNotification(
+			task,
+			notiTitleForTaskStatus,
+			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đang đến\"",
 			String.valueOf(task.getSchedule().getCustomerId()));
-
+		
 		break;
 	    }
 	    case DOING: {
@@ -459,22 +471,23 @@ public class TaskBuildupService {
 		TaskReport checkArrivedReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
 			TaskStatus.ARRIVED);
 		if (checkArrivedReportExists == null)
-		    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-			    "Báo cáo trạng thái \"Đã Đến\" trước !");
+		    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK, "Báo cáo trạng thái \"Đã Đến\" trước !");
 
 		task.setTaskStatus(TaskStatus.DOING);
 		task.getSchedule().setStatus(ScheduleStatus.INCOMING);
 		taskReportResult.setTaskStatus(task.getTaskStatus());
 
-		// TODO: HAS SET NOTIFICATION
-		this.createAndSendNotification(
-			task.getSchedule().getServiceName(),
+		// TODO: NOTI STAFF DOING TO CUSTOMER
+		TaskBuildupService.createAndSendNotification(
+			task,
+			notiTitleForTaskStatus,
 			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đang làm việc\"",
 			String.valueOf(task.getSchedule().getCustomerId()));
-		// create event for pop up send notification for upload img
+		
 		break;
 	    }
 	    case DONE: {
+		// Chedup befor report Done
 		TaskReport checkArrivedReportExists = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(),
 			TaskStatus.ARRIVED);
 		if (checkArrivedReportExists == null)
@@ -499,16 +512,19 @@ public class TaskBuildupService {
 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 				"Đây là dịch vụ giặt đồ cân kí. Trước khi báo cáo hãy điền giá trị khối lượng cho loại dịch vụ thuộc \"Gửi trả\"");
 		    quantity = reportNewDTO.getQtyOfGroupReturn();
-		    if (!(serviceInUsed.getMin() == 0 && serviceInUsed.getMax() == 0))
-			if (!(quantity >= serviceInUsed.getMin() && quantity <= serviceInUsed.getMax()))
-			    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-				    "Điền giá trị số lượng cho loại dịch vụ \"Gửi trả\". Hãy điền giá trị số lượng trong khoảng tối thiểu và tối đa được đặt ["
-					    + serviceInUsed.getMin() + " - " + serviceInUsed.getMax() + "]");
 		    if (!(quantity <= userUsage.getRemaining() && quantity > 0))
-			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-				"Oops, Số lượng còn lại trong gói bạn chọn chỉ còn " + userUsage.getRemaining()
-					+ ". Hãy điền giá trị số lượng trong khoảng [" + 1 + " - "
-					+ userUsage.getRemaining() + "]");
+		 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
+		 				"Oops, Số lượng còn lại trong gói bạn chọn chỉ còn " + userUsage.getRemaining()
+		 					+ ". Hãy điền giá trị số lượng trong khoảng số lượng mà bạn sở hữu ");
+		    if (!(serviceInUsed.getMin() == 0 && serviceInUsed.getMax() == 0)) {
+			if (quantity < serviceInUsed.getMin())
+			    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
+				    "Điền giá trị số lượng cho loại dịch vụ \"Gửi trả\". Hãy điền giá trị số lượng trong khoảng tối thiểu là "
+					    + serviceInUsed.getMin() + " - " + serviceInUsed.getMax());
+			if (quantity > serviceInUsed.getMax())
+			   taskReportResult.setQuantityRemainder(quantity - serviceInUsed.getMax());
+			   taskReportResult.setQutyRemainderPayment(taskReportResult.getQuantityRemainder() * serviceInUsed.getFinalPrice());
+		    }
 		    task.getSchedule().setQuantityRetrieve(quantity);
 		}
 
@@ -518,20 +534,20 @@ public class TaskBuildupService {
 		int newQuantityRemaining = userUsage.getRemaining() - task.getSchedule().getQuantityRetrieve();
 		userUsage.setRemaining(newQuantityRemaining < 0 ? 0 : newQuantityRemaining);
 
-		// TODO: NOTIFICATION OF DONE
-		this.createAndSendNotification(
-			task.getSchedule().getServiceName(),
+		// TODO: NOTI STAFF DONE TO CUSTOMER
+		TaskBuildupService.createAndSendNotification(
+			task,
+			notiTitleForTaskStatus,
 			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đã hoàn thành công việc\"",
 			String.valueOf(task.getSchedule().getCustomerId()));
-
+		
 		break;
 	    }
 	    }
-	    
 	    taskRepo.save(task);
 	    scheduleRepo.save(task.getSchedule());
 	    taskReportResult = taskReportRepo.save(taskReportResult);
-	    
+ 
 	} catch (Exception e) {
 	    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 	    e.printStackTrace();
@@ -541,8 +557,8 @@ public class TaskBuildupService {
 	return TaskRes.build(taskReportResult, TaskMessType.OK, "Báo cáo thành công !");
     }
 
-    // === SETTING TIME FOR AUTOMATIC NOTIFICATION===
-    public static void createAndSendNotification(String title, String mess, String userId) {
+    // === SETTING NOTIFICATION===
+    public static void createAndSendNotification(Task task, String title, String mess, String userId) {
 	// TODO: BUILD MESSAGE
 	// TODO SEND NOTIFICATION
     }
@@ -564,23 +580,25 @@ public class TaskBuildupService {
 		    scheduleRepo.save(schedule);
 		    taskRepo.save(task);
 
-		  //TODO: HAS SET NOTIFICATION NOT FOUND STAFF
+		  //TODO: NOTI FOR NOT FOUNDED STAFF TO CUSTOMER
 		    TaskBuildupService.createAndSendNotification(
-			    task.getSchedule().getServiceName(),
-			    "Rất tiếc phải hủy lịch làm việc do không tìm thấy nhân viên",
+			    task,
+			    "Hủy lịch",
+			    "Hủy lịch do không tìm thấy nhân viên",
 			    String.valueOf(task.getSchedule().getCustomerId()));
 		    
-		    log.info("TASK {} CLOSED AT {} STAFF IS NULL", task.getTaskId(), dateFormat.format(new Date()));
+		    log.info("Task {} closed at {} staff is null", task.getTaskId(), dateFormat.format(new Date()));
 		}
 		if (task.getStaffId() != null) {
 		    
-		  //TODO: HAS SET NOTIFICATION OF UP COMING TIME FOR STAFF AND CUSTOMER
+		  //TODO: NOTI FOR STAFF IS COMING TO CUSTOMER
 		    TaskBuildupService.createAndSendNotification(
-			    task.getSchedule().getServiceName(),
-			    "Nhân viên đang sắp tới. Mở cửa cho nhân viên khi tới nhé",
+			    task,
+			    notiTitleForTaskStatus,
+			    "Nhân viên đang sắp tới phục vụ bạn. Mở cửa cho nhân viên khi tới nhé",
 			    String.valueOf(task.getSchedule().getCustomerId()));
 		    
-		    log.info("TASK {} CLOSED AT {} STAFF NOT NULL", task.getTaskId(), dateFormat.format(new Date()));
+		    log.info("Task {} upcomging - staff not null - send at {}", task.getTaskId(), dateFormat.format(new Date()));
 		}
 	    }
 	};
@@ -591,12 +609,12 @@ public class TaskBuildupService {
 	}
 	eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 	
-	log.info("TASK {} CREATED EVENT SEND NOTI WHEN IN TIME WORKING at time {} ", theTask.getTaskId(),
-		LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone));
+	log.info("Task {} create event send noti when incoming task - will send at {} ", 
+		theTask.getTaskId(), LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone));
     }
 
-    private void createEventSendNotiUpcomingTask(Task theTask, LocalDateTime timeStartTask, int periodHourBefore) {	
-	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone).minusMinutes(periodHourBefore);
+    private void createEventSendNotiUpcomingTask(Task theTask, LocalDateTime timeStartTask, int periodHourBeforeFrMinutess) {	
+	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone).minusMinutes(periodHourBeforeFrMinutess);
 	Instant timeSendNotiInstant = timeStartTaskZone.toInstant();
 
 	Runnable runnableTask = new Runnable() {
@@ -606,17 +624,14 @@ public class TaskBuildupService {
 		Task task = taskRepo.findById(theTask.getTaskId()).get();
 		
 		if (task.getStaffId() == null) {
-		    //TODO: NOTIFICATION OF UP COMING TASK
+		    //TODO: NOTI TIME WORKING UPCOMING BUT NOT FOUND STAFF TO CUSTOMER
 		    TaskBuildupService.createAndSendNotification(
-			    task.getSchedule().getServiceName(),
+			    task,
+			    notiTitleForTaskStatus,
 			    "Vẫn chưa tìm được nhân viên. Hãy đợi thêm.",
 			    String.valueOf(task.getSchedule().getCustomerId()));
-		    TaskBuildupService.createAndSendNotification(
-			    task.getSchedule().getServiceName(),
-			    "Sắp đến giờ làm việc tại nhà khách hàng " + task.getSchedule().getCustomerId() + " vào lúc " + LocalDateTime.now(dateTimeZone),
-			    String.valueOf(task.getSchedule().getStaffId()));
 		  
-		    log.info("TASK {} UPCOMING NOTI SEND - STAFF IS NULL - SENT AT {}", task.getTaskId(),
+		    log.info("Task {} upcoming noti send - staff null - sent at {}", task.getTaskId(),
 			    dateFormat.format(new Date()));
 		}
 		if (task.getStaffId() != null) {
@@ -626,18 +641,21 @@ public class TaskBuildupService {
 		    scheduleRepo.save(schedule);
 		    taskRepo.save(task);
 		    
-		    //TODO: NOTIFICATION WAITING STAFF INCOMING
+		    //TODO: NOTI TIME WORRKING UPCOMING TO STAFF AND CUSTOMER
 		    TaskBuildupService.createAndSendNotification(
-			    task.getSchedule().getServiceName(),
+			    task,
+			    notiTitleForTaskStatus,
 			    "Nhân viên sắp đến. Hãy mở cửa nhé !",
 			    String.valueOf(task.getSchedule().getCustomerId()));
 		    TaskBuildupService.createAndSendNotification(
-			    task.getSchedule().getServiceName(),
-			    "Sắp đến giờ làm việc tại nhà khách hàng " + task.getSchedule().getCustomerId() + " vào lúc " + LocalDateTime.now(dateTimeZone),
+			    task,
+			    notiTitleForTaskStatus,
+			    "Hãy chuẩn bị đến giờ làm việc tại nhà khách hàng " + task.getSchedule().getCustomerId()
+				    + " vào lúc "
+				    + dateFormat.format(Date.from(timeStartTask.atZone(dateTimeZone).toInstant())),
 			    String.valueOf(task.getSchedule().getStaffId()));
 		    
-		    log.info("TASK {} UPCOMING NOTI SEND - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
-			    dateFormat.format(new Date()));
+		    log.info("Task {}  upcoming noti send - staff not null - sent at {}", task.getTaskId(), dateFormat.format(new Date()));
 		}
 	    }
 	};
@@ -648,17 +666,19 @@ public class TaskBuildupService {
 	}
 	eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 	
-	log.info("TASK{} CREATE EVENT SEND NOTI UPCOMING SHCEDULE {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone) );
+	log.info("Task {} create event send noti for upcoming schedule - will send at {}",
+		theTask.getTaskId(), LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone) );
     }
     
     private void createEventForReportTask(Task theTask, LocalDateTime timeStartWorking, LocalDateTime timeEndWorking) {
-	//1. Allow report task befor timestart is DURATION_MINUTES_TIMES_STAFF_START_REPORT = 15
-	// Duration for report status ARRIVED is DURATION_MINUTES_TIMES_STAFF_START_REPORT + time start working + DURATION_MINUTES_TIMES_STAFF_START_REPORT
-	//Minus proficient score for not report task after time start working a duration DURATION_MINUTES_TIMES_STAFF_START_REPORT mininutes 
-	//Then the staff will be minus a score MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK = 25 by the system event but still allow report this status before end time working
-	//2. Trigger event for cancel task when staff not report for status Doing at the endtime working
-	//3. Trigger event for auto report Done status for the task has already report Doing at the time after end time working is DURATION_HOURS_SYST_AUTO_DONE_TASK hours
-	//4. Trigger event cancel task when staff not report for status DONE after the end of day at 00 PM every day and minus the score MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK
+	/*1. Allow report task befor timestart is DURATION_MINUTES_TIMES_STAFF_START_REPORT = 15
+	 Duration for report status ARRIVED is DURATION_MINUTES_TIMES_STAFF_START_REPORT + time start working + DURATION_MINUTES_TIMES_STAFF_START_REPORT
+	 Minus proficient score for not report task after time start working a duration DURATION_MINUTES_TIMES_STAFF_START_REPORT mininutes 
+	 Then the staff will be minus a score MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK = 25 by the system event but still allow report this status before end time working
+	2. Trigger event for cancel task when staff not report for status Doing at the endtime working
+	3. Trigger event for auto report Done status for the task has already report Doing at the time after end time working is DURATION_HOURS_SYST_AUTO_DONE_TASK hours
+	4. Trigger event cancel task when staff not report for status DONE after the end of day at 00 PM every day and minus the score MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK
+	*/
    	ZonedDateTime timeStartWorkingZone = timeStartWorking.atZone(dateTimeZone);
    	ZonedDateTime timeEndWorkingZone = timeEndWorking.atZone(dateTimeZone);
   	ZonedDateTime todayAtMidnight = LocalDate.now().atTime(LocalTime.MIDNIGHT).atZone(dateTimeZone);
@@ -684,8 +704,15 @@ public class TaskBuildupService {
 			staff.setProfiencyScore(staff.getProfiencyScore() - MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK.getNum());
 			staff.setProfiencyScore(staff.getProfiencyScore() < 0 ? 0 : staff.getProfiencyScore());
 			staffRepo.save(staff);
-			// TODO: SEND NOTI FOR STAFF FOR MINUS THE PROFICIENT SCORE
-			log.info("TASK {} MINUS STAFF FOR NOT REPORT ARRIVED - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
+			
+			// TODO: NOTI MINUS THE PROFICIENT SCORE FOR REPORT ARRIVED TO STAFF
+			 TaskBuildupService.createAndSendNotification(
+				    task,
+				    notiTitleForTaskStatus,
+				    "Trừ " + MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK + " do trễ hẹn báo cáo trạng thái \"Đã đến\"",
+				    String.valueOf(task.getSchedule().getStaffId()));
+			 
+			log.info("Task {} minus score for not report Arrived - Sent at {}", task.getTaskId(),
 				dateFormat.format(new Date()));
 		    }
 		}
@@ -697,8 +724,8 @@ public class TaskBuildupService {
 	    }
 	    eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 
-	    log.info("TASK {} CREATE EVENT MINUS SCORE FOR NOT REPORT ARRIVED AT {} SEND AT {}",theTask.getTaskId(),
-		    timeMinusScoreForNotReportArrived, LocalDate.now());
+	    log.info("Task {} create event minus score for not report arrived - will sent {}",theTask.getTaskId(),
+		    timeMinusScoreForNotReportArrived);
 	}
 
 	//Trigger 2
@@ -717,21 +744,29 @@ public class TaskBuildupService {
 			Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
 			schedule.setStatus(ScheduleStatus.CANCEL);
 			schedule.setNote(schedule.getNote()
-				+ "\nSorry the schedule has been cancelled because your staff not coming to your home !");
+				+ " - Lịch bị hủy do nhân viên không tới nhà !");
 			task.setTaskStatus(TaskStatus.CANCELLED_BY_STAFF);
-			task.setTaskNote("Hủy công việc vì không báo cáo đầy đủ cho trạng thái \"ĐANG LÀM VIỆC\" đúng khung giờ quy định !");
+			task.setTaskNote("Hủy công việc vì không báo cáo đầy đủ cho trạng thái \"Đang làm việc\" đúng khung giờ quy định !");
 			staffRepo.save(staff);
 			taskRepo.save(task);
 			scheduleRepo.save(schedule);
 
-			// TODO: SEND NOTI FOR STAFF FOR CANCEL THE TASK
+			// TODO: NOTI CANCEL TASK FOR NOT REPORT DOING TO STAFF
 			 TaskBuildupService.createAndSendNotification(
-				    task.getSchedule().getServiceName(),
-				    "Hủy lịch do không báo cáo tiến trình đầy đủ ",
+				    task,
+				    "Hủy lịch",
+				    "Hủy lịch do không báo cáo tiến trình \"Đang làm việc\" ",
 				    String.valueOf(task.getSchedule().getStaffId()));
 			
-			log.info("TASK {} CANCEL TASK FOR NOT REPORT DOING - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
-				dateFormat.format(new Date()));
+			 // TODO: NOTI CANCEL SCHEDULE WHEN STAFF NOT REPORT DOING TO CUSTOMER
+			 TaskBuildupService.createAndSendNotification(
+				    task,
+				    "Hủy công việc",
+				    "Hủy lịch do nhân viên không báo cáo tiến trình làm việc.",
+				    String.valueOf(task.getSchedule().getCustomerId()));
+
+			log.info("Task {} has cancelled task for not report DOING - staff not null - at {}",
+				task.getTaskId(), dateFormat.format(new Date()));
 		    }
 		}
 	    };
@@ -742,8 +777,8 @@ public class TaskBuildupService {
 	    }
 	    eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 
-	    log.info("CREATE EVENT CANCELT TASK BY STAFF FOR NOT REPORT DOING AT {} SEND AT {}",
-		    timeCancelTaskForNotReportDoing, LocalDate.now());    
+	    log.info("Task {} create event cancel task for not report doing - send at {}",
+		  theTask.getTaskId(), timeCancelTaskForNotReportDoing);    
 	}
 	// trigger 3
 	{
@@ -762,13 +797,20 @@ public class TaskBuildupService {
 			scheduleRepo.save(schedule);
 			userUsageRepo.save(userUsage);
 			
-			// TODO: SEND NOTI FOR STAFF FOR REPORT STATUS DONE
+			// TODO: NOTI TO STAFF TO REPORT STATUS DONE
 			TaskBuildupService.createAndSendNotification(
-				    task.getSchedule().getServiceName(),
-				    "Hãy báo cáo tiến trình hoàn thành  ",
+				    task,
+				    notiTitleForTaskStatus,
+				    "Vui lòng báo cáo tiến trình hoàn thành. Nếu không bạn sẽ bị hủy công việc do không báo cáo tiến trình đầy đủ",
+				    String.valueOf(task.getSchedule().getStaffId()));
+			// TODO: NOTI REPORT STATUS DONE TO CUSTOMER  
+			TaskBuildupService.createAndSendNotification(
+				    task,
+				    notiTitleForTaskStatus,
+				    "Lịch làm việc đã hoàn thành, vui lòng kiểm tra lại trước 24 giờ đêm nay nếu có khiếu nại !\nSau thời gian này chúng tôi không nhận khiếu nại về báo cáo tiến trình làm việc gì thêm !",
 				    String.valueOf(task.getSchedule().getStaffId()));
 			
-			log.info("TASK {} AUTO DONE FOR NOT REPOR DONE - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
+			log.info("Task {} auto done report - staff not null - sent at {}", task.getTaskId(),
 				dateFormat.format(new Date()));
 		    }
 		}
@@ -780,8 +822,8 @@ public class TaskBuildupService {
 	    }
 	    eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 
-	    log.info("CREATE EVENT AUTO DONE TASK BY STAFF FOR NOT REPORT DOING AT {} SEND AT {}",
-		    eventAutoDoneTask, LocalDate.now());
+	    log.info("Task {} create event auto done - will send at {}",
+		    theTask.getTaskId(), timeAutoDoneTask);
 
 	}
 	// trigger 4
@@ -802,13 +844,15 @@ public class TaskBuildupService {
 			staffRepo.save(staff);
 			taskRepo.save(task);
 						
-			// TODO: SEND NOTI FOR STAFF FOR NOT REPORT STATUS DONE
+			// TODO: NOTI TO STAFF FOR NOT REPORT STATUS DONE
 			TaskBuildupService.createAndSendNotification(
-				    task.getSchedule().getServiceName(),
-				    "Hủy lịch do không hoàn thành báo cáo  ",
+				    task,
+				    "Hủy công việc",
+				    "Hủy công việc do không hoàn thành báo cáo ",
 				    String.valueOf(task.getSchedule().getStaffId()));
-			log.info("TASK {} CANCEL TASK FOR NOT REPORT DONE  - STAFF NOT NULL - SENT AT {}", task.getTaskId(),
-				dateFormat.format(new Date()));
+			
+			log.info("Task {} cancel task for not report done  - staff not null - sent at {}", 
+				task.getTaskId(), dateFormat.format(new Date()));
 		    }
 		}
 	    };
@@ -819,14 +863,14 @@ public class TaskBuildupService {
 	    }
 	    eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 
-	    log.info("TASK {} CREATE EVENT CANCEL TASK BY STAFF FOR NOT REPORT DOING AT {} SEND AT {}",
-		    eventCancelTaskForNotReportDone, LocalDate.now());
+	    log.info("Task {} create event cancel task for not report DONE - will send at {}",
+		    theTask.getTaskId(), timeCancelTaskForNotReportDone);
 	}
 	
-   	log.info("Trigger 1 timeMinusScoreForNotReportArrived call at {}", LocalDateTime.ofInstant(timeCancelTaskForNotReportDone, dateTimeZone));
-   	log.info("Trigger 2 timeCancelTaskForNotReportDoing call at {}", LocalDateTime.ofInstant(timeMinusScoreForNotReportArrived, dateTimeZone));
-   	log.info("Trigger 3 timeAutoDoneTask call at {}", LocalDateTime.ofInstant(timeAutoDoneTask, dateTimeZone) );
-   	log.info("Trigger 4 timeCancelTaskForNotReportDone call at {}", LocalDateTime.ofInstant(timeCancelTaskForNotReportDone, dateTimeZone));
+   	log.info("Task {} Trigger 1 timeMinusScoreForNotReportArrived call at {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeCancelTaskForNotReportDone, dateTimeZone));
+   	log.info("Task {} Trigger 2 timeCancelTaskForNotReportDoing call at {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeMinusScoreForNotReportArrived, dateTimeZone));
+   	log.info("Task {} Trigger 3 timeAutoDoneTask call at {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeAutoDoneTask, dateTimeZone) );
+   	log.info("Task {} Trigger 4 timeCancelTaskForNotReportDone call at {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeCancelTaskForNotReportDone, dateTimeZone));
 
     }
     
