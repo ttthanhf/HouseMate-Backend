@@ -221,11 +221,13 @@ public class ScheduleService {
             if (service.getGroupType().equals(RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
                 pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
+                pickupEvent.setTitle("[Nhận] " + pickupEvent.getTitle());
                 setCustomerInfo(events, schedule, pickupEvent);
 
                 EventRes receivedEvent = scheduleMapper.mapToEventRes(schedule, service);
                 receivedEvent.setStart(receivedEvent.getEnd());
                 receivedEvent.setEnd(receivedEvent.getEnd().plusHours(1));
+                receivedEvent.setTitle("[Trả] " + receivedEvent.getTitle());
                 setCustomerInfo(events, schedule, receivedEvent);
             } else {
                 EventRes event = scheduleMapper.mapToEventRes(schedule, service);
