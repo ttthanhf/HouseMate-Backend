@@ -301,14 +301,13 @@ public class ScheduleService {
         // Store to database
         int scheduleId = storeToDatabase(schedule);
 
-        ResponseEntity<?> taskResponse = isCreate
-                ? taskService.createNewTask(request, scheduleId)
-                : taskService.updateTaskTimeWorking(request, scheduleRepository.getByScheduleId(scheduleId));
-        if (taskResponse.getStatusCode() == HttpStatus.OK) {
-            return ResponseEntity.status(200).body("Đặt lịch thành công! Vui lòng đợi nhân viên chúng tôi nhận công việc này.");
+        if (isCreate) {
+            taskService.createNewTask(request, scheduleId);
         } else {
-            return taskResponse;
+            taskService.updateTaskTimeWorking(request, scheduleRepository.getByScheduleId(scheduleId));
         }
+
+        return ResponseEntity.status(200).body("Đặt lịch thành công! Vui lòng đợi nhân viên chúng tôi nhận công việc này.");
     }
 
     void deleteSchedule(Schedule newSchedule, Cycle oldCycle) {
