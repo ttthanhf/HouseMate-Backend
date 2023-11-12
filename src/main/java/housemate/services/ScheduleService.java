@@ -81,15 +81,17 @@ public class ScheduleService {
 
         for (Schedule schedule : schedules) {
             Service service = serviceRepository.getServiceByServiceId(schedule.getServiceId());
+
             if (service.getGroupType().equals(RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
-                pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
+                pickupEvent.setStart(pickupEvent.getStart());
+                pickupEvent.setEnd(pickupEvent.getStart());
                 pickupEvent.setTitle("[Nhận] " + pickupEvent.getTitle());
                 setStaffInfo(events, schedule, pickupEvent);
 
                 EventRes receivedEvent = scheduleMapper.mapToEventRes(schedule, service);
                 receivedEvent.setStart(receivedEvent.getEnd());
-                receivedEvent.setEnd(receivedEvent.getEnd().plusHours(1));
+                receivedEvent.setEnd(receivedEvent.getEnd());
                 receivedEvent.setTitle("[Trả] " + receivedEvent.getTitle());
                 setStaffInfo(events, schedule, receivedEvent);
             } else {
@@ -369,8 +371,8 @@ public class ScheduleService {
         }
 
         // Check if endDate is outside office hours => startDate in new day
-        int differenceHours = groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_MINUTES : 60;
-        LocalDateTime minimumEndDate = LocalDateTime.now().plusMinutes(FIND_STAFF_MINUTES + differenceHours);
+        int minimumWorkingMinutes = groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_MINUTES : 0;
+        LocalDateTime minimumEndDate = LocalDateTime.now().plusMinutes(FIND_STAFF_MINUTES + minimumWorkingMinutes);
         if (isOutsideOfficeHours(minimumEndDate)) {
             // If minimumEndDate started on a next day
             boolean isNextDate = minimumEndDate.getHour() > OFFICE_HOURS_START;
