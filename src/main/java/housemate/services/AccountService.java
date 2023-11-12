@@ -16,7 +16,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -100,7 +99,7 @@ public class AccountService {
         }
 
         // Change isBanned to true
-        account.setBanned(true);
+        account.setAccountStatus(AccountStatus.BANNED);
         userRepository.save(account);
         return ResponseEntity.status(HttpStatus.OK).body("Deleted successfully!");
     }

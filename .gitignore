@@ -39,3 +39,4 @@ src/main/resources/*.json
 **/src/test/
 nbactions.xml
 nb-configuration.xml
+bin/
