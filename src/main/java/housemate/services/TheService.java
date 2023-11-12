@@ -148,11 +148,9 @@ public class TheService {
 		Page<Service> serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, categoryValue, sortedPage);
 		int maxPages = (int) Math.ceil((double) serviceList.getTotalPages());
 		
-		if (serviceList.isEmpty() || serviceList == null)
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
-		
-		serviceList.forEach(
-				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
+		if (!serviceList.isEmpty())
+		    serviceList.forEach(s -> s.setImages(imgRepo
+			    .findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
 		
 		List<ServiceViewDTO> serviceViewList = new ArrayList<>();
 		for (Service service : serviceList.getContent()) {
@@ -207,11 +205,9 @@ public class TheService {
 		Page<Service> serviceList = serviceRepo.searchFilterAllAvailable(statusValue, keywordValue, ratingValue, categoryValue, sortedPage);
 		int maxPages = (int) Math.ceil((double) serviceList.getTotalPages());
 		
-		if (serviceList.isEmpty() || serviceList == null)
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
-		
-		serviceList.forEach(
-				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
+		if (!serviceList.isEmpty())
+		    serviceList.forEach(s -> s.setImages(imgRepo
+			    .findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
 		
 		return ResponseEntity.ok(serviceList);
 	}
