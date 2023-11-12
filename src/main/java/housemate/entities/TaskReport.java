@@ -43,12 +43,6 @@ public class TaskReport {
 
     @Transient
     List<Image> taskReportImages;
-    
-    @Transient
-    int quantityRemainder;
-    
-    @Transient
-    float qutyRemainderPayment;
 
 }
 

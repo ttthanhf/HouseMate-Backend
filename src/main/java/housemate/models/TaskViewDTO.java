@@ -72,6 +72,7 @@ public class TaskViewDTO {
 		private int serviceId;
 		private String titleName;
 		private String packageName;
+		private int finalPrice;
 		private String unitOfMeasure;
 		private String groupType;
 		private boolean isPackage;
