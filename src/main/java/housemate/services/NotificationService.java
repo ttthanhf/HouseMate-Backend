@@ -1,7 +1,10 @@
 package housemate.services;
 
+import housemate.constants.Role;
 import housemate.entities.Notification;
+import housemate.entities.UserAccount;
 import housemate.repositories.NotificationRepository;
+import housemate.repositories.UserRepository;
 import housemate.utils.AuthorizationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -19,37 +22,65 @@ import org.springframework.http.ResponseEntity;
  * @author ThanhF
  */
 public class NotificationService {
-
+    
     @Autowired
-    AuthorizationUtil authorizationUtil;
-
+    private AuthorizationUtil authorizationUtil;
+    
     @Autowired
-    NotificationRepository notificationRepository;
-
+    private NotificationRepository notificationRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private WebSocketService webSocketService;
+    
     public ResponseEntity<List<Notification>> getAllNotificationByUser(HttpServletRequest request) {
-
+        
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-
+        
         List<Notification> listNotification = notificationRepository.getAllNotificationByUserId(userId);
-
+        
         return ResponseEntity.status(HttpStatus.OK).body(listNotification);
     }
-
-    public Notification createNotification(HttpServletRequest request, String message) {
-
-        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-
-        Notification notification = new Notification();
-        notification.setUserId(userId);
-        notification.setMessage(message);
-        notification.setRead(false);
-        notification.setNotificationCreatedAt(LocalDateTime.now());
-
-        notificationRepository.save(notification);
-
-        return notification;
+    
+    public void createNotification(String userId, String message, String title, int entityId) {
+        
+        if (userId.equals(Role.STAFF.toString())) {
+            List<UserAccount> listStaff = userRepository.findByRole(Role.STAFF);
+            for (UserAccount staff : listStaff) {
+                
+                int aUserId = staff.getUserId();
+                
+                Notification notification = new Notification();
+                notification.setUserId(aUserId);
+                notification.setMessage(message);
+                notification.setTitle(title);
+                notification.setEntityId(entityId);
+                notification.setRead(false);
+                notification.setNotificationCreatedAt(LocalDateTime.now());
+                notification = notificationRepository.save(notification);
+                
+                webSocketService.sendNotificationToUser(String.valueOf(aUserId), notification);
+                
+            }
+        } else {
+            Notification notification = new Notification();
+            notification.setUserId(Integer.parseInt(userId));
+            notification.setMessage(message);
+            notification.setTitle(title);
+            notification.setEntityId(entityId);
+            notification.setRead(false);
+            notification.setNotificationCreatedAt(LocalDateTime.now());
+            notification = notificationRepository.save(notification);
+            
+            notificationRepository.save(notification);
+            
+            webSocketService.sendNotificationToUser(userId, notification);
+        }
+        
     }
-
+    
     public ResponseEntity<String> updateReadStatusNotification(HttpServletRequest request, int notificationId) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Notification notification = notificationRepository.getNotificationByNotificationIdAndUserId(userId, notificationId);

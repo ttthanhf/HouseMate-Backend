@@ -4,11 +4,10 @@
  */
 package housemate.controllers;
 
-import housemate.models.WebSocketDTO;
+import housemate.entities.Notification;
 import housemate.services.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,25 +22,13 @@ public class WebSocketController {
     @Autowired
     private WebSocketService webSocketService;
 
-    @MessageMapping("/chat")
-    @SendTo("/topic/messages")
-    public String send(String message) {
-        return message;
+    @PostMapping("/ws/customer/{userId}")
+    public void sendNotificationToUser(@PathVariable String userId, @RequestBody Notification notification) {
+        webSocketService.sendNotificationToUser(userId, notification);
     }
 
-    @PostMapping("/ws/addNewTask")
-    public void sendNotificationForEveryone(@RequestBody WebSocketDTO webSocketDTO) {
-        webSocketService.sendNotificationToEveryone(webSocketDTO);
+    @PostMapping("/ws/staff")
+    public void sendNotification(@RequestBody Notification notification) {
+        webSocketService.sendNotificationToEveryone(notification);
     }
-
-    @PostMapping("/ws/customer")
-    public void sendNotificationToUser(@RequestBody WebSocketDTO webSocketDTO) {
-        webSocketService.sendNotificationToUser("usertest", webSocketDTO);
-    }
-
-    @PostMapping("/ws/send")
-    public void sendNotification(@RequestBody WebSocketDTO webSocketDTO) {
-        webSocketService.sendNotification(webSocketDTO);
-    }
-
 }
