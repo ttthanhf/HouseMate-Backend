@@ -44,8 +44,8 @@ public class ScheduleService {
     private final ServiceConfigRepository serviceConfigRepository;
     private final int OFFICE_HOURS_START;
     private final int OFFICE_HOURS_END;
-    private final int FIND_STAFF_HOURS;
-    private final int MINIMUM_RETURN_HOURS;
+    private final int FIND_STAFF_MINUTES;
+    private final int MINIMUM_RETURN_MINUTES;
 
 
     @Autowired
@@ -71,8 +71,8 @@ public class ScheduleService {
         this.serviceConfigRepository = serviceConfigRepository;
         this.OFFICE_HOURS_START = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_START).getConfigValue());
         this.OFFICE_HOURS_END = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_END).getConfigValue());
-        this.FIND_STAFF_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.FIND_STAFF_HOURS).getConfigValue());
-        this.MINIMUM_RETURN_HOURS = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.MINIMUM_RETURN_HOURS).getConfigValue());
+        this.FIND_STAFF_MINUTES = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.FIND_STAFF_MINUTES).getConfigValue());
+        this.MINIMUM_RETURN_MINUTES = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.MINIMUM_RETURN_MINUTES).getConfigValue());
     }
 
     private List<EventRes> getCustomerSchedule(int userId) {
@@ -84,11 +84,13 @@ public class ScheduleService {
             if (service.getGroupType().equals(RETURN_SERVICE)) {
                 EventRes pickupEvent = scheduleMapper.mapToEventRes(schedule, service);
                 pickupEvent.setEnd(pickupEvent.getStart().plusHours(1));
+                pickupEvent.setTitle("[Nhận] " + pickupEvent.getTitle());
                 setStaffInfo(events, schedule, pickupEvent);
 
                 EventRes receivedEvent = scheduleMapper.mapToEventRes(schedule, service);
                 receivedEvent.setStart(receivedEvent.getEnd());
                 receivedEvent.setEnd(receivedEvent.getEnd().plusHours(1));
+                receivedEvent.setTitle("[Trả] " + receivedEvent.getTitle());
                 setStaffInfo(events, schedule, receivedEvent);
             } else {
                 EventRes event = scheduleMapper.mapToEventRes(schedule, service);
@@ -367,8 +369,8 @@ public class ScheduleService {
         }
 
         // Check if endDate is outside office hours => startDate in new day
-        int differenceHours = groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_HOURS : 1;
-        LocalDateTime minimumEndDate = LocalDateTime.now().plusHours(FIND_STAFF_HOURS + differenceHours);
+        int differenceHours = groupType.equals(RETURN_SERVICE) ? MINIMUM_RETURN_MINUTES : 60;
+        LocalDateTime minimumEndDate = LocalDateTime.now().plusMinutes(FIND_STAFF_MINUTES + differenceHours);
         if (isOutsideOfficeHours(minimumEndDate)) {
             // If minimumEndDate started on a next day
             boolean isNextDate = minimumEndDate.getHour() > OFFICE_HOURS_START;
@@ -382,13 +384,13 @@ public class ScheduleService {
         }
 
         // Validate startDate >= now + FIND_STAFF_HOURS
-        LocalDateTime startWorkingDate = LocalDateTime.now().plusHours(FIND_STAFF_HOURS);
+        LocalDateTime startWorkingDate = LocalDateTime.now().plusMinutes(FIND_STAFF_MINUTES);
         if (startDate.isBefore(startWorkingDate)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn vui lòng đặt ngày bắt đầu sau " + formatDateTime(startWorkingDate));
         }
 
         // Validate startDate >= now + differenceHours
-        LocalDateTime endWorkingDate = startDate.plusHours(differenceHours);
+        LocalDateTime endWorkingDate = startDate.plusMinutes(differenceHours);
         if (endDate.isBefore(endWorkingDate)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn vui lòng đặt ngày kết thúc sau " + formatDateTime(endWorkingDate));
         }
