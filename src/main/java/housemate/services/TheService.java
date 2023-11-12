@@ -100,8 +100,7 @@ public class TheService {
 	}
 
 	public ResponseEntity<?> getTopsale() {
-	    List<Service> serviceList = List.of();
-	    serviceList = serviceRepo.findTopSale();
+	    List<Service> serviceList  = serviceRepo.findTopSale();
 	    if (!serviceList.isEmpty())
 		serviceList.forEach(s -> s.setImages(
 			imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
