@@ -42,10 +42,6 @@ public class ScheduleService {
     private final OrderItemRepository orderItemRepository;
     private final ServiceConfigRepository serviceConfigRepository;
     private final TaskService taskService;
-    private final int OFFICE_HOURS_START;
-    private final int OFFICE_HOURS_END;
-    private final int FIND_STAFF_MINUTES;
-    private final int MINIMUM_RETURN_MINUTES;
 
 
     @Autowired
@@ -71,10 +67,6 @@ public class ScheduleService {
         this.orderItemRepository = orderItemRepository;
         this.serviceConfigRepository = serviceConfigRepository;
         this.taskService = taskService;
-        this.OFFICE_HOURS_START = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_START).getConfigValue());
-        this.OFFICE_HOURS_END = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_END).getConfigValue());
-        this.FIND_STAFF_MINUTES = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.FIND_STAFF_MINUTES).getConfigValue());
-        this.MINIMUM_RETURN_MINUTES = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.MINIMUM_RETURN_MINUTES).getConfigValue());
     }
 
     private List<EventRes> getCustomerSchedule(int userId) {
@@ -358,6 +350,11 @@ public class ScheduleService {
     }
 
     private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, String groupType) {
+        // Config
+        int FIND_STAFF_MINUTES = ServiceConfiguration.FIND_STAFF_HOURS.getNum();
+        int MINIMUM_RETURN_MINUTES = ServiceConfiguration.MINIMUM_RETURN_HOURS.getNum();
+        int OFFICE_HOURS_START = ServiceConfiguration.OFFICE_HOURS_START.getNum();
+
         // Check startDate < endDate
         if (!startDate.isBefore(endDate)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn phải đặt ngày bắt đầu trước ngày kết thúc");
@@ -395,7 +392,7 @@ public class ScheduleService {
         }
 
         // Validate startDate >= now + differenceHours
-        LocalDateTime endWorkingDate = startDate.plusMinutes(differenceHours);
+        LocalDateTime endWorkingDate = startDate.plusMinutes(minimumWorkingMinutes);
         if (endDate.isBefore(endWorkingDate)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn vui lòng đặt ngày kết thúc sau " + formatDateTime(endWorkingDate));
         }
@@ -473,6 +470,10 @@ public class ScheduleService {
     }
 
     private boolean isOutsideOfficeHours(LocalDateTime date) {
+        // Config
+        int OFFICE_HOURS_START = ServiceConfiguration.OFFICE_HOURS_START.getNum();
+        int OFFICE_HOURS_END = ServiceConfiguration.OFFICE_HOURS_END.getNum();
+
         int hour = date.getHour();
         return hour <= OFFICE_HOURS_START || hour >= OFFICE_HOURS_END;
     }
