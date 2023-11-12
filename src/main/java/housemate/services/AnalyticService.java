@@ -448,7 +448,7 @@ public class AnalyticService implements DisposableBean {
         if (searchCustomerName == null) {
             paginatedListCustomer = userRepository.getAllUserByUserRoleAndStartDateToEndDate(Role.CUSTOMER, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX), pageRequest);
         } else {
-            paginatedListCustomer = userRepository.getAllUserByFullName(searchCustomerName, pageRequest);
+            paginatedListCustomer = userRepository.getAllUserByUserRoleAndFullName(Role.CUSTOMER, searchCustomerName, pageRequest);
         }
         listCustomer = paginatedListCustomer.getContent();
 
@@ -458,6 +458,7 @@ public class AnalyticService implements DisposableBean {
             analyticCustomerResponse.setUserName(customer.getFullName());
             analyticCustomerResponse.setDate(customer.getCreatedAt().toLocalDate());
             analyticCustomerResponse.setAvatar(customer.getAvatar());
+            analyticCustomerResponse.setAccountStatus(customer.getAccountStatus());
 
             int customerId = customer.getUserId();
             analyticCustomerResponse.setUserId(customerId);
@@ -486,7 +487,7 @@ public class AnalyticService implements DisposableBean {
             }
 
         } else if (sortNumberOfOrder != null) {
-            if (sortTotalOrderPrice.equals(SortEnum.ASC)) {
+            if (sortNumberOfOrder.equals(SortEnum.ASC)) {
                 Collections.sort(listAnalyticCustomerResponse, Comparator.comparingInt(AnalyticCustomerResponse::getNumberOfOrder));
             } else {
                 Collections.sort(listAnalyticCustomerResponse, Comparator.comparingInt(AnalyticCustomerResponse::getNumberOfOrder).reversed());
