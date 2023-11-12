@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import housemate.constants.Enum.ServiceConfiguration;
+import housemate.constants.ServiceConfiguration;
 import housemate.models.ServiceConfigNewDTO;
 import housemate.services.ServiceConfigService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,7 +37,7 @@ public class ServiceConfigController {
 		return servConfDao.getAll();
 	}
 	
-	@GetMapping("/{type}")
+	@GetMapping("/type")
 	@Operation(summary = "View the collection of each service config type")
 	public ResponseEntity<?> viewAllByConfigType(@RequestParam ServiceConfiguration configType){
 		return servConfDao.getAllByServiceConfigType(configType);
@@ -46,13 +46,13 @@ public class ServiceConfigController {
 	@PostMapping("/new")
 	@Operation(summary = "Create new config value for the specific config type")
 	public ResponseEntity<?> createNewConfigValue(HttpServletRequest request, @Valid @RequestBody ServiceConfigNewDTO serviceConfigNew){
-		return servConfDao.createNewServConf(request, serviceConfigNew);
+		return servConfDao.createNewServConfig(request, serviceConfigNew);
 	}
 	
 	@PutMapping("/{id}")
 	@Operation(summary = "Update new config value for the specific config type")
 	public ResponseEntity<?> updateConfigValue(HttpServletRequest request, @PathVariable("id") int serviceConfigId, @Valid @RequestBody ServiceConfigNewDTO serviceConfigNew){
-		return servConfDao.updateServConf(request, serviceConfigId, serviceConfigNew);
+		return servConfDao.updateServConfigValue(request, serviceConfigId, serviceConfigNew);
 	}
 	
 	@DeleteMapping("/{id}")
@@ -60,7 +60,4 @@ public class ServiceConfigController {
 	public ResponseEntity<?> deleteConfigValue(HttpServletRequest request, @PathVariable("id") int serviceConfigId){
 		return servConfDao.deleteConfigValue(request, serviceConfigId);
 	}
-	
-	
-
 }

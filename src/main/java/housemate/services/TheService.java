@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import housemate.constants.Role;
-import housemate.constants.Enum.ServiceConfiguration;
+import housemate.constants.ServiceConfiguration;
 import housemate.constants.Enum.*;
 import housemate.constants.ImageType;
 import housemate.entities.Image;
@@ -57,56 +57,54 @@ import java.time.ZoneId;
 @Component
 public class TheService {
 
-	@Autowired
-	ServiceRepository serviceRepo;
+        @Autowired
+        private ServiceRepository serviceRepo;
+    
+        @Autowired
+        private ServiceTypeRepository serviceTypeRepo;
+    
+        @Autowired
+        private PackageServiceItemRepository packageServiceItemRepo;
+    
+        @Autowired
+        private CommentRepository commentRepo;
+    
+        @Autowired
+        private FeedbackRepository feedbackRepo;
+    
+        @Autowired
+        private PeriodRepository periodRepo;
+    
+        @Autowired
+        private ImageRepository imgRepo;
+    
+        @Autowired
+        private PeriodPriceConfigRepository periodPriceConfRepo;
+    
+        @Autowired
+        private AuthorizationUtil authorizationUtil;
+    
+        @Autowired
+        private ServiceConfigRepository servConfRepo;
 
-	@Autowired
-	ServiceTypeRepository serviceTypeRepo;
-
-	@Autowired
-	PackageServiceItemRepository packageServiceItemRepo;
-
-	@Autowired
-	CommentRepository commentRepo;
-
-	@Autowired
-	FeedbackRepository feedbackRepo;
-
-	@Autowired
-	PeriodRepository periodRepo;
-	
-	@Autowired
-	ImageRepository imgRepo;
-	
-	@Autowired
-	PeriodPriceConfigRepository periodPriceConfRepo;
-	
-	@Autowired
-    AuthorizationUtil authorizationUtil;
-	
-	@Autowired
-	ServiceConfigRepository servConfRepo;
-
-	ModelMapper mapper = new ModelMapper();
+	private ModelMapper mapper = new ModelMapper();
 	
 	private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
 	public ResponseEntity<?> getAllSingleService() {
-		List<Service> serviceList = serviceRepo.findAllByIsPackageFalse();
-		if (serviceList == null)
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
-		serviceList.forEach(
-				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST)));
-		return ResponseEntity.ok().body(serviceList);
+	    List<Service> serviceList = List.of();
+	    serviceList = serviceRepo.findAllByIsPackageFalse();
+	    serviceList.forEach(s -> s.setImages(
+		    imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
+	    return ResponseEntity.ok().body(serviceList);
 	}
 
 	public ResponseEntity<?> getTopsale() {
-		List<Service> serviceList = serviceRepo.findTopSale();
-		if (serviceList == null)
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Empty List !");
-		serviceList.forEach(
-				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST)));
-		return ResponseEntity.ok().body(serviceList);
+	    List<Service> serviceList  = serviceRepo.findTopSale();
+	    if (!serviceList.isEmpty())
+		serviceList.forEach(s -> s.setImages(
+			imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
+	    return ResponseEntity.ok().body(serviceList);
 	}
 	
 	public ResponseEntity<?> searchFilterAllKind(
