@@ -87,7 +87,7 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body("Updated successfully!");
     }
 
-    public ResponseEntity<String> delete(HttpServletRequest request, int userId) {
+    public ResponseEntity<String> ban(HttpServletRequest request, int userId) {
         Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
         if (!role.equals(Role.ADMIN)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
@@ -104,6 +104,25 @@ public class AccountService {
         userRepository.save(account);
         return ResponseEntity.status(HttpStatus.OK).body("Deleted successfully!");
     }
+
+    public ResponseEntity<String> inactive(HttpServletRequest request, int userId) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (!role.equals(Role.ADMIN)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        }
+
+        // Find account in database
+        UserAccount account = userRepository.findByUserId(userId);
+        if (account == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cannot find this account!");
+        }
+
+        // Change status to inactive
+        account.setAccountStatus(AccountStatus.INACTIVE);
+        userRepository.save(account);
+        return ResponseEntity.status(HttpStatus.OK).body("Make account status inactive successfully!!");
+    }
+
     public ResponseEntity<String> changeRole(HttpServletRequest request, int userId, Role updateRole) {
         Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
         if (!role.equals(Role.ADMIN)) {

@@ -42,7 +42,7 @@ public class UploadController {
         return s3Service.uploadImage(request, files, uploadDTO);
     }
 
-    @DeleteMapping("/detele/{imageId}")
+    @DeleteMapping("/delete/{imageId}")
     public ResponseEntity<String> removeImage(HttpServletRequest request, @PathVariable int imageId) {
         return s3Service.removeImage(request, imageId);
     }
