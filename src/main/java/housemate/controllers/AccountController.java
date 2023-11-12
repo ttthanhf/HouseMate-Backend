@@ -43,9 +43,15 @@ public class AccountController {
     }
 
     @Operation(summary = "[ADMIN] Delete account by userId")
-    @DeleteMapping("/delete/{userId}")
-    public ResponseEntity<String> delete(HttpServletRequest request, @PathVariable int userId) {
-        return service.delete(request, userId);
+    @DeleteMapping("/ban/{userId}")
+    public ResponseEntity<String> ban(HttpServletRequest request, @PathVariable int userId) {
+        return service.ban(request, userId);
+    }
+
+    @Operation(summary = "[ADMIN] Delete account by userId")
+    @DeleteMapping("/inactive/{userId}")
+    public ResponseEntity<String> inactive(HttpServletRequest request, @PathVariable int userId) {
+        return service.inactive(request, userId);
     }
 
     @Operation(summary = "[ADMIN] Update role of an account")
