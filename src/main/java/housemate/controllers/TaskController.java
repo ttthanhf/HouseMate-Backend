@@ -82,9 +82,8 @@ public class TaskController {
 	@Operation(summary = "Update the task timeworking based on specific schedule - Role: CUSTOMER - owner of the schedule")
 	public ResponseEntity<?> updateTaskTimeWorking(
 			HttpServletRequest request,
-			@Param("schedule-id") int oldScheduleId,
 			@RequestBody Schedule newSchedule) {
-		return taskServiceDao.updateTaskTimeWorking(request, oldScheduleId, newSchedule);
+		return taskServiceDao.updateTaskTimeWorking(request, newSchedule);
 	}
 	
 	@PostMapping("{task-id}/staff/application")
