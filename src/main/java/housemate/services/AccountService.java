@@ -203,7 +203,22 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body(String.valueOf(accountDb.getUserId()));
     }
 
-    public ResponseEntity<?> getCustomerDetail(int customerId, String start, String end) {
+    public ResponseEntity<?> getCustomerDetail(HttpServletRequest request, int customerId, String start, String end) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (role.equals(Role.STAFF)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admin and current customer can get details.");
+        }
+
+        UserAccount account = userRepository.findByUserId(customerId);
+        if (role.equals(Role.CUSTOMER) && customerId != account.getUserId()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can't view another customer");
+        }
+
+        // Only can get detail for role staff
+        if (!account.getRole().equals(Role.CUSTOMER)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You only can get details for role customer");
+        }
+
         CustomerDetailRes customerDetailRes = new CustomerDetailRes();
 
         // Default sort
@@ -311,6 +326,12 @@ public class AccountService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
         }
 
+        // Only can get detail for role staff
+        UserAccount account = userRepository.findByUserId(staffId);
+        if (!account.getRole().equals(Role.STAFF)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You only can get details for role staff");
+        }
+
         StaffDetailRes staffDetailRes = new StaffDetailRes();
 
         // Default sort
@@ -349,7 +370,7 @@ public class AccountService {
         // Set to StaffDetailRes
         staffDetailRes.setMonthlyReport(reports);
         staffDetailRes.setAchievement(achievements);
-        staffDetailRes.setUserInfo(userRepository.findByUserId(staffId));
+        staffDetailRes.setUserInfo(account);
 
         return ResponseEntity.status(HttpStatus.OK).body(staffDetailRes);
     }
