@@ -265,6 +265,11 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm dịch vụ với ID này");
         }
 
+        if (!service.getGroupType().equals(RETURN_SERVICE) && !service.isPackage() && (schedule.getQuantityRetrieve() < service.getMin() || schedule.getQuantityRetrieve() > service.getMax())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bạn vui lòng đặt lịch với số lượng trong khoảng từ " +
+                    service.getMin() + " " + service.getUnitOfMeasure().toLowerCase() + " đến " + service.getMax() + " " + service.getUnitOfMeasure().toLowerCase());
+        }
+
         // Check correct user usage ID
         UserUsage userUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
         if (userUsage == null) {
@@ -362,8 +367,8 @@ public class ScheduleService {
 
     private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, String groupType) {
         // Config
-        int FIND_STAFF_MINUTES = ServiceConfiguration.FIND_STAFF_HOURS.getNum();
-        int MINIMUM_RETURN_MINUTES = ServiceConfiguration.MINIMUM_RETURN_HOURS.getNum();
+        int FIND_STAFF_MINUTES = ServiceConfiguration.FIND_STAFF_MINUTES.getNum();
+        int MINIMUM_RETURN_MINUTES = ServiceConfiguration.MINIMUM_RETURN_MINUTES.getNum();
         int OFFICE_HOURS_START = ServiceConfiguration.OFFICE_HOURS_START.getNum();
 
         // Check startDate < endDate
