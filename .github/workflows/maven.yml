@@ -56,7 +56,7 @@ jobs:
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} 'pkill -9 -f "java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}"' || true
 
     - name: Run app
-      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }} &" 
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }} &" &
 
 #        # while pgrep -f \"java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}\" > /dev/null; do sleep 1; done || true
     # - name: Verify app
