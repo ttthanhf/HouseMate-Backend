@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -308,15 +306,11 @@ public class TaskService {
     // UPDATE TASK TO CHANGE THE TIME
     public ResponseEntity<?> updateTaskTimeWorking(HttpServletRequest request,
 	    Schedule scheduleNewTimeWorking) {
+	Schedule newSchedule = scheduleRepo.findById(scheduleNewTimeWorking.getScheduleId()).get();
 	int customerIdRequestUpdate = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-	if (scheduleNewTimeWorking == null)
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch cũ không tồn tại");
-
-	if (!(customerIdRequestUpdate == scheduleNewTimeWorking.getCustomerId()))
-	    return ResponseEntity.badRequest().body("You are not allow to update this schedule");
-
-	if (scheduleNewTimeWorking.getScheduleId() != scheduleNewTimeWorking.getScheduleId())
-	    return ResponseEntity.badRequest().body("New schedule should have the same ID of OldSchedule");
+	if (newSchedule == null)
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch không tồn tại");
+	
 
 	TaskRes taskRes = taskBuildupServ.updateTaskOnScheduleChangeTime(scheduleNewTimeWorking);
 	if (taskRes.getMessType().equals(TaskMessType.REJECT_UPDATE_TASK)) {
