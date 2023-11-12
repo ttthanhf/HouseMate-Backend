@@ -23,6 +23,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import housemate.constants.ScheduleStatus;
 import static housemate.constants.ServiceConfiguration.*;
+import housemate.constants.AccountStatus;
 import housemate.constants.Enum.TaskMessType;
 import housemate.constants.Enum.TaskReportType;
 import housemate.constants.Enum.TaskStatus;
@@ -266,7 +267,7 @@ public class TaskService {
 			.body("Bạn đã hủy lịch này thày công !\nChú ý bạn, bạn được phép hủy lịch trước giờ làm việc trước "
 				+ DURATION_HOURS_CUSTOMER_SHOULD_NOT_CANCEL_TASK.getNum()
 				+ " tiếng để đảm bảo nhân viên của chúng tôi sắp xếp được lịch làm việc .\nSau khoảng thời gian này chúng tôi sẽ trừ điểm uy tín của bạn.\nĐiểm uy tín nếu bằng 0 tài khoản sẽ bị cấm bởi hệ thống");
-	    if (customer.isBanned())
+	    if (customer.getAccountStatus().equals(AccountStatus.BANNED))
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 			.body("Tài khoản của bạn đã bị cấm khỏi hệ thống vì đã vượt giới hạn số lần được hủy và điểm uy tín của bạn bằng 0 !");
 	   
@@ -278,8 +279,8 @@ public class TaskService {
 		if (taskToBeCancelled.getStaff() != null) {
 		    int subtract = customer.getProfiencyScore() - MINUS_POINTS_FOR_CUSTOMER_CANCEL_TASK.getNum();
 		    customer.setProfiencyScore(subtract < 0 ? 0 : subtract);
-		    if (customer.getProfiencyScore() == 0)
-			customer.setBanned(true);		     
+		    customerRepo.save(customer);
+		    taskBuildupServ.bannedStaff(customer.getCustomerId());	     
 		}
 	    }
 	    return ResponseEntity.ok().body("Bạn đã hủy lịch thành công !");
@@ -288,15 +289,15 @@ public class TaskService {
 	    if (userIdRequestCancel != scheduleToBeCancelled.getStaffId())
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không có quyền được xóa lịch này !");
 	    taskToBeCancelled = taskBuildupServ.cancelTaskByRole(Role.STAFF, scheduleToBeCancelled,
-		    "The staff has cancelled the task !");
+		    "Nhân viên hủy lịch làm việc !");
 	    if (taskToBeCancelled == null)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Có lỗi xảy ra ! Hủy lịch thất bại !");
 	    if (hoursFrMinutes < DURATION_HOURS_STAFF_SHOULD_NOT_CANCEL_TASK.getNum()) {
 		Staff staff = staffRepo.findById(userCancel.getUserId()).get();
 		int subtract = staff.getProfiencyScore() - MINUS_POINTS_FOR_STAFF_CANCEL_TASK.getNum();
 		staff.setProfiencyScore(subtract < 0 ? 0 : subtract);
-		if (staff.getProfiencyScore() == 0)
-		    staff.setBanned(true);
+		staffRepo.save(staff);
+		taskBuildupServ.bannedStaff(staff.getStaffId());
 	    }
 	    return ResponseEntity.ok().body("Bạn đã hủy lịch thành công !");
 	}
@@ -311,7 +312,6 @@ public class TaskService {
 	if (newSchedule == null)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch không tồn tại");
 	
-
 	TaskRes taskRes = taskBuildupServ.updateTaskOnScheduleChangeTime(scheduleNewTimeWorking);
 	if (taskRes.getMessType().equals(TaskMessType.REJECT_UPDATE_TASK)) {
 	    return ResponseEntity.badRequest().body(taskRes.getMessage());
@@ -328,12 +328,11 @@ public class TaskService {
 	String role = authorizationUtil.getRoleFromAuthorizationHeader(request);
 	if (!role.equals(Role.STAFF.name()))
 	    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Truy cập thất bại - Chỉ cho phép tài khoản nhân viên mới được ứng tuyển !");
-
 	int staffId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 	Staff staff = staffRepo.findById(staffId).orElse(null);
 	if (staff == null)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nhân viên không tồn tại !");
-	if (staff.isBanned())
+	if (staff.getAccountStatus().equals(AccountStatus.BANNED))
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tài khoản của bạn đã bị cấm ! Bạn không được phép mua hàng hay ứng tuyển công việc từ tài khoản này được nữa !");
 	Task task = taskRepo.findById(taskId).orElse(null);
 	if (task == null)
@@ -352,6 +351,7 @@ public class TaskService {
 			    + dateFormat.format(Date.from(dupSchedule.getStartDate().atZone(dateTimeZone).toInstant())) + " và kết thúc ngày "
 			    + dateFormat.format(Date.from(dupSchedule.getEndDate().atZone(dateTimeZone).toInstant()))
 			    + " ! ");
+	
 	if (task.getStaffId() != null && task.getStaffId() != staffId)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch này đã có nhân viên khác ứng tuyển !");
 	

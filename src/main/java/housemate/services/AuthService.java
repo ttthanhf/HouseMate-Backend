@@ -74,7 +74,7 @@ public class AuthService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't been created");
         }
 
-        if (accountDB.isBanned() || accountDB.getAccountStatus().equals(AccountStatus.INACTIVE)) {
+        if (accountDB.getAccountStatus().equals(AccountStatus.BANNED) || accountDB.getAccountStatus().equals(AccountStatus.INACTIVE)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are banned");
         }
 
@@ -201,7 +201,7 @@ public class AuthService {
             userAccount = userRepository.save(newUser);
         }
 
-        if (userAccount.isBanned() || userAccount.getAccountStatus().equals(AccountStatus.INACTIVE)) {
+        if (userAccount.getAccountStatus().equals(AccountStatus.BANNED) || userAccount.getAccountStatus().equals(AccountStatus.INACTIVE)) {
             //Create uri with token for redirect
             String url = URL_CLIENT + "/" + "?success=false&message=You%20are%20banned";
             URI uri = URI.create(url);

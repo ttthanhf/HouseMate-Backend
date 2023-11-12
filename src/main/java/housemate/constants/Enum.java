@@ -39,13 +39,6 @@ public class Enum {
 	    	private String fieldName;
 	}
 	
-
-	public enum AccountStatus {
-		ACTIVE,
-		INACTIVE,
-		BANNED;
-	}
-	
 	public enum TaskStatus {
 		PENDING_APPLICATION,//waiting for staff apply apply for job
 		PENDING_WORKING,//found staff - waiting for staff coming

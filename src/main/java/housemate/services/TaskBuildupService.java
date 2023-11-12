@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -24,6 +23,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import static housemate.constants.ServiceConfiguration.*;
+
+import housemate.constants.AccountStatus;
 import housemate.constants.Enum.TaskMessType;
 import housemate.constants.Enum.TaskReportType;
 import housemate.constants.Enum.TaskStatus;
@@ -687,7 +688,8 @@ public class TaskBuildupService {
 		    TaskReport arrivedReport = taskReportRepo.findByTaskIdAndTaskStatus(task.getTaskId(), TaskStatus.ARRIVED);
 		    if (task.getStaffId() != null && !task.getTaskStatus().equals("CANCELLED") && arrivedReport == null) {
 			Staff staff = staffRepo.findById(task.getStaffId()).get();
-			bannedStaff(staff);
+			staffRepo.save(staff);
+			bannedStaff(staff.getStaffId());
 			staff.setProfiencyScore(staff.getProfiencyScore() - MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK.getNum());
 			staff.setProfiencyScore(staff.getProfiencyScore() < 0 ? 0 : staff.getProfiencyScore());
 			staffRepo.save(staff);
@@ -727,7 +729,8 @@ public class TaskBuildupService {
 			Staff staff = staffRepo.findById(task.getStaffId()).get();
 			staff.setProfiencyScore(staff.getProfiencyScore() - MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK.getNum());
 			staff.setProfiencyScore(staff.getProfiencyScore() < 0 ? 0 : staff.getProfiencyScore());
-			bannedStaff(staff);
+			staffRepo.save(staff);
+			bannedStaff(staff.getStaffId());
 			Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
 			schedule.setStatus(ScheduleStatus.CANCEL);
 			schedule.setNote(schedule.getNote()
@@ -779,7 +782,8 @@ public class TaskBuildupService {
 			Staff staff = staffRepo.findById(task.getStaffId()).get();
 			staff.setProfiencyScore(staff.getProfiencyScore() - MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK.getNum());
 			staff.setProfiencyScore(staff.getProfiencyScore() < 0 ? 0 : staff.getProfiencyScore());
-			bannedStaff(staff);
+			staffRepo.save(staff);
+			bannedStaff(staff.getStaffId());
 			Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
 			schedule.setStatus(ScheduleStatus.CANCEL);
 			schedule.setNote(schedule.getNote()
@@ -832,9 +836,10 @@ public class TaskBuildupService {
 	}
     }
     
-    private void bannedStaff(Staff staff) {
-	if(staff.getProfiencyScore() == 0)
-	    staff.setBanned(true);
+    public void bannedStaff(int userId) {
+	UserAccount user  = userRepo.findByUserId(userId);
+	if(user.getProficiencyScore() == 0)
+	    user.setAccountStatus(AccountStatus.BANNED);
     }
     
     public Schedule checkIsDuplicateTask(Task newTask, Staff staff){
