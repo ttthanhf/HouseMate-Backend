@@ -39,6 +39,9 @@ jobs:
 
     - name: Add application.properties
       run: echo "${{ secrets.APPLICATION_PROPERTIES }}" >> ./src/main/resources/application.properties
+    
+    - name: Add credentials.json
+      run: echo "${{ secrets.CREDENTIALS_JSON }}" >> ./src/main/resources/credentials.json
 
     - name: Clean app
       run: mvn clean
