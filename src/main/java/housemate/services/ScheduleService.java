@@ -171,14 +171,14 @@ public class ScheduleService {
                 .orElse(null);
     }
 
-    public ResponseEntity<String> createSchedule(HttpServletRequest request, ScheduleDTO scheduleDTO) {
+    public ResponseEntity<?> createSchedule(HttpServletRequest request, ScheduleDTO scheduleDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
         return validateAndProcessSchedule(schedule, null, request);
     }
 
-    public ResponseEntity<String> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO updateSchedule, int scheduleId) {
+    public ResponseEntity<?> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO updateSchedule, int scheduleId) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Schedule currentSchedule = scheduleRepository.findById(scheduleId).orElse(null);
 
@@ -251,7 +251,7 @@ public class ScheduleService {
         events.add(event);
     }
 
-    private ResponseEntity<String> validateAndProcessSchedule(Schedule schedule, Cycle oldCycle, HttpServletRequest request) {
+    private ResponseEntity<?> validateAndProcessSchedule(Schedule schedule, Cycle oldCycle, HttpServletRequest request) {
         int serviceId = schedule.getServiceId();
 
         // Check service not exist
@@ -299,9 +299,16 @@ public class ScheduleService {
         }
 
         // Store to database
-        storeToDatabase(schedule, isCreate, request);
+        int scheduleId = storeToDatabase(schedule);
 
-        return ResponseEntity.status(HttpStatus.OK).body("Đặt lịch thành công! Vui lòng đợi nhân viên chúng tôi nhận công việc này.");
+        ResponseEntity<?> taskResponse = isCreate
+                ? taskService.createNewTask(request, scheduleId)
+                : taskService.updateTaskTimeWorking(request, scheduleRepository.getByScheduleId(scheduleId));
+        if (taskResponse.getStatusCode() == HttpStatus.OK) {
+            return ResponseEntity.status(200).body("Đặt lịch thành công! Vui lòng đợi nhân viên chúng tôi nhận công việc này.");
+        } else {
+            return taskResponse;
+        }
     }
 
     void deleteSchedule(Schedule newSchedule, Cycle oldCycle) {
@@ -356,7 +363,7 @@ public class ScheduleService {
         int OFFICE_HOURS_START = ServiceConfiguration.OFFICE_HOURS_START.getNum();
 
         // Check startDate < endDate
-        if (!startDate.isBefore(endDate)) {
+        if (!startDate.isBefore(endDate) && !startDate.isEqual(endDate)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn phải đặt ngày bắt đầu trước ngày kết thúc");
         }
 
@@ -400,14 +407,13 @@ public class ScheduleService {
         return null;
     }
 
-    private void storeToDatabase(Schedule schedule, boolean isCreate, HttpServletRequest request) {
+    private int storeToDatabase(Schedule schedule) {
         int customerId = schedule.getCustomerId();
         Cycle cycle = schedule.getCycle();
         int parentScheduleId = 0;
 
         // Usage of user
         UserUsage userUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
-        if (userUsage == null) return;
 
         // Get max quantity
         int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(schedule.getUserUsageId());
@@ -422,10 +428,7 @@ public class ScheduleService {
             newSchedule.setParentScheduleId(newSchedule.getScheduleId());
             Schedule scheduleDb = scheduleRepository.save(newSchedule);
 
-            if (isCreate) {
-                taskService.createNewTask(request, scheduleDb.getScheduleId());
-            }
-            return;
+            return scheduleDb.getScheduleId();
         }
 
         // Store to database (EVERY_WEEK/EVERY_MONTH)
@@ -449,9 +452,7 @@ public class ScheduleService {
             scheduleRepository.save(newSchedule);
         }
 
-        if (isCreate) {
-            taskService.createNewTask(request, parentScheduleId);
-        }
+        return parentScheduleId;
     }
 
     private int getMaxQuantity(LocalDateTime startDate, LocalDateTime endDate, Cycle cycle, int remaining, int quantity, int totalUsed) {
@@ -508,7 +509,6 @@ public class ScheduleService {
         schedule.setCurrentUsage(currentUsage);
         schedule.setGroupType(service.getGroupType());
 
-        Set<PurchasedServiceRes> purchases = new HashSet<>();
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         List<UserUsage> usageList = userUsageRepository.getAllByServiceIdAndUserId(schedule.getServiceId(), userId);
 
@@ -523,7 +523,6 @@ public class ScheduleService {
             if (remaining <= 0 || userUsage.getEndDate().isBefore(LocalDateTime.now())) continue;
 
             // Query the relationship to get data in database
-            int serviceId = userUsage.getServiceId();
             int orderItemId = userUsage.getOrderItemId();
             OrderItem orderItem = orderItemRepository.findById(orderItemId);
             Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
@@ -537,7 +536,7 @@ public class ScheduleService {
         return ResponseEntity.status(HttpStatus.OK).body(schedule);
     }
 
-    public ResponseEntity<String> cancelSchedule(HttpServletRequest request, int scheduleId, DeleteType deleteType) {
+    public ResponseEntity<?> cancelSchedule(HttpServletRequest request, int scheduleId, DeleteType deleteType) {
         Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
 
         if (schedule == null) {
@@ -563,8 +562,6 @@ public class ScheduleService {
         }
 
         // Cancel schedule => Cancel task
-        taskService.cancelTask(request, scheduleId);
-
-        return ResponseEntity.status(HttpStatus.OK).body("Hủy lịch thành công");
+        return taskService.cancelTask(request, scheduleId);
     }
 }
