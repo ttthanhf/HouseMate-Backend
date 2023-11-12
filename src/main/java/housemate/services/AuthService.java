@@ -4,6 +4,7 @@
  */
 package housemate.services;
 
+import housemate.constants.AccountStatus;
 import housemate.entities.JwtPayload;
 import housemate.entities.UserAccount;
 import housemate.mappers.AccountMapper;
@@ -73,7 +74,7 @@ public class AuthService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This email haven't been created");
         }
 
-        if (accountDB.isBanned()) {
+        if (accountDB.isBanned() || accountDB.getAccountStatus().equals(AccountStatus.INACTIVE)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are banned");
         }
 
@@ -200,7 +201,7 @@ public class AuthService {
             userAccount = userRepository.save(newUser);
         }
 
-        if (userAccount.isBanned()) {
+        if (userAccount.isBanned() || userAccount.getAccountStatus().equals(AccountStatus.INACTIVE)) {
             //Create uri with token for redirect
             String url = URL_CLIENT + "/" + "?success=false&message=You%20are%20banned";
             URI uri = URI.create(url);
