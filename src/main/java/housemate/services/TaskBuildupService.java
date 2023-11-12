@@ -509,7 +509,7 @@ public class TaskBuildupService {
 		    Integer quantity = null;
 		    if (reportNewDTO == null || reportNewDTO.getQtyOfGroupReturn() == null)
 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
-				"Đây là dịch vụ giặt đồ cân kí. Trước khi báo cáo hãy điền giá trị khối lượng cho loại dịch vụ thuộc \"Gửi trả\"");
+				"Trước khi báo cáo hãy điền giá trị khối lượng cho loại dịch vụ thuộc \"Gửi trả\"");
 		    quantity = reportNewDTO.getQtyOfGroupReturn();
 		    if (!(quantity <= userUsage.getRemaining() && quantity > 0))
 		 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
