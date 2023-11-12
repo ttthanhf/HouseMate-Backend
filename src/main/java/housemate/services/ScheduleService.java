@@ -1,8 +1,8 @@
 package housemate.services;
 
 import housemate.constants.Cycle;
-    import housemate.constants.DeleteType;
-import housemate.constants.Enum.ServiceConfiguration;
+import housemate.constants.DeleteType;
+import housemate.constants.ServiceConfiguration;
 import housemate.constants.Role;
 import housemate.constants.ScheduleStatus;
 import housemate.entities.*;
@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -42,6 +41,7 @@ public class ScheduleService {
     private final UserRepository userRepository;
     private final OrderItemRepository orderItemRepository;
     private final ServiceConfigRepository serviceConfigRepository;
+    private final TaskService taskService;
     private final int OFFICE_HOURS_START;
     private final int OFFICE_HOURS_END;
     private final int FIND_STAFF_MINUTES;
@@ -58,7 +58,8 @@ public class ScheduleService {
             UserUsageRepository userUsageRepository,
             UserRepository userRepository,
             OrderItemRepository orderItemRepository,
-            ServiceConfigRepository serviceConfigRepository
+            ServiceConfigRepository serviceConfigRepository,
+            TaskService taskService
     ) {
         this.serviceRepository = serviceRepository;
         this.scheduleRepository = scheduleRepository;
@@ -69,6 +70,7 @@ public class ScheduleService {
         this.userRepository = userRepository;
         this.orderItemRepository = orderItemRepository;
         this.serviceConfigRepository = serviceConfigRepository;
+        this.taskService = taskService;
         this.OFFICE_HOURS_START = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_START).getConfigValue());
         this.OFFICE_HOURS_END = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.OFFICE_HOURS_END).getConfigValue());
         this.FIND_STAFF_MINUTES = Integer.parseInt(serviceConfigRepository.findFirstByConfigType(ServiceConfiguration.FIND_STAFF_MINUTES).getConfigValue());
@@ -181,7 +183,7 @@ public class ScheduleService {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
-        return validateAndProcessSchedule(schedule, null);
+        return validateAndProcessSchedule(schedule, null, request);
     }
 
     public ResponseEntity<String> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO updateSchedule, int scheduleId) {
@@ -208,7 +210,7 @@ public class ScheduleService {
         Cycle oldCycle = currentSchedule.getCycle();
         Schedule newSchedule = scheduleMapper.updateSchedule(currentSchedule, updateSchedule);
         newSchedule.setCustomerId(userId);
-        return validateAndProcessSchedule(newSchedule, oldCycle);
+        return validateAndProcessSchedule(newSchedule, oldCycle, request);
     }
 
     // ======================================== REUSABLE FUNCTIONS ========================================
@@ -257,7 +259,7 @@ public class ScheduleService {
         events.add(event);
     }
 
-    private ResponseEntity<String> validateAndProcessSchedule(Schedule schedule, Cycle oldCycle) {
+    private ResponseEntity<String> validateAndProcessSchedule(Schedule schedule, Cycle oldCycle, HttpServletRequest request) {
         int serviceId = schedule.getServiceId();
 
         // Check service not exist
@@ -299,12 +301,13 @@ public class ScheduleService {
         }
 
         // Delete schedule
-        if (oldCycle != null) {
+        boolean isCreate = oldCycle == null;
+        if (!isCreate) {
             deleteSchedule(schedule, oldCycle);
         }
 
         // Store to database
-        storeToDatabase(schedule);
+        storeToDatabase(schedule, isCreate, request);
 
         return ResponseEntity.status(HttpStatus.OK).body("Đặt lịch thành công! Vui lòng đợi nhân viên chúng tôi nhận công việc này.");
     }
@@ -400,7 +403,7 @@ public class ScheduleService {
         return null;
     }
 
-    private void storeToDatabase(Schedule schedule) {
+    private void storeToDatabase(Schedule schedule, boolean isCreate, HttpServletRequest request) {
         int customerId = schedule.getCustomerId();
         Cycle cycle = schedule.getCycle();
         int parentScheduleId = 0;
@@ -420,7 +423,11 @@ public class ScheduleService {
 
             // Update schedule parent ID
             newSchedule.setParentScheduleId(newSchedule.getScheduleId());
-            scheduleRepository.save(newSchedule);
+            Schedule scheduleDb = scheduleRepository.save(newSchedule);
+
+            if (isCreate) {
+                taskService.createNewTask(request, scheduleDb.getScheduleId());
+            }
             return;
         }
 
@@ -443,6 +450,10 @@ public class ScheduleService {
             parentScheduleId = increment == 0 ? newSchedule.getScheduleId() : parentScheduleId;
             newSchedule.setParentScheduleId(parentScheduleId);
             scheduleRepository.save(newSchedule);
+        }
+
+        if (isCreate) {
+            taskService.createNewTask(request, parentScheduleId);
         }
     }
 
@@ -550,7 +561,8 @@ public class ScheduleService {
             scheduleRepository.cancelThisAndFollowingSchedule(scheduleId, schedule.getParentScheduleId());
         }
 
-        // TODO: Fetch API /tasks/cancel/schedule/{schedule-id}
+        // Cancel schedule => Cancel task
+        taskService.cancelTask(request, scheduleId);
 
         return ResponseEntity.status(HttpStatus.OK).body("Hủy lịch thành công");
     }

@@ -23,6 +23,7 @@ import lombok.ToString;
 @ToString
 public class LoginAccountDTO {
 
+
     @NotNull(message = "Email must not be null")
     @Email(message = "Please enter a valid email")
     @Schema(example = "example@gmail.com", description = "Email of an account")

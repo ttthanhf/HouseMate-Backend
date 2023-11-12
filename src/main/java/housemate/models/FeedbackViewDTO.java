@@ -3,18 +3,13 @@ package housemate.models;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import housemate.entities.Image;
 import housemate.entities.Service;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Data
 @NoArgsConstructor
