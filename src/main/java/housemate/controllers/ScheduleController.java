@@ -51,7 +51,7 @@ public class ScheduleController {
 
     @Operation(summary = "Create schedule")
     @PostMapping("/create")
-    public ResponseEntity<?> createSchedule(HttpServletRequest request, @Valid @RequestBody ScheduleDTO scheduleDTO) {
+    public ResponseEntity<String> createSchedule(HttpServletRequest request, @Valid @RequestBody ScheduleDTO scheduleDTO) {
         return service.createSchedule(request, scheduleDTO);
     }
 
@@ -63,13 +63,13 @@ public class ScheduleController {
 
     @Operation(summary = "Cancel schedule")
     @DeleteMapping("/cancel/{scheduleId}")
-    public ResponseEntity<?> cancelSchedule(HttpServletRequest request, @PathVariable int scheduleId, DeleteType deleteType) {
+    public ResponseEntity<String> cancelSchedule(HttpServletRequest request, @PathVariable int scheduleId, DeleteType deleteType) {
         return service.cancelSchedule(request, scheduleId, deleteType);
     }
 
     @Operation(summary = "Update schedule")
     @PutMapping("/update/{scheduleId}")
-    public ResponseEntity<?> updateSchedule(
+    public ResponseEntity<String> updateSchedule(
             HttpServletRequest request, @Valid @RequestBody ScheduleUpdateDTO scheduleUpdateDTO, @PathVariable int scheduleId
     ) {
         return service.updateSchedule(request, scheduleUpdateDTO, scheduleId);

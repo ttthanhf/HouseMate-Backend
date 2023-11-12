@@ -171,20 +171,25 @@ public class ScheduleService {
                 .orElse(null);
     }
 
-    public ResponseEntity<?> createSchedule(HttpServletRequest request, ScheduleDTO scheduleDTO) {
+    public ResponseEntity<String> createSchedule(HttpServletRequest request, ScheduleDTO scheduleDTO) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Schedule schedule = scheduleMapper.mapToEntity(scheduleDTO);
         schedule.setCustomerId(userId);
         return validateAndProcessSchedule(schedule, null, request);
     }
 
-    public ResponseEntity<?> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO updateSchedule, int scheduleId) {
+    public ResponseEntity<String> updateSchedule(HttpServletRequest request, ScheduleUpdateDTO updateSchedule, int scheduleId) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Schedule currentSchedule = scheduleRepository.findById(scheduleId).orElse(null);
 
         // Check if schedule ID is not exist
         if (currentSchedule == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm lịch này với ID: + " + scheduleId);
+        }
+
+        // Check if schedule already have staff applied it
+        if (currentSchedule.getStaffId() != 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Không thể cập nhật lịch vì lịch này đã có nhân viên thực hiện!");
         }
 
         // Check if status is allowed or not
@@ -251,7 +256,7 @@ public class ScheduleService {
         events.add(event);
     }
 
-    private ResponseEntity<?> validateAndProcessSchedule(Schedule schedule, Cycle oldCycle, HttpServletRequest request) {
+    private ResponseEntity<String> validateAndProcessSchedule(Schedule schedule, Cycle oldCycle, HttpServletRequest request) {
         int serviceId = schedule.getServiceId();
 
         // Check service not exist
@@ -535,7 +540,7 @@ public class ScheduleService {
         return ResponseEntity.status(HttpStatus.OK).body(schedule);
     }
 
-    public ResponseEntity<?> cancelSchedule(HttpServletRequest request, int scheduleId, DeleteType deleteType) {
+    public ResponseEntity<String> cancelSchedule(HttpServletRequest request, int scheduleId, DeleteType deleteType) {
         Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
 
         if (schedule == null) {
@@ -561,6 +566,8 @@ public class ScheduleService {
         }
 
         // Cancel schedule => Cancel task
-        return taskService.cancelTask(request, scheduleId);
+        taskService.cancelTask(request, scheduleId);
+
+        return ResponseEntity.status(HttpStatus.OK).body("Hủy lịch thành công");
     }
 }
