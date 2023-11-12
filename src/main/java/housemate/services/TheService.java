@@ -148,11 +148,9 @@ public class TheService {
 		Page<Service> serviceList = serviceRepo.searchFilterAllKind(statusValue, keywordValue, ratingValue, categoryValue, sortedPage);
 		int maxPages = (int) Math.ceil((double) serviceList.getTotalPages());
 		
-		if (serviceList.isEmpty() || serviceList == null)
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
-		
-		serviceList.forEach(
-				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST)));
+		if (!serviceList.isEmpty())
+		    serviceList.forEach(s -> s.setImages(imgRepo
+			    .findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
 		
 		List<ServiceViewDTO> serviceViewList = new ArrayList<>();
 		for (Service service : serviceList.getContent()) {
@@ -168,10 +166,7 @@ public class TheService {
 		}
 		Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 		Page<ServiceViewDTO> serviceViewPage = new PageImpl<ServiceViewDTO>(serviceViewList, serviceList.getPageable(), serviceList.getTotalElements());
-		
-		if (serviceViewPage.isEmpty() || serviceViewPage == null)
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
-		
+				
 		return ResponseEntity.ok(serviceViewPage);
 	}
 
@@ -210,11 +205,9 @@ public class TheService {
 		Page<Service> serviceList = serviceRepo.searchFilterAllAvailable(statusValue, keywordValue, ratingValue, categoryValue, sortedPage);
 		int maxPages = (int) Math.ceil((double) serviceList.getTotalPages());
 		
-		if (serviceList.isEmpty() || serviceList == null)
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found !");
-		
-		serviceList.forEach(
-				s -> s.setImages(imgRepo.findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(Collections.EMPTY_LIST)));
+		if (!serviceList.isEmpty())
+		    serviceList.forEach(s -> s.setImages(imgRepo
+			    .findAllByEntityIdAndImageType(s.getServiceId(), ImageType.SERVICE).orElse(List.of())));
 		
 		return ResponseEntity.ok(serviceList);
 	}
@@ -224,7 +217,7 @@ public class TheService {
 		ServiceViewDTO serviceDtoForDetail = new ServiceViewDTO();
 
 		Service service = serviceRepo.findById(serviceId).orElse(null);
-		List<Image> imgList = imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.SERVICE).orElse(Collections.EMPTY_LIST);
+		List<Image> imgList = imgRepo.findAllByEntityIdAndImageType(serviceId, ImageType.SERVICE).orElse(List.of());
 		service.setImages(imgList);
 		
 		if (service == null)
@@ -243,8 +236,9 @@ public class TheService {
 					.findAllByPackageServiceId(service.getServiceId()).orElse(null);
 			if (packageServiceChildList != null) {
 				for (PackageServiceItem packageServiceItem : packageServiceChildList) {
-					Service serviceChild = serviceRepo.findByServiceId(packageServiceItem.getSingleServiceId()).orElse(null);
 					packageServiceItem.setTypeList(serviceTypeRepo.findAllByServiceId(packageServiceItem.getSingleServiceId()).orElse(null));
+					packageServiceItem.setImages(imgRepo.findAllByEntityIdAndImageType(packageServiceItem.getSingleServiceId(), ImageType.SERVICE).orElse(List.of()));
+					
 				}
 				serviceDtoForDetail.setPackageServiceItemList(packageServiceChildList);
 			}
@@ -558,6 +552,8 @@ public class TheService {
 			oldService.setOriginalPrice(serviceDTO.getOriginalPrice());
 			oldService.setFinalPrice(serviceDTO.getFinalPrice());
 			oldService.setGroupType(serviceDTO.getGroupType());
+			oldService.setMin(serviceDTO.getMin());
+			oldService.setMax(serviceDTO.getMax());
 			updatedService = serviceRepo.save(oldService);
 			
 			//Update the price cycle list of this service
