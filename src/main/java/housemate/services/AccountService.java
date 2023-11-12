@@ -294,40 +294,12 @@ public class AccountService {
         }
 
         // Get purchase history
-        List<MyPurchasedResponse> purchaseHistory = new ArrayList<>();
+        List<OrderItem> purchaseHistory = new ArrayList<>();
 
         List<Order> listOrder = orderRepository.getAllOrderCompleteByUserId(customerId);
         for (Order order : listOrder) {
             List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
-            for (OrderItem orderItem : listOrderItem) {
-
-                List<String> listSingleServiceName = new ArrayList<>();
-
-                MyPurchasedResponse myPurchasedResponse = new MyPurchasedResponse();
-
-                Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
-                if (service.isPackage()) {
-                    List<PackageServiceItem> listPackageServiceItem = packageServiceItemRepository.findAllSingleServiceIdByPackageServiceId(service.getServiceId());
-                    for (PackageServiceItem packageServiceItem : listPackageServiceItem) {
-                        Service singleService = serviceRepository.getServiceByServiceId(packageServiceItem.getSingleServiceId());
-                        List<Image> images = imageRepository.findAllByEntityIdAndImageType(singleService.getServiceId(), housemate.constants.ImageType.SERVICE).orElse(List.of());
-                        singleService.setImages(images);
-                        listSingleServiceName.add(singleService.getTitleName());
-                    }
-                } else {
-                    List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), ImageType.SERVICE).orElse(List.of());
-                    service.setImages(images);
-                    listSingleServiceName.add(service.getTitleName());
-                }
-
-                myPurchasedResponse.setOrderItemId(orderItem.getOrderItemId());
-                myPurchasedResponse.setEndDate(orderItem.getExpireDate());
-                myPurchasedResponse.setStartDate(orderItem.getCreateDate());
-                myPurchasedResponse.setSingleServiceName(listSingleServiceName);
-                myPurchasedResponse.setService(service);
-
-                purchaseHistory.add(myPurchasedResponse);
-            }
+            purchaseHistory.addAll(listOrderItem);
         }
 
         // Set to CustomerDetailRes
