@@ -4,6 +4,16 @@
     <img src="https://housemate.site/assets/logo-7f02d06f.svg" alt="HouseMate" width="100" height="100" />
     <p><a href="https://housemate.site">HouseMate</a> is a web application that provides service for student apartments.</p>
 </div>
+<br>
+<div align='center'>
+<img src="https://img.shields.io/badge/Java-17-blue"> 
+<img src="https://img.shields.io/badge/Spring%20Boot-3.1.3-blue"> 
+<img src="https://img.shields.io/badge/Build-Passing-green"> 
+<img src="https://img.shields.io/badge/Docker-Yes-green"> 
+<img src="https://img.shields.io/badge/Server-Yes-green"> 
+<img src="https://img.shields.io/badge/API-Yes-green">
+<br>
+</div>
 
 ## 0. Introduction
 
