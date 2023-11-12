@@ -42,7 +42,7 @@ public class TaskReport {
     private String note;
     
     @Transient
-    private int qutyOver;
+    private int qtyOver;
 
     @Transient
     List<Image> taskReportImages;

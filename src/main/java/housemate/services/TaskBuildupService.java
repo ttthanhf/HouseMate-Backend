@@ -227,7 +227,7 @@ public class TaskBuildupService {
 		    List<Image> reportTaskImgs = imgRepo
 			    .findAllByEntityIdAndImageType(x.getTaskReportId(), ImageType.WORKING).orElse(List.of());
 		    x.setTaskReportImages(reportTaskImgs);
-		    x.setQutyOver(userUsageRepo.findById(taskRepo.findById(x.getTaskId()).get().getSchedule().getUserUsageId()).get().getQtyOver());
+		    x.setQtyOver(userUsageRepo.findById(taskRepo.findById(x.getTaskId()).get().getSchedule().getUserUsageId()).get().getQtyOver());
 		});
 	    }
 	    Schedule schedule = scheduleRepo.findById(task.getScheduleId()).orElse(null);
