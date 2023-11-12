@@ -117,7 +117,7 @@ public class AccountService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cannot find this account!");
         }
 
-        // Change isBanned to true
+        // Change status to inactive
         account.setAccountStatus(AccountStatus.INACTIVE);
         userRepository.save(account);
         return ResponseEntity.status(HttpStatus.OK).body("Make account status inactive successfully!!");
