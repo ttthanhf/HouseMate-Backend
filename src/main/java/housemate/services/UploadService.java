@@ -157,7 +157,7 @@ public class UploadService {
             s3client.completeMultipartUpload(completeRequest);
 
             if (uploadDTO.getImageType().equals(ImageType.AVATAR)) {
-                UserAccount user = userRepository.findByUserId(userId);
+                UserAccount user = userRepository.findByUserId(uploadDTO.getEntityId());
                 user.setAvatar(domainCDN + imageName);
                 userRepository.save(user);
                 break;

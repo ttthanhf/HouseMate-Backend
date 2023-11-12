@@ -89,4 +89,8 @@ public class Schedule implements Cloneable {
     @OneToOne
     @JoinColumn(name = "service_id", insertable = false, updatable = false)
     private Service service;
+
+    @OneToOne
+    @JoinColumn(name = "staff_id", insertable = false, updatable = false)
+    private UserAccount staff;
 }
