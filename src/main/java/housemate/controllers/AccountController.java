@@ -64,7 +64,10 @@ public class AccountController {
     @Operation(summary = "[ADMIN] Get customer details")
     @GetMapping("/customers/{customerId}")
     public ResponseEntity<?> getCustomerDetail(
-            HttpServletRequest request, @PathVariable int customerId, @Param("start") String start, @Param("end") String end
+            HttpServletRequest request,
+            @PathVariable int customerId,
+            @RequestParam(value = "start", required = false) String start,
+            @RequestParam(value = "end", required = false) String end
     ) {
         return service.getCustomerDetail(request, customerId, start, end);
     }
@@ -72,7 +75,10 @@ public class AccountController {
     @Operation(summary = "[ADMIN] Get staff details")
     @GetMapping("/staffs/{staffId}")
     public ResponseEntity<?> getStaffDetail(
-            HttpServletRequest request, @PathVariable int staffId, @Param("start") String start, @Param("end") String end
+            HttpServletRequest request,
+            @PathVariable int staffId,
+            @RequestParam(value = "start", required = false) String start,
+            @RequestParam(value = "end", required = false) String end
     ) {
         return service.getStaffDetail(request, staffId, start, end);
     }
