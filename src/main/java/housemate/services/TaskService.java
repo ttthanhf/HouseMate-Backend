@@ -81,8 +81,6 @@ public class TaskService {
     private AuthorizationUtil authorizationUtil;
 
     private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
-
-    private static final Logger log = LoggerFactory.getLogger(TaskService.class);
     
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 

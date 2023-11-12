@@ -520,9 +520,6 @@ public class TaskBuildupService {
 			    return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 				    "Điền giá trị số lượng cho loại dịch vụ \"Gửi trả\". Hãy điền giá trị số lượng trong khoảng tối thiểu là "
 					    + serviceInUsed.getMin() + " - " + serviceInUsed.getMax() + "\nLớn hơn khoảng này bạn sẽ phải trả thêm số tiền cho lượng dư thêm !");
-			if (quantity > serviceInUsed.getMax())
-			   taskReportResult.setQuantityRemainder(quantity - serviceInUsed.getMax());
-			   taskReportResult.setQutyRemainderPayment(taskReportResult.getQuantityRemainder() * serviceInUsed.getFinalPrice());
 		    }
 		    task.getSchedule().setQuantityRetrieve(quantity);
 		}
