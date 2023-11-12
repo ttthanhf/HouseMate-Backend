@@ -2,6 +2,7 @@ package housemate.responses;
 
 import housemate.entities.Schedule;
 import housemate.entities.UserAccount;
+import housemate.models.responses.MyPurchasedResponse;
 import lombok.Data;
 
 import java.util.List;
@@ -13,4 +14,5 @@ public class CustomerDetailRes  {
     private UserAccount userInfo;
     private List<Schedule> usageHistory;
     private List<ReportRes> monthlyReport;
+    private List<MyPurchasedResponse> purchaseHistory;
 }
