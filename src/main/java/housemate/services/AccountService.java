@@ -209,6 +209,7 @@ public class AccountService {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admin and current customer can get details.");
         }
 
+        // Check can't view another customer
         UserAccount account = userRepository.findByUserId(customerId);
         if (role.equals(Role.CUSTOMER) && customerId != account.getUserId()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can't view another customer");
