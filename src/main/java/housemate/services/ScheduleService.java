@@ -312,7 +312,7 @@ public class ScheduleService {
             taskService.updateTaskTimeWorking(request, scheduleRepository.getByScheduleId(scheduleId));
         }
 
-        return ResponseEntity.status(200).body("Đặt lịch thành công! Vui lòng đợi nhân viên chúng tôi nhận công việc này.");
+        return ResponseEntity.status(HttpStatus.OK).body("Đặt lịch thành công! Vui lòng đợi nhân viên chúng tôi nhận công việc này.");
     }
 
     void deleteSchedule(Schedule newSchedule, Cycle oldCycle) {
