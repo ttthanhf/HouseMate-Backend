@@ -20,18 +20,18 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class PeriodPriceConfigService {
-
-	private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
-
-	@Autowired
-	PeriodPriceConfigRepository perCofgRepo;
-
-	ModelMapper mapper = new ModelMapper();
-
-	@Autowired
-	private AuthorizationUtil authorizationUtil;
-
-	// view
+    
+        private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
+    
+        @Autowired
+        private PeriodPriceConfigRepository perCofgRepo;
+    
+        private ModelMapper mapper = new ModelMapper();
+    
+        @Autowired
+        private AuthorizationUtil authorizationUtil;
+    
+        // view
 
 	public ResponseEntity<?> getPeriodPriceConfigListInUsed() {
 		List<PeriodPriceConfig> peConfgList = perCofgRepo.findAllInUsed(LocalDateTime.now(dateTimeZone));

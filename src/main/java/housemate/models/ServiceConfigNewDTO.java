@@ -1,6 +1,6 @@
 package housemate.models;
 
-import housemate.constants.Enum.ServiceConfiguration;
+import housemate.constants.ServiceConfiguration;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -13,5 +13,7 @@ public class ServiceConfigNewDTO {
 	
 	@NotEmpty
 	private String configValue;
+
+
 
 }

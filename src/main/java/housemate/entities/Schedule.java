@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +61,7 @@ public class Schedule implements Cloneable {
 
     @Column(name = "user_usage_id")
     private int userUsageId;
-
+    
     @Column(name = "on_task")
     private boolean onTask;
 
@@ -71,12 +70,6 @@ public class Schedule implements Cloneable {
     public Schedule clone() {
         return (Schedule) super.clone();
     }
-
-    @Transient
-    private String staff;
-
-    @Transient
-    private String phone;
 
     @Transient
     private List<ServiceType> type;
@@ -92,4 +85,12 @@ public class Schedule implements Cloneable {
 
     @Transient
     private String serviceName;
+
+    @OneToOne
+    @JoinColumn(name = "service_id", insertable = false, updatable = false)
+    private Service service;
+
+    @OneToOne
+    @JoinColumn(name = "staff_id", insertable = false, updatable = false)
+    private UserAccount staff;
 }

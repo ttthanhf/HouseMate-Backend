@@ -29,34 +29,35 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class FeedbackService {
-	@Autowired
-	FeedbackRepository feedBackRepo;
-
-	@Autowired
-	UserRepository userRepo;
-
-	@Autowired
-	ServiceRepository servRepo;
-
-	@Autowired
-	AuthorizationUtil authorizationUtil;
-
-	@Autowired
-	ImageRepository imgRepo;
-
-	ModelMapper mapper = new ModelMapper();
-	
-	ZoneId datetimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
+    
+        @Autowired
+        private FeedbackRepository feedBackRepo;
+    
+        @Autowired
+        private UserRepository userRepo;
+    
+        @Autowired
+        private ServiceRepository servRepo;
+    
+        @Autowired
+        private AuthorizationUtil authorizationUtil;
+    
+        @Autowired
+        private ImageRepository imgRepo;
+    
+        private ModelMapper mapper = new ModelMapper();
+    
+        private final ZoneId datetimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
 	public ResponseEntity<?> getRatingOverviewByService(int serviceId) {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 		
 		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.ok(serviceFeedbList);
+		    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Chưa có đánh giá tổng quát cho dịch vụ này");
 
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
-
+		
 		Map<Integer, Integer> numOfReviewPerRatingLevel = new HashMap<>();
 		numOfReviewPerRatingLevel.put(1, feedBackRepo.getNumOfReviewPerRatingLevel(serviceId, 1));
 		numOfReviewPerRatingLevel.put(2, feedBackRepo.getNumOfReviewPerRatingLevel(serviceId, 2));
@@ -76,10 +77,10 @@ public class FeedbackService {
 
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByServiceId(serviceId);
 
-		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.ok(serviceFeedbList);
-
 		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
+
+		if (serviceFeedbList.isEmpty())
+		    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Chưa có đánh giá nào cho dịch vụ này !");
 
 		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
 		for (ServiceFeedback feeback : serviceFeedbList) {
@@ -98,9 +99,10 @@ public class FeedbackService {
 	public ResponseEntity<?> findTopFeedback(int ratingLevel) {
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findTopFeedback(ratingLevel);
 		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.ok(serviceFeedbList);
-
+			return ResponseEntity.ok(List.of());
+		
 		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
+
 		for (ServiceFeedback feeback : serviceFeedbList) {
 			FeedbackViewDetailDTO feedbackViewDetail = mapper.map(feeback, FeedbackViewDetailDTO.class);
 			UserAccount customer = userRepo.findByUserId(feeback.getCustomerId());
@@ -112,12 +114,12 @@ public class FeedbackService {
 	}
 
 	public ResponseEntity<?> filterServiceFeedbackByRating(int serviceId, int ratingLevel) {
+		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
+
 		List<ServiceFeedback> serviceFeedbList = feedBackRepo.findAllByRating(serviceId, ratingLevel);
 		if (serviceFeedbList.isEmpty())
-			return ResponseEntity.ok(serviceFeedbList);
-
-
-		FeedbackViewDTO serviceFeedback = new FeedbackViewDTO();
+		    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body("Không tìm thấy đánh giá " + ratingLevel + " sao cho dịch vụ này !");
 
 		List<FeedbackViewDetailDTO> feebackDetailList = new ArrayList<>();
 		for (ServiceFeedback feeback : serviceFeedbList) {
@@ -175,8 +177,8 @@ public class FeedbackService {
 	@Transactional
 	public ResponseEntity<?> updateFeedback(HttpServletRequest request, FeedbackNewDTO newFeedback, int serviceFeedbackId) {
 		ServiceFeedback feedbackToUpdate = null;
-		try {
-			int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+
+		int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 			//TODO: Constraint for comboId taskId, customerId, ServiceId In Here
 			//TODO: Allow to create when task status is DONE
 			//Only the author of specific feedback is allowed to update include Admin not allow too
@@ -192,11 +194,7 @@ public class FeedbackService {
 			    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 				    .body("Có lỗi đã xảy ra ! Cập nhật đánh giá thất bại !");			
 			servRepo.updateAvgRating(oldFeedback.getServiceId());
-		}catch(Exception e) {
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Có lỗi đã xảy ra ! Cập nhật đánh giá thất bại !");
-		}
+
 		return this.getOne(feedbackToUpdate.getServiceFeedbackId());
 	}
 	

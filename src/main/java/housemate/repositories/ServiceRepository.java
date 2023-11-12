@@ -33,60 +33,63 @@ public interface ServiceRepository extends JpaRepository<Service, Integer> {
 
     @Query("SELECT s.finalPrice FROM Service s WHERE s.serviceId = :serviceId")
     int getFinalPriceByServiceId(@Param("serviceId") int serviceId);
-	
-	List<Service> findAllByIsPackageFalse();
 
-	@Query("SELECT s FROM Service s WHERE "
-			+ "(:saleStatus IS NULL OR s.saleStatus = :saleStatus) "
-			+ "AND s.saleStatus <> 'DISCONTINUED'"
-			+ "AND (:keyword IS NULL OR LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')))  "
-			+ "AND s.avgRating >= :ratingFrom "
-			+ "AND (:isPackage IS NULL OR s.isPackage = :isPackage) ")
-	Page<Service> searchFilterAllAvailable(
-			@Param("saleStatus") SaleStatus saleStatus,
-			@Param("keyword") String keyword,
-			@Param("ratingFrom") int ratingFrom,
-			@Param("isPackage") Boolean isPackage,
-			Pageable page);
-	
-	@Query("SELECT s FROM Service s WHERE "
-			+ "(:saleStatus IS NULL OR s.saleStatus = :saleStatus) "
-			+ "AND (:keyword IS NULL OR LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')))  "
-			+ "AND s.avgRating >= :ratingFrom "
-			+ "AND (:isPackage IS NULL OR s.isPackage = :isPackage) ")
-	Page<Service> searchFilterAllKind(
-			@Param("saleStatus") SaleStatus saleStatus,
-			@Param("keyword") String keyword,
-			@Param("ratingFrom") int ratingFrom,
-			@Param("isPackage") Boolean isPackage,
-			Pageable page);
-	
-	@Query("SELECT s FROM Service s WHERE "
-			+ "s.saleStatus = 'ONSALE' "
-			+ "ORDER BY s.numberOfSold DESC "
-			+ "LIMIT 4 ")
-	List<Service> findTopSale();
+    List<Service> findAllByIsPackageFalse();
 
-	Optional<Service> findByServiceId(int id);
+    @Query("SELECT s FROM Service s WHERE "
+            + "(:saleStatus IS NULL OR s.saleStatus = :saleStatus) "
+            + "AND s.saleStatus <> 'DISCONTINUED'"
+            + "AND (:keyword IS NULL OR LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')))  "
+            + "AND s.avgRating >= :ratingFrom "
+            + "AND (:isPackage IS NULL OR s.isPackage = :isPackage) ")
+    Page<Service> searchFilterAllAvailable(
+            @Param("saleStatus") SaleStatus saleStatus,
+            @Param("keyword") String keyword,
+            @Param("ratingFrom") int ratingFrom,
+            @Param("isPackage") Boolean isPackage,
+            Pageable page);
 
-	Service findByTitleNameIgnoreCase(String titleName);
-	
-	@Transactional
-	@Modifying
-	@Query("UPDATE Service s SET s.avgRating = "
-	        + "(SELECT COALESCE(AVG(f.rating), 0) FROM ServiceFeedback f WHERE f.serviceId = :serviceId) "
-	        + "WHERE s.serviceId = :serviceId")
-	void updateAvgRating(@Param("serviceId") int serviceId);
-	
-	@Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
-	int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
+    @Query("SELECT s FROM Service s WHERE "
+            + "(:saleStatus IS NULL OR s.saleStatus = :saleStatus) "
+            + "AND (:keyword IS NULL OR LOWER(s.titleName) LIKE LOWER(CONCAT('%', :keyword, '%')))  "
+            + "AND s.avgRating >= :ratingFrom "
+            + "AND (:isPackage IS NULL OR s.isPackage = :isPackage) ")
+    Page<Service> searchFilterAllKind(
+            @Param("saleStatus") SaleStatus saleStatus,
+            @Param("keyword") String keyword,
+            @Param("ratingFrom") int ratingFrom,
+            @Param("isPackage") Boolean isPackage,
+            Pageable page);
 
-	@Query("SELECT s FROM Service s WHERE s.serviceId = :serviceId")
-	Service getServiceByServiceId(@Param("serviceId") int serviceId);
+    @Query("SELECT s FROM Service s WHERE "
+            + "s.saleStatus = 'ONSALE' "
+            + "ORDER BY s.numberOfSold DESC "
+            + "LIMIT 4 ")
+    List<Service> findTopSale();
+
+    Optional<Service> findByServiceId(int id);
+
+    Service findByTitleNameIgnoreCase(String titleName);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE Service s SET s.avgRating = "
+            + "(SELECT COALESCE(AVG(f.rating), 0) FROM ServiceFeedback f WHERE f.serviceId = :serviceId) "
+            + "WHERE s.serviceId = :serviceId")
+    void updateAvgRating(@Param("serviceId") int serviceId);
+
+    @Query("SELECT s.originalPrice FROM Service s WHERE s.serviceId = :serviceId")
+    int getOriginalPriceByServiceId(@Param("serviceId") int serviceId);
+
+    @Query("SELECT s FROM Service s WHERE s.serviceId = :serviceId")
+    Service getServiceByServiceId(@Param("serviceId") int serviceId);
 
     @Modifying
     @Transactional
     @Query("UPDATE Service s SET s.numberOfSold = s.numberOfSold + :quantity WHERE s.serviceId = :serviceId")
     void updateNumberOfSoldByServiceId(@Param("serviceId") int serviceId, int quantity);
+
+    @Query("SELECT s FROM Service s WHERE s.titleName = :serviceName")
+    Service getServiceByFullNameService(@Param("serviceName") String serviceName);
 
 }
