@@ -324,8 +324,14 @@ public class AccountService {
 
     public ResponseEntity<?> getStaffDetail(HttpServletRequest request, int staffId, String start, String end) {
         Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
-        if (!role.equals(Role.ADMIN)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        if (role.equals(Role.CUSTOMER)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Only admin and current customer can get details.");
+        }
+
+        // Check can't view another staff
+        int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        if (role.equals(Role.STAFF) && staffId != currentUserId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can't view another staff");
         }
 
         // Only can get detail for role staff
