@@ -211,6 +211,7 @@ public class AccountService {
         // Get usage history
         List<Schedule> schedules = scheduleRepository.getHistoryUsage(customerId);
         for (Schedule schedule: schedules) {
+            schedule.setServiceName(schedule.getService().getTitleName());
             UserUsage userUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
             OrderItem orderItem = orderItemRepository.findById(userUsage.getOrderItemId());
             Service service = serviceRepository.findById(orderItem.getServiceId()).orElse(null);
