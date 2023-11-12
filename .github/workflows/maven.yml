@@ -53,9 +53,7 @@ jobs:
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -r -o StrictHostKeyChecking=no ./target/${{ secrets.FILE_JAR }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
 
     - name: Destroy running app and check is app destroyed
-      run: |
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -9 -f \"java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}\""
-        while pgrep -f \"java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}\" > /dev/null; do sleep 1; done || true
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -9 -f \"java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}\""
 
     - name: Run app
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "nohup java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}" &
@@ -63,6 +61,7 @@ jobs:
     - name: Wait for app to start
       run: sleep 20s
 
+#        # while pgrep -f \"java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}\" > /dev/null; do sleep 1; done || true
     # - name: Verify app
     #   run: |
     #     sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "
