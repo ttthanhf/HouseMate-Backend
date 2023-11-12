@@ -306,17 +306,16 @@ public class TaskService {
     }
 
     // UPDATE TASK TO CHANGE THE TIME
-    public ResponseEntity<?> updateTaskTimeWorking(HttpServletRequest request, int oldScheduleId,
+    public ResponseEntity<?> updateTaskTimeWorking(HttpServletRequest request,
 	    Schedule scheduleNewTimeWorking) {
-	Schedule oldSchedule = scheduleRepo.findById(oldScheduleId).get();
 	int customerIdRequestUpdate = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-	if (oldSchedule == null)
+	if (scheduleNewTimeWorking == null)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch cũ không tồn tại");
 
-	if (!(customerIdRequestUpdate == oldSchedule.getCustomerId()))
+	if (!(customerIdRequestUpdate == scheduleNewTimeWorking.getCustomerId()))
 	    return ResponseEntity.badRequest().body("You are not allow to update this schedule");
 
-	if (oldSchedule.getScheduleId() != scheduleNewTimeWorking.getScheduleId())
+	if (scheduleNewTimeWorking.getScheduleId() != scheduleNewTimeWorking.getScheduleId())
 	    return ResponseEntity.badRequest().body("New schedule should have the same ID of OldSchedule");
 
 	TaskRes taskRes = taskBuildupServ.updateTaskOnScheduleChangeTime(scheduleNewTimeWorking);
