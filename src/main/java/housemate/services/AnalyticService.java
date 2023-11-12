@@ -58,6 +58,7 @@ public class AnalyticService implements DisposableBean {
     private String propertyId;
 
     private final String credentialsFileName = "credentials.json";
+
     private GoogleCredentials credentials;
     private BetaAnalyticsDataSettings betaAnalyticsDataSettings;
     private BetaAnalyticsDataClient analyticsData;
