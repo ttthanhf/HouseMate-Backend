@@ -41,7 +41,7 @@ public class TaskReport {
     @Column(name = "note", length = 3000)
     private String note;
     
-    @Column(name = "quantity_over", length = 3000)
+    @Transient
     private int qutyOver;
 
     @Transient
