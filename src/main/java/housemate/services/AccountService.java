@@ -210,12 +210,13 @@ public class AccountService {
         }
 
         // Check can't view another customer
-        UserAccount account = userRepository.findByUserId(customerId);
-        if (role.equals(Role.CUSTOMER) && customerId != account.getUserId()) {
+        int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        if (role.equals(Role.CUSTOMER) && customerId != currentUserId) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can't view another customer");
         }
 
         // Only can get detail for role staff
+        UserAccount account = userRepository.findByUserId(customerId);
         if (!account.getRole().equals(Role.CUSTOMER)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You only can get details for role customer");
         }
