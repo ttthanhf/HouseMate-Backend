@@ -70,7 +70,14 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body(account);
     }
 
-    public ResponseEntity<String> updateInfo(UpdateAccountDTO updateAccountDTO, int userId) {
+    public ResponseEntity<String> updateInfo(HttpServletRequest request, UpdateAccountDTO updateAccountDTO, int userId) {
+        // Check can't update another account
+        Role currentRole = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        if (!currentRole.equals(Role.ADMIN) && userId != currentUserId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can't update another account");
+        }
+
         // Get account in database
         UserAccount accountDB = userRepository.findByUserId(userId);
 
@@ -96,7 +103,7 @@ public class AccountService {
         // Change isBanned to true
         account.setAccountStatus(AccountStatus.BANNED);
         userRepository.save(account);
-        return ResponseEntity.status(HttpStatus.OK).body("Deleted successfully!");
+        return ResponseEntity.status(HttpStatus.OK).body("Ban account successfully!");
     }
 
     public ResponseEntity<String> inactive(HttpServletRequest request, int userId) {

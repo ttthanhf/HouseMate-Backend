@@ -38,8 +38,8 @@ public class AccountController {
 
     @Operation(summary = "Update account info")
     @PutMapping("/update/{userId}")
-    public ResponseEntity<String> updateInfo(@Valid @RequestBody UpdateAccountDTO updateAccountDTO, @PathVariable int userId) {
-        return service.updateInfo(updateAccountDTO, userId);
+    public ResponseEntity<String> updateInfo(HttpServletRequest request, @Valid @RequestBody UpdateAccountDTO updateAccountDTO, @PathVariable int userId) {
+        return service.updateInfo(request, updateAccountDTO, userId);
     }
 
     @Operation(summary = "[ADMIN] Ban account by userId")
