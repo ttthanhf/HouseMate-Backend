@@ -70,12 +70,7 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body(account);
     }
 
-    public ResponseEntity<String> updateInfo(HttpServletRequest request, UpdateAccountDTO updateAccountDTO, int userId) {
-        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
-        if (!role.equals(Role.ADMIN)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
-        }
-
+    public ResponseEntity<String> updateInfo(UpdateAccountDTO updateAccountDTO, int userId) {
         // Get account in database
         UserAccount accountDB = userRepository.findByUserId(userId);
 
