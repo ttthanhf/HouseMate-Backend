@@ -55,7 +55,7 @@ public class UserUsage implements Cloneable {
     public UserUsage clone() {
         return (UserUsage) super.clone();
     }
-
+    
     @Transient
     private Service service;
 }
