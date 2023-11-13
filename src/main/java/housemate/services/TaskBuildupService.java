@@ -513,9 +513,12 @@ public class TaskBuildupService {
 			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
 				"Trước khi báo cáo hãy điền giá trị khối lượng cho loại dịch vụ thuộc \"Gửi trả\"");
 		    quantity = reportNewDTO.getQtyOfGroupReturn();
-		    if(quantity > userUsage.getRemaining())
+		    if(userUsage.getRemaining() == 0) 
+			return TaskRes.build(taskReportResult, TaskMessType.REJECT_REPORT_TASK,
+				"Lượng tài nguyên của gói đã hết ! Hãy đặt mua gói mới !");		    
+		    if(quantity > userUsage.getRemaining()) 
 			userUsage.setQtyOver(quantity - userUsage.getRemaining());
-		    
+		
 		    task.getSchedule().setQuantityRetrieve(quantity);
 		}
 		task.setTaskStatus(TaskStatus.DONE);
@@ -524,6 +527,11 @@ public class TaskBuildupService {
 		int newQuantityRemaining = userUsage.getRemaining() - task.getSchedule().getQuantityRetrieve();
 		userUsage.setRemaining(newQuantityRemaining < 0 ? 0 : newQuantityRemaining);
 		userUsageRepo.save(userUsage);
+		int plusStaffScore = task.getStaff().getProfiencyScore() + PLUS_SCORE_PER_SUCCESS_TASK.getNum();
+		int plustCustomerScore = userRepo.findByUserId(task.getSchedule().getCustomerId()).getProficiencyScore() + PLUS_SCORE_PER_SUCCESS_TASK.getNum();
+		task.getStaff().setProfiencyScore(plusStaffScore > 100 ? 100 : plusStaffScore);
+		userRepo.findByUserId(task.getSchedule().getCustomerId()).setProficiencyScore(plustCustomerScore > 100 ? 100 : plustCustomerScore);
+		
 
 		// TODO: NOTI STAFF DONE TO CUSTOMER
 		TaskBuildupService.createAndSendNotification(
@@ -531,6 +539,7 @@ public class TaskBuildupService {
 			notiTitleForTaskStatus,
 			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đã hoàn thành công việc\"",
 			String.valueOf(task.getSchedule().getCustomerId()));
+		
 		
 		break;
 	    }
@@ -589,7 +598,7 @@ public class TaskBuildupService {
 			    "Nhân viên đang sắp tới phục vụ bạn. Mở cửa cho nhân viên khi tới nhé",
 			    String.valueOf(task.getSchedule().getCustomerId()));
 		    
-		    log.info("Task {} upcomging - staff not null - send at {}", task.getTaskId(), dateFormat.format(new Date()));
+		    log.info("Task {} time coming - staff not null - send at {}", task.getTaskId(), dateFormat.format(new Date()));
 		}
 	    }
 	};
@@ -600,7 +609,7 @@ public class TaskBuildupService {
 	}
 	eventNotiList.get(theTask.getTaskId()).add(taskEvent);
 	
-	log.info("Task {} create event send noti when incoming task - will send at {} ", 
+	log.info("Task {} create event send noti when time coming task - will send at {} ", 
 		theTask.getTaskId(), LocalDateTime.ofInstant(timeSendNotiInstant, dateTimeZone));
     }
 
@@ -670,14 +679,12 @@ public class TaskBuildupService {
 	3. Trigger event for auto report Done status for the task has already report Doing at the time after end time working is DURATION_HOURS_SYST_AUTO_DONE_TASK hours
 	4. Trigger event cancel task when staff not report for status DONE after the end of day at 00 PM every day and minus the score MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK
 	*/
-   	ZonedDateTime timeStartWorkingZone = timeStartWorking.atZone(dateTimeZone);
-   	ZonedDateTime timeEndWorkingZone = timeEndWorking.atZone(dateTimeZone);
    	//Trigger 1
-   	Instant timeMinusScoreForNotReportArrived = timeStartWorkingZone.plusMinutes(DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum()).toInstant(); 
+   	Instant timeMinusScoreForNotReportArrived = timeStartWorking.plusMinutes(DURATION_MINUTES_TIMES_STAFF_START_REPORT.getNum()).atZone(dateTimeZone).toInstant();
    	//Trigger 2
-   	Instant timeCancelTaskForNotReportDoing = timeEndWorkingZone.toInstant();
+   	Instant timeCancelTaskForNotReportDoing = timeEndWorking.atZone(dateTimeZone).toInstant();
    	//Trigger 4
-   	Instant timeCancelTaskForNotReportDone = timeEndWorkingZone.plusMinutes(DURATION_HOURS_SYST_AUTO_DONE_TASK.getNum()).toInstant();
+   	Instant timeCancelTaskForNotReportDone = timeEndWorking.plusMinutes(DURATION_HOURS_SYST_AUTO_DONE_TASK.getNum()).atZone(dateTimeZone).toInstant();
  
    	//Trigger 1
 	{
@@ -823,8 +830,8 @@ public class TaskBuildupService {
 		    theTask.getTaskId(), timeCancelTaskForNotReportDone);
 	}
 	
-   	log.info("Task {} Trigger 1 timeMinusScoreForNotReportArrived call at {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeCancelTaskForNotReportDone, dateTimeZone));
-   	log.info("Task {} Trigger 2 timeCancelTaskForNotReportDoing call at {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeMinusScoreForNotReportArrived, dateTimeZone));
+   	log.info("Task {} Trigger 1 timeMinusScoreForNotReportArrived call at {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeMinusScoreForNotReportArrived, dateTimeZone));
+   	log.info("Task {} Trigger 2 timeCancelTaskForNotReportDoing call at {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeCancelTaskForNotReportDoing, dateTimeZone));
    	log.info("Task {} Trigger 3 timeCancelTaskForNotReportDone call at {}", theTask.getTaskId(), LocalDateTime.ofInstant(timeCancelTaskForNotReportDone, dateTimeZone));
 
     }

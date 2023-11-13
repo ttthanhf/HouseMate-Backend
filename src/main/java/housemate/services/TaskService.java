@@ -217,7 +217,7 @@ public class TaskService {
 		    + " điểm lịch của bạn đến hẹn làm việc ! Vui lòng tạo lịch"
 		    + " mới để hệ thống lên lịch làm việc cho bạn !");
 	if (schedule.getStatus().equals(ScheduleStatus.CANCEL))
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn đã hủy lịch này ! Vui lòng tạo lịch mới để hệ thống lên lịch làm việc cho bạn !");
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch này đã bị hủy ! Vui lòng tạo lịch mới để hệ thống lên lịch làm việc cho bạn !");
 
 	Task createdTask = taskRepo.findExistingTaskForSchedule(scheduleId);
 	if (createdTask != null)
