@@ -22,7 +22,8 @@ public enum ServiceConfiguration {
     MINUS_POINTS_FOR_STAFF_CANCEL_TASK(false),
     MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK(false),
     PLUS_SCORE_PER_SUCCESS_TASK(false),
-    BAD_STAFF_PROFICIENT_SCORE(false);
+    BAD_STAFF_PROFICIENT_SCORE(false),
+    TIME_TRIGGER_SCAN_NEW_TASK(false);
     
     
 
@@ -58,5 +59,16 @@ public enum ServiceConfiguration {
 	    e.printStackTrace();
 	}
 	return configValue == null ? null : Integer.parseInt(configValue);
+    }
+    
+    public String getString() {
+	String configValue = null;
+	try {
+	    configValue = configService.getConfigValuesOfConfigTypeName(this.valueOf(this.name())).stream().findFirst()
+			.orElseThrow(IllegalArgumentException::new);
+	}catch (Exception e) {
+	    e.printStackTrace();
+	}
+	return configValue;
     }
 }

@@ -383,9 +383,12 @@ public class TaskService {
 
 	if (taskToBeReported == null)
 	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Công việc này không tồn tại !");
-	if (!(taskToBeReported.getStaffId() != null && !taskToBeReported.getTaskStatus().name().contains("CANCELLED")
-		&& userReportRole.equals(Role.STAFF) && userReport == taskToBeReported.getStaffId()))
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn không có quyền được phép báo cáo tiến trình làm việc cho công việc này !");
+	if (taskToBeReported.getTaskStatus().name().contains("CANCELLED"))
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+		    .body("Lịch này đã bị hủy ! Ngừng báo cáo tiến trình làm việc cho lịch này !");
+	if (!(taskToBeReported.getStaffId() != null && userReportRole.equals(Role.STAFF) && userReport == taskToBeReported.getStaffId()))
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+		    .body("Chỉ nhân viên quản lịch này mới được báo cáo tiến trình này !");
 
 	TaskRes<TaskReport> taskReportedRes = taskBuildupServ.reportTask(taskToBeReported, taskReportType, reportnewDTO);
 	if (taskReportedRes == null)
@@ -419,6 +422,5 @@ public class TaskService {
 	}
 	return ResponseEntity.ok().body(taskReport);
     }
-
  
 }

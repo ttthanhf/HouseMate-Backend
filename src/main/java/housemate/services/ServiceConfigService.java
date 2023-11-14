@@ -104,7 +104,7 @@ public class ServiceConfigService {
 	@Transactional
 	public ResponseEntity<?> deleteConfigValue(HttpServletRequest request, int serviceConfigId) {
 	    ServiceConfig existedServConf = servConfRepo.findById(serviceConfigId).orElse(null);
-	    if (existedServConf != null)
+	    if (existedServConf == null)
 		return ResponseEntity.badRequest().body("Not found to delete !");
 	    servConfRepo.delete(existedServConf);
 	    return ResponseEntity.ok("Deleted Successfully");

@@ -117,5 +117,14 @@ public class TaskController {
 			HttpServletRequest request,
 			@PathVariable("schedule-id") int scheduleId) {
 		return taskServiceDao.cancelTask(request, scheduleId);
-	}	
+	}
+	
+	@GetMapping("/auto-schedule")
+	@Operation(summary = "call back event auto ")
+	public ResponseEntity<?> callBackAutoScanSchduleForNewTask(
+			HttpServletRequest request,
+			@PathVariable("schedule-id") int scheduleId) {
+		return taskServiceDao.cancelTask(request, scheduleId);
+	}
+	
 }
