@@ -63,12 +63,15 @@ public class NotificationService {
                 notification.setNotificationCreatedAt(LocalDateTime.now());
                 notification = notificationRepository.save(notification);
                 
+                notification.setUser(staff);
+                
                 webSocketService.sendNotificationToUser(String.valueOf(aUserId), notification);
                 
             }
         } else {
+            int aUserId = Integer.parseInt(userId);
             Notification notification = new Notification();
-            notification.setUserId(Integer.parseInt(userId));
+            notification.setUserId(aUserId);
             notification.setMessage(message);
             notification.setTitle(title);
             notification.setEntityId(entityId);
@@ -77,6 +80,9 @@ public class NotificationService {
             notification = notificationRepository.save(notification);
             
             notificationRepository.save(notification);
+            
+            UserAccount user = userRepository.findByUserId(aUserId);
+            notification.setUser(user);
             
             webSocketService.sendNotificationToUser(userId, notification);
         }
