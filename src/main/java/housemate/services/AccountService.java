@@ -71,9 +71,11 @@ public class AccountService {
     }
 
     public ResponseEntity<String> updateInfo(HttpServletRequest request, UpdateAccountDTO updateAccountDTO, int userId) {
-        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
-        if (!role.equals(Role.ADMIN)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        // Check can't update another account
+        Role currentRole = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        if (!currentRole.equals(Role.ADMIN) && userId != currentUserId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can't update another account");
         }
 
         // Get account in database
@@ -101,7 +103,7 @@ public class AccountService {
         // Change isBanned to true
         account.setAccountStatus(AccountStatus.BANNED);
         userRepository.save(account);
-        return ResponseEntity.status(HttpStatus.OK).body("Deleted successfully!");
+        return ResponseEntity.status(HttpStatus.OK).body("Ban account successfully!");
     }
 
     public ResponseEntity<String> inactive(HttpServletRequest request, int userId) {

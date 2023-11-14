@@ -113,6 +113,9 @@ public class TaskBuildupService {
 
     @Autowired
     private TaskScheduler taskScheduler;
+    
+    @Autowired
+    private static NotificationService notificationService;
 
     private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -574,8 +577,11 @@ public class TaskBuildupService {
     }
 
     //MARKUP === SETTING NOTIFICATION===
-    public static void createAndSendNotification(Task task, String title, String mess, String userId) {
+    public static void createAndSendNotification(Task task, String title, String message, String userId) {
 	// TODO: BUILD MESSAGE
+        title = task.getSchedule().getService().getTitleName() + " " + title;
+        int entityId = task.getScheduleId();
+        notificationService.createNotification(userId, message, title, entityId);
 	// TODO SEND NOTIFICATION
     }
     

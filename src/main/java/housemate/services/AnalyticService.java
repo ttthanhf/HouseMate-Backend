@@ -264,6 +264,10 @@ public class AnalyticService implements DisposableBean {
                 analyticServicePageResponse.setTotalView(totalView);
 
                 Service service = serviceRepository.getServiceByFullNameService(serviceName);
+                if(service == null) {
+                    continue;
+                }
+                
                 int serviceId = service.getServiceId();
 
                 Image image = imageRepository.findFirstByEntityIdAndImageType(serviceId, ImageType.SERVICE).orElse(null);
