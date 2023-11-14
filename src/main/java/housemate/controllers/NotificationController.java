@@ -44,4 +44,10 @@ public class NotificationController {
     public ResponseEntity<String> updateReadStatusNotification(HttpServletRequest request, @PathVariable int notificationId) {
         return notificationService.updateReadStatusNotification(request, notificationId);
     }
+
+    @Operation(summary = "Change all status read notification to true")
+    @GetMapping("/read-all")
+    public ResponseEntity<String> updateAllReadStatusNotification(HttpServletRequest request) {
+        return notificationService.updateAllReadStatusNotification(request);
+    }
 }

@@ -24,36 +24,36 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class NotificationService {
-    
+
     @Autowired
     private AuthorizationUtil authorizationUtil;
-    
+
     @Autowired
     private NotificationRepository notificationRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private WebSocketService webSocketService;
-    
+
     public ResponseEntity<List<Notification>> getAllNotificationByUser(HttpServletRequest request) {
-        
+
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
-        
+
         List<Notification> listNotification = notificationRepository.getAllNotificationByUserId(userId);
-        
+
         return ResponseEntity.status(HttpStatus.OK).body(listNotification);
     }
-    
+
     public void createNotification(String userId, String message, String title, int entityId) {
-        
+
         if (userId.equals(Role.STAFF.toString())) {
             List<UserAccount> listStaff = userRepository.findByRole(Role.STAFF);
             for (UserAccount staff : listStaff) {
-                
+
                 int aUserId = staff.getUserId();
-                
+
                 Notification notification = new Notification();
                 notification.setUserId(aUserId);
                 notification.setMessage(message);
@@ -62,11 +62,11 @@ public class NotificationService {
                 notification.setRead(false);
                 notification.setCreatedAt(LocalDateTime.now());
                 notification = notificationRepository.save(notification);
-                
+
                 notification.setUser(staff);
-                
+
                 webSocketService.sendNotificationToUser(String.valueOf(aUserId), notification);
-                
+
             }
         } else {
             int aUserId = Integer.parseInt(userId);
@@ -78,17 +78,17 @@ public class NotificationService {
             notification.setRead(false);
             notification.setCreatedAt(LocalDateTime.now());
             notification = notificationRepository.save(notification);
-            
+
             notificationRepository.save(notification);
-            
+
             UserAccount user = userRepository.findByUserId(aUserId);
             notification.setUser(user);
-            
+
             webSocketService.sendNotificationToUser(userId, notification);
         }
-        
+
     }
-    
+
     public ResponseEntity<String> updateReadStatusNotification(HttpServletRequest request, int notificationId) {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         Notification notification = notificationRepository.getNotificationByNotificationIdAndUserId(userId, notificationId);
@@ -98,5 +98,13 @@ public class NotificationService {
         notification.setRead(true);
         notificationRepository.save(notification);
         return ResponseEntity.status(HttpStatus.OK).body("Update read status notification success !");
+    }
+
+    public ResponseEntity<String> updateAllReadStatusNotification(HttpServletRequest request) {
+        int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        List<Notification> listNotification = notificationRepository.getAllNotificationByUserId(userId);
+        listNotification.stream().forEach(noti -> noti.setRead(true));
+        notificationRepository.saveAll(listNotification);
+        return ResponseEntity.status(HttpStatus.OK).body("Update all read status notification success !");
     }
 }
