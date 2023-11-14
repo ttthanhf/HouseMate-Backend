@@ -40,4 +40,7 @@ public class Notification {
     @Column(name = "entity_id")
     private int entityId;
 
+    @Transient
+    UserAccount user;
+
 }
