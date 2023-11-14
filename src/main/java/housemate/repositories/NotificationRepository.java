@@ -21,5 +21,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
     List<Notification> getAllNotificationByUserId(int userId);
 
     @Query("SELECT n FROM Notification n WHERE n.userId = :userId AND n.notificationId = :notificationId")
-    Notification getNotificationByNotificationIdAndUserId(int notificationId, int userId);
+    Notification getNotificationByNotificationIdAndUserId(int userId, int notificationId);
 }
