@@ -60,7 +60,7 @@ public class NotificationService {
                 notification.setTitle(title);
                 notification.setEntityId(entityId);
                 notification.setRead(false);
-                notification.setNotificationCreatedAt(LocalDateTime.now());
+                notification.setCreatedAt(LocalDateTime.now());
                 notification = notificationRepository.save(notification);
                 
                 notification.setUser(staff);
@@ -76,7 +76,7 @@ public class NotificationService {
             notification.setTitle(title);
             notification.setEntityId(entityId);
             notification.setRead(false);
-            notification.setNotificationCreatedAt(LocalDateTime.now());
+            notification.setCreatedAt(LocalDateTime.now());
             notification = notificationRepository.save(notification);
             
             notificationRepository.save(notification);

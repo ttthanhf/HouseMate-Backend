@@ -26,7 +26,7 @@ public class Notification {
     private int userId;
 
     @Column(name = "notification_created_at")
-    private LocalDateTime notificationCreatedAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "is_read")
     private boolean isRead;
