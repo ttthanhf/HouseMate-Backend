@@ -42,6 +42,8 @@ public class NotificationService {
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
 
         List<Notification> listNotification = notificationRepository.getAllNotificationByUserId(userId);
+        UserAccount user = userRepository.findByUserId(userId);
+        listNotification.stream().forEach(noti -> noti.setUser(user));
 
         return ResponseEntity.status(HttpStatus.OK).body(listNotification);
     }
