@@ -20,16 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.TriggerContext;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import static housemate.constants.ServiceConfiguration.*;
-
 import housemate.constants.AccountStatus;
 import housemate.constants.Enum.TaskMessType;
 import housemate.constants.Enum.TaskReportType;
@@ -67,7 +64,6 @@ import housemate.repositories.TaskReposiotory;
 import housemate.repositories.UserRepository;
 import housemate.repositories.UserUsageRepository;
 import housemate.responses.TaskRes;
-import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 
 @Component
@@ -115,7 +111,7 @@ public class TaskBuildupService {
     private TaskScheduler taskScheduler;
     
     @Autowired
-    private static NotificationService notificationService;
+    private NotificationService notificationService;
 
     private final ZoneId dateTimeZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -150,7 +146,7 @@ public class TaskBuildupService {
 	    if (taskList != null || !taskList.isEmpty()) {
 		taskList.stream().forEach(x -> {
 		    // TODO: NOTI TO CUSTOMER FOR TASK
-		    TaskBuildupService.createAndSendNotification(
+		    this.createAndSendNotification(
 			    x, // Task
 			    "Chờ tìm nhân viên",
 			    "Đang tìm kiếm nhân viên", // Mess
@@ -159,7 +155,7 @@ public class TaskBuildupService {
 
 		});
 		// TODO: NOTI NEW TASK LIST FOR STAFF
-		TaskBuildupService.createAndSendNotification(
+		this.createAndSendNotification(
 			null,
 			"Việc mới",
 			"Việc mới ngày " + LocalDate.now().getDayOfMonth(),
@@ -179,19 +175,20 @@ public class TaskBuildupService {
 	try {
 	    if (schedules.isEmpty())
 		return List.of();
-	    for (Schedule theSchedule : schedules) 
-		taskList.add(this.createTask(theSchedule));
-	    
+	    for (Schedule schedule : schedules) {
+		Task task = this.createTask(schedule);
+		if (task != null) 
+		    taskList.add(task);
+	    }	    
 	    if (!taskList.isEmpty()) {
 		taskList.stream().forEach(x -> {
 		    // TODO: NOTI TO CUSTOMER FOR TASK
-		    TaskBuildupService.createAndSendNotification(
+		    this.createAndSendNotification(
 			    x, // Task
 			    "Chờ tìm nhân viên",
 			    "Đang tìm kiếm nhân viên", // Mess
 			    String.valueOf(x.getSchedule().getCustomerId())
 			    ); // Receiver
-		    log.info("======go");
 		});
 	    }
 	    
@@ -304,7 +301,7 @@ public class TaskBuildupService {
 	    
 	    //TODO: NOTI CANCEL TO STAFF	
 	    if (taskToBeCancelled != null && taskToBeCancelled.getStaff() != null) {
-		TaskBuildupService.createAndSendNotification(
+		this.createAndSendNotification(
 			taskToBeCancelled,
 			"Hủy lịch",
 			"Khách hàng hủy lịch làm việc ngày " + dateFormat.format(
@@ -317,7 +314,7 @@ public class TaskBuildupService {
 		
 		// TODO: NOTI CANCEL TO CUSTOMER
 		if (taskToBeCancelled != null && taskToBeCancelled.getStaff() != null)
-		    TaskBuildupService.createAndSendNotification(
+		    this.createAndSendNotification(
 			    taskToBeCancelled,
 			    "Hủy công việc",
 			    "Nhân viên hủy lịch làm việc, vui lòng chờ nhân viên khác",
@@ -392,7 +389,7 @@ public class TaskBuildupService {
 	
 	    // TODO: NOTI CANCEL TASK FOR CHANGE TIME WORKING TO STAFF
 	    if (oldTask.getStaffId() != null) {
-		    TaskBuildupService.createAndSendNotification(
+		    this.createAndSendNotification(
 			    oldTask,
 			    "Hủy công việc",
 			    "Lich công việc bị hủy do khách hàng đổi giờ làm việc ",
@@ -431,7 +428,14 @@ public class TaskBuildupService {
 
 		//MARKUP CALL EVENTS FOR REPORT TASK
 		this.createEventForReportTask(task, task.getSchedule().getStartDate(), task.getSchedule().getEndDate());
-				
+		// TODO: NOTI APPROVE STAFF
+		this.createAndSendNotification(
+			task,
+			"Công việc mới",
+			"Công việc mới của bạn đã được lên lịch làm việc ",
+			String.valueOf(task.getStaffId()));
+		log.info("TASK ĐÂY");
+		    
 	    } catch (Exception e) {
 		e.printStackTrace();
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -478,7 +482,7 @@ public class TaskBuildupService {
 		taskReportResult.setTaskStatus(task.getTaskStatus());
 
 		// TODO: NOTI STAFF ARRIVED TO CUSTOMER
-		TaskBuildupService.createAndSendNotification(
+		this.createAndSendNotification(
 			task,
 			notiTitleForTaskStatus,
 			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đang đến\"",
@@ -498,7 +502,7 @@ public class TaskBuildupService {
 		taskReportResult.setTaskStatus(task.getTaskStatus());
 
 		// TODO: NOTI STAFF DOING TO CUSTOMER
-		TaskBuildupService.createAndSendNotification(
+		this.createAndSendNotification(
 			task,
 			notiTitleForTaskStatus,
 			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đang làm việc\"",
@@ -553,7 +557,7 @@ public class TaskBuildupService {
 		
 
 		// TODO: NOTI STAFF DONE TO CUSTOMER
-		TaskBuildupService.createAndSendNotification(
+		this.createAndSendNotification(
 			task,
 			notiTitleForTaskStatus,
 			"Nhân viên " + task.getStaff().getStaffInfo().getFullName() + "\"Đã hoàn thành công việc\"",
@@ -577,19 +581,21 @@ public class TaskBuildupService {
     }
 
     //MARKUP === SETTING NOTIFICATION===
-    public static void createAndSendNotification(Task task, String title, String message, String userId) {
+    public void createAndSendNotification(Task task, String title, String message, String userId) {
 	// TODO: BUILD MESSAGE
-        title = task.getSchedule().getService().getTitleName() + " " + title;
-        int entityId = task.getScheduleId();
-        notificationService.createNotification(userId, message, title, entityId);
-	// TODO SEND NOTIFICATION
+	String serviceName = task.getSchedule() == null ? "" : task.getSchedule().getService().getTitleName();
+	title = serviceName + " " + title;
+	int entityId = task.getScheduleId();
+	notificationService.createNotification(userId, message, title, entityId);
+	log.info("SEND NOTIFICATION");
     }
-    
+
    //MARKUP ===CREATE EVENTS===
     private void createEventSendNotiWhenTimeComing(Task theTask, LocalDateTime timeStartTask) {
 	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone);
 	Instant timeSendNotiInstant = timeStartTaskZone.toInstant();
-
+	TaskBuildupService taskBuidServ = this;
+	
 	Runnable runnableTask = new Runnable() {
 	    @Override
 	    public void run() {
@@ -603,7 +609,7 @@ public class TaskBuildupService {
 		    taskRepo.save(task);
 
 		  //TODO: NOTI FOR NOT FOUNDED STAFF TO CUSTOMER
-		    TaskBuildupService.createAndSendNotification(
+		    taskBuidServ.createAndSendNotification(
 			    task,
 			    "Hủy lịch",
 			    "Hủy lịch do không tìm thấy nhân viên",
@@ -614,7 +620,7 @@ public class TaskBuildupService {
 		if (task.getStaffId() != null) {
 		    
 		  //TODO: NOTI FOR STAFF IS COMING TO CUSTOMER
-		    TaskBuildupService.createAndSendNotification(
+		    taskBuidServ.createAndSendNotification(
 			    task,
 			    notiTitleForTaskStatus,
 			    "Nhân viên đang sắp tới phục vụ bạn. Mở cửa cho nhân viên khi tới nhé",
@@ -638,16 +644,16 @@ public class TaskBuildupService {
     private void createEventSendNotiUpcomingTask(Task theTask, LocalDateTime timeStartTask, int periodHourBeforeFrMinutess) {	
 	ZonedDateTime timeStartTaskZone = timeStartTask.atZone(dateTimeZone).minusMinutes(periodHourBeforeFrMinutess);
 	Instant timeSendNotiInstant = timeStartTaskZone.toInstant();
+	TaskBuildupService taskBuidServ = this;
 
 	Runnable runnableTask = new Runnable() {
-
 	    @Override
 	    public void run() {
 		Task task = taskRepo.findById(theTask.getTaskId()).get();
 		
 		if (task.getStaffId() == null) {
 		    //TODO: NOTI TIME WORKING UPCOMING BUT NOT FOUND STAFF TO CUSTOMER
-		    TaskBuildupService.createAndSendNotification(
+		    taskBuidServ.createAndSendNotification(
 			    task,
 			    notiTitleForTaskStatus,
 			    "Vẫn chưa tìm được nhân viên. Hãy đợi thêm.",
@@ -664,12 +670,12 @@ public class TaskBuildupService {
 		    taskRepo.save(task);
 		    
 		    //TODO: NOTI TIME WORRKING UPCOMING TO STAFF AND CUSTOMER
-		    TaskBuildupService.createAndSendNotification(
+		    taskBuidServ.createAndSendNotification(
 			    task,
 			    notiTitleForTaskStatus,
 			    "Nhân viên sắp đến. Hãy mở cửa nhé !",
 			    String.valueOf(task.getSchedule().getCustomerId()));
-		    TaskBuildupService.createAndSendNotification(
+		    taskBuidServ.createAndSendNotification(
 			    task,
 			    notiTitleForTaskStatus,
 			    "Hãy chuẩn bị đến giờ làm việc tại nhà khách hàng " + task.getSchedule().getCustomerId()
@@ -708,6 +714,7 @@ public class TaskBuildupService {
    	//Trigger 4
    	Instant timeCancelTaskForNotReportDone = timeEndWorking.plusMinutes(DURATION_HOURS_SYST_AUTO_DONE_TASK.getNum()).atZone(dateTimeZone).toInstant();
  
+   	TaskBuildupService taskBuidServ = this;
    	//Trigger 1
 	{
 	    Runnable eventMinusScoreForNotReportArrived = new Runnable() {
@@ -724,7 +731,7 @@ public class TaskBuildupService {
 			staffRepo.save(staff);
 			
 			// TODO: NOTI MINUS THE PROFICIENT SCORE FOR REPORT ARRIVED TO STAFF
-			 TaskBuildupService.createAndSendNotification(
+			taskBuidServ.createAndSendNotification(
 				    task,
 				    notiTitleForTaskStatus,
 				    "Trừ " + MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK + " do trễ hẹn báo cáo trạng thái \"Đã đến\"",
@@ -771,14 +778,14 @@ public class TaskBuildupService {
 			scheduleRepo.save(schedule);
 
 			// TODO: NOTI CANCEL TASK FOR NOT REPORT DOING TO STAFF
-			 TaskBuildupService.createAndSendNotification(
+			taskBuidServ.createAndSendNotification(
 				    task,
 				    "Hủy công việc",
 				    "Hủy do không báo cáo tiến trình \"Đang làm việc\" ",
 				    String.valueOf(task.getSchedule().getStaffId()));
 			
 			 // TODO: NOTI CANCEL SCHEDULE WHEN STAFF NOT REPORT DOING TO CUSTOMER
-			 TaskBuildupService.createAndSendNotification(
+			taskBuidServ.createAndSendNotification(
 				    task,
 				    "Hủy lịch",
 				    "Hủy do nhân viên không báo cáo tiến trình làm việc.",
@@ -824,13 +831,13 @@ public class TaskBuildupService {
 			taskRepo.save(task);
 				
 			 // TODO: NOTI CANCEL SCHEDULE WHEN STAFF NOT REPORT DONE TO CUSTOMER
-			 TaskBuildupService.createAndSendNotification(
+			taskBuidServ.createAndSendNotification(
 				    task,
 				    "Hủy lịch",
 				    "Hủy do nhân viên không báo cáo tiến trình làm việc.",
 				    String.valueOf(task.getSchedule().getCustomerId()));
 			// TODO: NOTI TO STAFF FOR NOT REPORT STATUS DONE
-			TaskBuildupService.createAndSendNotification(
+			taskBuidServ.createAndSendNotification(
 				    task,
 				    "Hủy công việc",
 				    "Hủy do không hoàn thành báo cáo tiến trình \"Hoàn thành\"",
