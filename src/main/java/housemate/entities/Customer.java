@@ -2,7 +2,7 @@ package housemate.entities;
 
 import org.hibernate.annotations.Where;
 
-import housemate.constants.Enum.AccountStatus;
+import housemate.constants.AccountStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -36,7 +36,5 @@ public class Customer {
 	@Column(name = "account_status")
 	@Enumerated(EnumType.STRING)
 	private AccountStatus accountStatus;
-	
-	@Column(name = "is_banned")
-	private boolean isBanned;
+
 }

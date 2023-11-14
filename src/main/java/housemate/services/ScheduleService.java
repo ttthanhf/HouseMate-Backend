@@ -187,6 +187,11 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm lịch này với ID: + " + scheduleId);
         }
 
+        // Check if schedule already have staff applied it
+        if (currentSchedule.getStaffId() != 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Không thể cập nhật lịch vì lịch này đã có nhân viên thực hiện!");
+        }
+
         // Check if status is allowed or not
         ScheduleStatus status = currentSchedule.getStatus();
         if (status != ScheduleStatus.PROCESSING && status != ScheduleStatus.PENDING) {
@@ -260,6 +265,11 @@ public class ScheduleService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không thể tìm dịch vụ với ID này");
         }
 
+        if (!service.getGroupType().equals(RETURN_SERVICE) && !service.isPackage() && (schedule.getQuantityRetrieve() < service.getMin() || schedule.getQuantityRetrieve() > service.getMax())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bạn vui lòng đặt lịch với số lượng trong khoảng từ " +
+                    service.getMin() + " " + service.getUnitOfMeasure().toLowerCase() + " đến " + service.getMax() + " " + service.getUnitOfMeasure().toLowerCase());
+        }
+
         // Check correct user usage ID
         UserUsage userUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
         if (userUsage == null) {
@@ -299,7 +309,13 @@ public class ScheduleService {
         }
 
         // Store to database
-        storeToDatabase(schedule, isCreate, request);
+        int scheduleId = storeToDatabase(schedule);
+
+        if (isCreate) {
+            taskService.createNewTask(request, scheduleId);
+        } else {
+            taskService.updateTaskTimeWorking(request, scheduleRepository.getByScheduleId(scheduleId));
+        }
 
         return ResponseEntity.status(HttpStatus.OK).body("Đặt lịch thành công! Vui lòng đợi nhân viên chúng tôi nhận công việc này.");
     }
@@ -351,12 +367,12 @@ public class ScheduleService {
 
     private ResponseEntity<String> validateDate(LocalDateTime startDate, LocalDateTime endDate, String groupType) {
         // Config
-        int FIND_STAFF_MINUTES = ServiceConfiguration.FIND_STAFF_HOURS.getNum();
-        int MINIMUM_RETURN_MINUTES = ServiceConfiguration.MINIMUM_RETURN_HOURS.getNum();
+        int FIND_STAFF_MINUTES = ServiceConfiguration.FIND_STAFF_MINUTES.getNum();
+        int MINIMUM_RETURN_MINUTES = ServiceConfiguration.MINIMUM_RETURN_MINUTES.getNum();
         int OFFICE_HOURS_START = ServiceConfiguration.OFFICE_HOURS_START.getNum();
 
         // Check startDate < endDate
-        if (!startDate.isBefore(endDate)) {
+        if (!startDate.isBefore(endDate) && !startDate.isEqual(endDate)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn phải đặt ngày bắt đầu trước ngày kết thúc");
         }
 
@@ -400,14 +416,13 @@ public class ScheduleService {
         return null;
     }
 
-    private void storeToDatabase(Schedule schedule, boolean isCreate, HttpServletRequest request) {
+    private int storeToDatabase(Schedule schedule) {
         int customerId = schedule.getCustomerId();
         Cycle cycle = schedule.getCycle();
         int parentScheduleId = 0;
 
         // Usage of user
         UserUsage userUsage = userUsageRepository.findById(schedule.getUserUsageId()).orElse(null);
-        if (userUsage == null) return;
 
         // Get max quantity
         int totalUsed = scheduleRepository.getTotalQuantityRetrieveByUserUsageId(schedule.getUserUsageId());
@@ -422,10 +437,7 @@ public class ScheduleService {
             newSchedule.setParentScheduleId(newSchedule.getScheduleId());
             Schedule scheduleDb = scheduleRepository.save(newSchedule);
 
-            if (isCreate) {
-                taskService.createNewTask(request, scheduleDb.getScheduleId());
-            }
-            return;
+            return scheduleDb.getScheduleId();
         }
 
         // Store to database (EVERY_WEEK/EVERY_MONTH)
@@ -449,9 +461,7 @@ public class ScheduleService {
             scheduleRepository.save(newSchedule);
         }
 
-        if (isCreate) {
-            taskService.createNewTask(request, parentScheduleId);
-        }
+        return parentScheduleId;
     }
 
     private int getMaxQuantity(LocalDateTime startDate, LocalDateTime endDate, Cycle cycle, int remaining, int quantity, int totalUsed) {
@@ -508,7 +518,6 @@ public class ScheduleService {
         schedule.setCurrentUsage(currentUsage);
         schedule.setGroupType(service.getGroupType());
 
-        Set<PurchasedServiceRes> purchases = new HashSet<>();
         int userId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
         List<UserUsage> usageList = userUsageRepository.getAllByServiceIdAndUserId(schedule.getServiceId(), userId);
 
@@ -523,7 +532,6 @@ public class ScheduleService {
             if (remaining <= 0 || userUsage.getEndDate().isBefore(LocalDateTime.now())) continue;
 
             // Query the relationship to get data in database
-            int serviceId = userUsage.getServiceId();
             int orderItemId = userUsage.getOrderItemId();
             OrderItem orderItem = orderItemRepository.findById(orderItemId);
             Service serviceChild = serviceRepository.getServiceByServiceId(orderItem.getServiceId());

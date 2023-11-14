@@ -58,4 +58,7 @@ public class PackageServiceItem {
 	
 	@Transient
 	private List<ServiceType> typeList;
+	
+	@Transient
+	private List<Image> images;
 }

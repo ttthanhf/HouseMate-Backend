@@ -72,9 +72,6 @@ public class UserAccount {
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus = AccountStatus.ACTIVE; // Default: active
 
-    @Column(name = "is_banned")
-    private boolean isBanned = false; // Default isBanned is false
-
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
