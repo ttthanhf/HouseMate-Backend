@@ -10,6 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,8 +19,13 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.Trigger;
+import org.springframework.scheduling.TriggerContext;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import static housemate.constants.ServiceConfiguration.*;
@@ -61,6 +67,7 @@ import housemate.repositories.TaskReposiotory;
 import housemate.repositories.UserRepository;
 import housemate.repositories.UserUsageRepository;
 import housemate.responses.TaskRes;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 
 @Component
@@ -114,12 +121,16 @@ public class TaskBuildupService {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
     private static final Map<Integer, List<ScheduledFuture<?>>> eventNotiList = new HashMap<>();
-       
+    
+    private ScheduledFuture<?> scheduleEventAutoScanForNewTask;       
+    
     private static final String notiTitleForTaskStatus = "Trạng thái công việc";
+    
+    private static String cronExpression;
    
     
     //MARKUP ======CREATE TASK======
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Ho_Chi_Minh") // call this at every 24:00 PM
+//    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Ho_Chi_Minh")
     public List<Task> createTasksOnUpcomingSchedulesAutoByFixedRate() {
 	List<Task> taskList = new ArrayList<>();
 	try {
@@ -129,17 +140,19 @@ public class TaskBuildupService {
 	    if (schedules.isEmpty())
 		return List.of();
 	    for (Schedule schedule : schedules) {
-		taskList.add(this.createTask(schedule));		 
+		Task task = this.createTask(schedule);
+		if (task != null)
+		    taskList.add(this.createTask(schedule));
 	    }
-
 	    if (!taskList.isEmpty()) {
-		// TODO: NOTI TO CUSTOMER FOR TASK
 		taskList.stream().forEach(x -> {
+		    // TODO: NOTI TO CUSTOMER FOR TASK
 		    TaskBuildupService.createAndSendNotification(
 			    x, // Task
 			    "Chờ tìm nhân viên",
 			    "Đang tìm kiếm nhân viên", // Mess
 			    String.valueOf(x.getSchedule().getCustomerId())); // Receiver
+
 		});
 		// TODO: NOTI NEW TASK LIST FOR STAFF
 		TaskBuildupService.createAndSendNotification(
@@ -155,13 +168,11 @@ public class TaskBuildupService {
 	return taskList;
     }
     
-    
+ 
     public List<Task> createTaskOnUpComingSchedule(Schedule newSchedule) {
 	List<Schedule> schedules = scheduleRepo.findAllByParentScheduleAndInUpComing(ScheduleStatus.PROCESSING, 1, newSchedule.getParentScheduleId());	
-	log.info("IS SCHEDULES EMPTY {} ", schedules.size());
 	List<Task> taskList = new ArrayList<>();
 	try {
-		log.debug("SCHEDULES WHEN FIND ALL BY PARENTS - IS EMPTY {} | IS NULL: {}", schedules.isEmpty(), schedules == null);
 	    if (schedules.isEmpty())
 		return List.of();
 	    for (Schedule theSchedule : schedules) 
@@ -186,7 +197,6 @@ public class TaskBuildupService {
     public Task createTask(Schedule schedule) {
 	// Check if the task for this schedule have created before by system
 	Task task = taskRepo.findExistingTaskForSchedule(schedule.getScheduleId());
-	log.info("SCHEDULE ID {} - IS TASK OF THIS SCHEDULE HAS EXISTED BEFORE : {}", schedule.getScheduleId(), task);
 	Task savedTask = null;
 	try {
 	    if (task == null) {
@@ -794,7 +804,7 @@ public class TaskBuildupService {
 			Schedule schedule = scheduleRepo.findById(task.getScheduleId()).get();
 			schedule.setStatus(ScheduleStatus.CANCEL);
 			schedule.setNote(schedule.getNote()
-				+ " - Lịch bị hủy do nhân viên không hoàn thành tiến trình DONE !");
+				+ " - Lịch bị hủy do nhân viên không hoàn thành tiến trình !");
 			task.setTaskStatus(TaskStatus.CANCELLED_BY_STAFF);
 			task.setTaskNote("Buộc phải hủy công việc vì bạn không báo cáo cho trạng thái \"ĐÃ HOÀN THÀNH\" đúng khung giờ quy định !");
 			staffRepo.save(staff);
@@ -836,7 +846,47 @@ public class TaskBuildupService {
 
     }
     
-    private void CancelAllEventsByTaskId(int taskToBeCancelId) {
+    @Bean
+    public void AutoScanScheduleForNewTask() {
+	TaskBuildupService taskBuidServ = this;
+	String cronExp = TIME_TRIGGER_SCAN_NEW_TASK.getString();
+	CronTrigger cronTrigger = new CronTrigger(cronExp);	
+	Trigger trigger = new Trigger() {
+		@Override
+		public Instant nextExecution(TriggerContext triggerContext) {
+			return cronTrigger.nextExecution(triggerContext);
+		}
+	};
+	   
+	Runnable eventAutoScanScheduleForNewTask = new Runnable() {
+	 
+	    public void run() {
+		log.info("cronTrigger get expression {} - and current cron Expression {} - and Equal {}",
+			TIME_TRIGGER_SCAN_NEW_TASK.getString(), cronExpression,
+			TIME_TRIGGER_SCAN_NEW_TASK.getString().equals(cronExpression));
+		if (cronExpression != null) {
+		    if (!TIME_TRIGGER_SCAN_NEW_TASK.getString().equals(cronExpression)) {
+			taskBuidServ.cancelAutoScanSchduleForNewTask();
+			synchronized (this) {
+			    cronExpression = cronTrigger.getExpression();
+			}
+			taskBuidServ.AutoScanScheduleForNewTask();
+		    }
+		}
+		cronExpression = cronTrigger.getExpression();
+		taskBuidServ.createTasksOnUpcomingSchedulesAutoByFixedRate();
+	    }
+	};
+	scheduleEventAutoScanForNewTask = taskScheduler.schedule(eventAutoScanScheduleForNewTask, trigger);
+	log.info("Create auto scan schedule for new task at {}", dateFormat.format(new Date()));
+    }
+    
+    public void cancelAutoScanSchduleForNewTask() {
+	if(scheduleEventAutoScanForNewTask != null)
+	scheduleEventAutoScanForNewTask.cancel(true);
+    }
+    
+    public void CancelAllEventsByTaskId(int taskToBeCancelId) {
 	if (eventNotiList.get(taskToBeCancelId) != null) {
 	    eventNotiList.get(taskToBeCancelId).stream().map(event -> event.cancel(true));	    
 	    eventNotiList.remove(taskToBeCancelId);
