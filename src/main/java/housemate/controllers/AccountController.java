@@ -36,7 +36,7 @@ public class AccountController {
         return  service.getInfo(userId);
     }
 
-    @Operation(summary = "[ADMIN] Update account info")
+    @Operation(summary = "Update account info")
     @PutMapping("/update/{userId}")
     public ResponseEntity<String> updateInfo(HttpServletRequest request, @Valid @RequestBody UpdateAccountDTO updateAccountDTO, @PathVariable int userId) {
         return service.updateInfo(request, updateAccountDTO, userId);
