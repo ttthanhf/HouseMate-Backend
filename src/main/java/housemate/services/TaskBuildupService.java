@@ -279,27 +279,11 @@ public class TaskBuildupService {
             switch (role) {
                 case CUSTOMER, ADMIN:
                     taskToBeCancelled = this.cancelTaskByCustomer(scheduleHasTaskToBeCancelled, taskToBeCancelled, Optional.of(cancelReason));
-
-                    //TODO: NOTI CANCEL TO STAFF
-                    if (taskToBeCancelled != null && taskToBeCancelled.getStaff() != null) {
-                        this.createAndSendNotification(
-                                taskToBeCancelled,
-                                "Hủy lịch",
-                                "Khách hàng hủy lịch làm việc ngày " + dateFormat.format(
-                                        Date.from(taskToBeCancelled.getSchedule().getStartDate().toInstant(null))),
-                                String.valueOf(taskToBeCancelled.getStaffId()));
-                    }
+                  
                     break;
                 case STAFF:
                     taskToBeCancelled = this.cancelTaskByStaff(scheduleHasTaskToBeCancelled, taskToBeCancelled, Optional.of(cancelReason));
 
-                    // TODO: NOTI CANCEL TO CUSTOMER
-                    if (taskToBeCancelled != null && taskToBeCancelled.getStaff() != null)
-                        this.createAndSendNotification(
-                                taskToBeCancelled,
-                                "Hủy công việc",
-                                "Nhân viên hủy lịch làm việc, vui lòng chờ nhân viên khác",
-                                String.valueOf(taskToBeCancelled.getSchedule().getCustomerId()));
                     break;
                 default:
                     throw new IllegalArgumentException("Unexpected value: " + role);
@@ -315,7 +299,18 @@ public class TaskBuildupService {
         taskToBeCancelled.setTaskNote(taskNoteMess);
         scheduleHasTaskToBeCancelledByCustomer.setStatus(ScheduleStatus.CANCEL);
         taskRepo.save(taskToBeCancelled);
+        
 
+        //TODO: NOTI CANCEL TO STAFF
+        if (taskToBeCancelled != null && taskToBeCancelled.getStaff() != null) {
+            this.createAndSendNotification(
+                    taskToBeCancelled,
+                    "Hủy lịch",
+                    "Khách hàng hủy lịch làm việc ngày " + dateFormat.format(
+                            Date.from(taskToBeCancelled.getSchedule().getStartDate().toInstant(null))),
+                    String.valueOf(taskToBeCancelled.getStaffId()));
+        }
+        
         //MARKUP CALL EVENTS WHEN CANCEL TASK
         this.CancelAllEventsByTaskId(taskToBeCancelled.getTaskId());
 
@@ -334,6 +329,14 @@ public class TaskBuildupService {
         taskRepo.save(taskToBeCancelled);
         renewTaskFormApplication = this.createTask(scheduleHasTaskToBeCancelledByStaff);
 
+        // TODO: NOTI CANCEL TO CUSTOMER
+        if (taskToBeCancelled != null && taskToBeCancelled.getStaff() != null)
+            this.createAndSendNotification(
+                    taskToBeCancelled,
+                    "Hủy công việc",
+                    "Nhân viên hủy lịch làm việc, vui lòng chờ nhân viên khác",
+                    String.valueOf(taskToBeCancelled.getSchedule().getCustomerId()));
+        
         //MARKUP CALL EVENTS WHEN CANCEL TASK
         this.CancelAllEventsByTaskId(taskToBeCancelled.getTaskId());
 
@@ -411,7 +414,6 @@ public class TaskBuildupService {
 
 
             // TODO: NOTI APPROVE STAFF
-            
             this.createAndSendNotification(
                     task,
                     "Công việc mới",
