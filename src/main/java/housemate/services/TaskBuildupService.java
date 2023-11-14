@@ -141,17 +141,18 @@ public class TaskBuildupService {
 		return List.of();
 	    for (Schedule schedule : schedules) {
 		Task task = this.createTask(schedule);
-		if (task != null)
-		    taskList.add(this.createTask(schedule));
+		if (task != null) 
+		    taskList.add(task);
 	    }
-	    if (!taskList.isEmpty()) {
+	    if (taskList != null || !taskList.isEmpty()) {
 		taskList.stream().forEach(x -> {
 		    // TODO: NOTI TO CUSTOMER FOR TASK
 		    TaskBuildupService.createAndSendNotification(
 			    x, // Task
 			    "Chờ tìm nhân viên",
 			    "Đang tìm kiếm nhân viên", // Mess
-			    String.valueOf(x.getSchedule().getCustomerId())); // Receiver
+			    String.valueOf(x.getSchedule().getCustomerId())
+			    ); // Receiver
 
 		});
 		// TODO: NOTI NEW TASK LIST FOR STAFF
@@ -179,13 +180,18 @@ public class TaskBuildupService {
 		taskList.add(this.createTask(theSchedule));
 	    
 	    if (!taskList.isEmpty()) {
-		// TODO: NOTI NEW TASK LIST FOR STAFF
-		TaskBuildupService.createAndSendNotification(
-			null,
-			"Việc mới",
-			"Việc mới ngày " + LocalDate.now().getDayOfMonth(),
-			Role.STAFF.name());
+		taskList.stream().forEach(x -> {
+		    // TODO: NOTI TO CUSTOMER FOR TASK
+		    TaskBuildupService.createAndSendNotification(
+			    x, // Task
+			    "Chờ tìm nhân viên",
+			    "Đang tìm kiếm nhân viên", // Mess
+			    String.valueOf(x.getSchedule().getCustomerId())
+			    ); // Receiver
+		    log.info("======go");
+		});
 	    }
+	    
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    return List.of();
