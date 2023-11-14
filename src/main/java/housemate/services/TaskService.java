@@ -217,7 +217,7 @@ public class TaskService {
 		    + " điểm lịch của bạn đến hẹn làm việc ! Vui lòng tạo lịch"
 		    + " mới để hệ thống lên lịch làm việc cho bạn !");
 	if (schedule.getStatus().equals(ScheduleStatus.CANCEL))
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bạn đã hủy lịch này ! Vui lòng tạo lịch mới để hệ thống lên lịch làm việc cho bạn !");
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lịch này đã bị hủy ! Vui lòng tạo lịch mới để hệ thống lên lịch làm việc cho bạn !");
 
 	Task createdTask = taskRepo.findExistingTaskForSchedule(scheduleId);
 	if (createdTask != null)
@@ -266,7 +266,8 @@ public class TaskService {
 		return ResponseEntity.ok()
 			.body("Bạn đã hủy lịch này thày công !\nChú ý bạn, bạn được phép hủy lịch trước giờ làm việc trước "
 				+ DURATION_HOURS_CUSTOMER_SHOULD_NOT_CANCEL_TASK.getNum()
-				+ " tiếng để đảm bảo nhân viên của chúng tôi sắp xếp được lịch làm việc .\nSau khoảng thời gian này chúng tôi sẽ trừ điểm uy tín của bạn.\nĐiểm uy tín nếu bằng 0 tài khoản sẽ bị cấm bởi hệ thống");
+				+ " tiếng để đảm bảo nhân viên của chúng tôi sắp xếp được lịch làm việc ."
+				+ "\nSau khoảng thời gian này chúng tôi sẽ trừ điểm uy tín của bạn.\nĐiểm uy tín nếu bằng 0 tài khoản sẽ bị cấm bởi hệ thống");
 	    if (customer.getAccountStatus().equals(AccountStatus.BANNED))
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 			.body("Tài khoản của bạn đã bị cấm khỏi hệ thống vì đã vượt giới hạn số lần được hủy và điểm uy tín của bạn bằng 0 !");
