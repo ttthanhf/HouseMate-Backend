@@ -16,7 +16,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -72,9 +71,11 @@ public class AccountService {
     }
 
     public ResponseEntity<String> updateInfo(HttpServletRequest request, UpdateAccountDTO updateAccountDTO, int userId) {
-        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
-        if (!role.equals(Role.ADMIN)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        // Check can't update another account
+        Role currentRole = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        int currentUserId = authorizationUtil.getUserIdFromAuthorizationHeader(request);
+        if (!currentRole.equals(Role.ADMIN) && userId != currentUserId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can't update another account");
         }
 
         // Get account in database
@@ -87,7 +88,7 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body("Updated successfully!");
     }
 
-    public ResponseEntity<String> delete(HttpServletRequest request, int userId) {
+    public ResponseEntity<String> ban(HttpServletRequest request, int userId) {
         Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
         if (!role.equals(Role.ADMIN)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
@@ -100,10 +101,29 @@ public class AccountService {
         }
 
         // Change isBanned to true
-        account.setBanned(true);
+        account.setAccountStatus(AccountStatus.BANNED);
         userRepository.save(account);
-        return ResponseEntity.status(HttpStatus.OK).body("Deleted successfully!");
+        return ResponseEntity.status(HttpStatus.OK).body("Ban account successfully!");
     }
+
+    public ResponseEntity<String> inactive(HttpServletRequest request, int userId) {
+        Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
+        if (!role.equals(Role.ADMIN)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You have no permission to access this function");
+        }
+
+        // Find account in database
+        UserAccount account = userRepository.findByUserId(userId);
+        if (account == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cannot find this account!");
+        }
+
+        // Change status to inactive
+        account.setAccountStatus(AccountStatus.INACTIVE);
+        userRepository.save(account);
+        return ResponseEntity.status(HttpStatus.OK).body("Make account status inactive successfully!!");
+    }
+
     public ResponseEntity<String> changeRole(HttpServletRequest request, int userId, Role updateRole) {
         Role role = Role.valueOf(authorizationUtil.getRoleFromAuthorizationHeader(request));
         if (!role.equals(Role.ADMIN)) {
@@ -275,40 +295,12 @@ public class AccountService {
         }
 
         // Get purchase history
-        List<MyPurchasedResponse> purchaseHistory = new ArrayList<>();
+        List<OrderItem> purchaseHistory = new ArrayList<>();
 
         List<Order> listOrder = orderRepository.getAllOrderCompleteByUserId(customerId);
         for (Order order : listOrder) {
             List<OrderItem> listOrderItem = orderItemRepository.getAllOrderItemByOrderId(order.getOrderId());
-            for (OrderItem orderItem : listOrderItem) {
-
-                List<String> listSingleServiceName = new ArrayList<>();
-
-                MyPurchasedResponse myPurchasedResponse = new MyPurchasedResponse();
-
-                Service service = serviceRepository.getServiceByServiceId(orderItem.getServiceId());
-                if (service.isPackage()) {
-                    List<PackageServiceItem> listPackageServiceItem = packageServiceItemRepository.findAllSingleServiceIdByPackageServiceId(service.getServiceId());
-                    for (PackageServiceItem packageServiceItem : listPackageServiceItem) {
-                        Service singleService = serviceRepository.getServiceByServiceId(packageServiceItem.getSingleServiceId());
-                        List<Image> images = imageRepository.findAllByEntityIdAndImageType(singleService.getServiceId(), housemate.constants.ImageType.SERVICE).orElse(List.of());
-                        singleService.setImages(images);
-                        listSingleServiceName.add(singleService.getTitleName());
-                    }
-                } else {
-                    List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), ImageType.SERVICE).orElse(List.of());
-                    service.setImages(images);
-                    listSingleServiceName.add(service.getTitleName());
-                }
-
-                myPurchasedResponse.setOrderItemId(orderItem.getOrderItemId());
-                myPurchasedResponse.setEndDate(orderItem.getExpireDate());
-                myPurchasedResponse.setStartDate(orderItem.getCreateDate());
-                myPurchasedResponse.setSingleServiceName(listSingleServiceName);
-                myPurchasedResponse.setService(service);
-
-                purchaseHistory.add(myPurchasedResponse);
-            }
+            purchaseHistory.addAll(listOrderItem);
         }
 
         // Set to CustomerDetailRes

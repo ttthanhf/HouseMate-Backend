@@ -39,6 +39,9 @@ jobs:
 
     - name: Add application.properties
       run: echo "${{ secrets.APPLICATION_PROPERTIES }}" >> ./src/main/resources/application.properties
+    
+    - name: Add credentials.json
+      run: echo "${{ secrets.CREDENTIALS_JSON }}" >> ./src/main/resources/credentials.json
 
     - name: Clean app
       run: mvn clean
@@ -49,17 +52,13 @@ jobs:
     - name: Deloy app to server
       run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -r -o StrictHostKeyChecking=no ./target/${{ secrets.FILE_JAR }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
 
-    - name: Destroy running app and check is app destroyed
-      run: |
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "pkill -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}"
-        while pgrep -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }} > /dev/null; do sleep 1; done || true
+    - name: Destroy running app
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "sudo pkill -9 -f ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}" || true
 
     - name: Run app
-      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "nohup java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}" &
+      run: sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }} &" &
 
-    - name: Wait for app to start
-      run: sleep 20s
-
+#        # while pgrep -f \"java -jar ${{ secrets.SERVER_PATH }}${{ secrets.FILE_JAR }}\" > /dev/null; do sleep 1; done || true
     # - name: Verify app
     #   run: |
     #     sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "
@@ -73,4 +72,4 @@ jobs:
     #         sleep 1s
     #       done
     #       '
-    #     "
+    #     "#

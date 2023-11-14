@@ -4,13 +4,8 @@
  */
 package housemate.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import lombok.Data;
 
@@ -55,6 +50,7 @@ public class OrderItem {
     @Transient
     private int discountPrice;
 
-    @Transient
+    @OneToOne
+    @JoinColumn(name = "service_id", updatable = false, insertable = false)
     private Service service;
 }

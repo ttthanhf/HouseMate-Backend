@@ -1,10 +1,8 @@
 package housemate.entities;
 
-import housemate.constants.Role;
 
 import org.hibernate.annotations.Where;
-
-import housemate.constants.Enum.AccountStatus;
+import housemate.constants.AccountStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -42,9 +40,6 @@ public class Staff {
 	@Column(name = "account_status")
 	@Enumerated(EnumType.STRING)
 	private AccountStatus accountStatus;
-	
-	@Column(name = "is_banned")
-	private boolean isBanned;
 	
 	
 }

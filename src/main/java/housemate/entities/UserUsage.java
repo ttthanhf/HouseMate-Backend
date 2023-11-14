@@ -46,13 +46,16 @@ public class UserUsage implements Cloneable {
 
     @Column(name = "is_expired")
     private boolean isExpired;
-
+    
+    @Column(name = "quantity_over")
+    private int qtyOver;
+    
     @SneakyThrows
     @Override
     public UserUsage clone() {
         return (UserUsage) super.clone();
     }
-
+    
     @Transient
     private Service service;
 }
