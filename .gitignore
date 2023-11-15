@@ -34,4 +34,9 @@ build/
 
 
 ### OWN ###
-src/main/resources/application.properties
+src/main/resources/*.properties
+src/main/resources/*.json
+**/src/test/
+nbactions.xml
+nb-configuration.xml
+bin/

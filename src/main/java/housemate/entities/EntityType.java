@@ -26,6 +26,4 @@ public class EntityType {
         this.entityTypeName = entityTypeName;
     }
 
-    
 }
-
