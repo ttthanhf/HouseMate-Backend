@@ -14,4 +14,5 @@ public class EventRes {
     private ScheduleStatus status;
     private String userName;
     private String phone;
+    private int taskId;
 }
