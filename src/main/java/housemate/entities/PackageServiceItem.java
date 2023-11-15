@@ -5,39 +5,60 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
-import java.util.Date;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.io.Serializable;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  *
- * @author ThanhF
+ * @author Anh
  */
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+class IdComboPackageServiceItem implements Serializable {
+	private int packageServiceId; // same name with the key
+	private int singleServiceId;
+}
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "package_service_item")
 @Entity
-@Table(name = "Package_Service_Item")
+@IdClass(IdComboPackageServiceItem.class)
 public class PackageServiceItem {
 
-    @Id
-    @Column(name = "package_service_id")
-    private int packageServiceId;
+	@Id
+	@Column(name = "package_service_id")
+	private int packageServiceId;
 
-    @Id
-    @Column(name = "service_id")
-    private int serviceId;
+	@Id
+	@Column(name = "service_id")
+	private int singleServiceId;
 
-    @Column(name = "quantity")
-    private int quantity;
+	@JsonInclude(value = Include.NON_NULL)
+	@Transient
+	private String singleServiceName;
 
-    @Column(name = "date_start")
-    private Date dateStart;
+	@Column(name = "quantity")
+	private int quantity;
 
-    @Column(name = "date_end")
-    private Date dateEnd;
-
-    public PackageServiceItem(int packageServiceId, int serviceId, int quantity, Date dateStart, Date dateEnd) {
-        this.packageServiceId = packageServiceId;
-        this.serviceId = serviceId;
-        this.quantity = quantity;
-        this.dateStart = dateStart;
-        this.dateEnd = dateEnd;
-    }
-
+	@ManyToOne
+	@JoinColumn(name="service_id", referencedColumnName = "service_id", updatable = false, insertable = false)
+	private Service service;
+	
+	@Transient
+	private List<ServiceType> typeList;
+	
+	@Transient
+	private List<Image> images;
 }

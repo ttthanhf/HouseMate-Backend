@@ -5,37 +5,53 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
-import java.util.Date;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+import housemate.constants.Enum.TaskStatus;
 
 /**
  *
  * @author ThanhF
  */
 @Entity
-@Table(name = "Task")
+@Table(name = "task")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Task {
 
-    @Id
-    @Column(name = "task_id")
-    private int id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "task_id")
+	private int taskId;
 
-    @Column(name = "service_schedule_id")
-    private int serviceScheduleId;
+	@Column(name = "service_schedule_id")
+	private int scheduleId;
+	
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
 
-    @Column(name = "customer_id")
-    private int customerId;
+	@Column(name = "staff_id")
+	private Integer staffId;
 
-    @Column(name = "post_at")
-    private Date postAt;
+	@Column(name = "received_at")
+	private LocalDateTime receivedAt;
 
-    @Column(name = "task_status")
-    private String taskStatus;
+	@Column(name = "task_status")
+	@Enumerated(EnumType.STRING)
+	private TaskStatus taskStatus;
+	
+	@Column(name = "task_note")
+	private String taskNote;
+	
+	@OneToOne
+	@JoinColumn(name = "service_schedule_id", referencedColumnName = "service_schedule_id", updatable = false, insertable = false)
+	private Schedule schedule;
+	
+	@OneToOne
+	@JoinColumn(name = "staff_id", referencedColumnName = "user_id", updatable = false, insertable = false)
+	private Staff staff;
 
-    public Task(int id, int serviceScheduleId, int customerId, Date postAt, String taskStatus) {
-        this.id = id;
-        this.serviceScheduleId = serviceScheduleId;
-        this.customerId = customerId;
-        this.postAt = postAt;
-        this.taskStatus = taskStatus;
-    }
 }

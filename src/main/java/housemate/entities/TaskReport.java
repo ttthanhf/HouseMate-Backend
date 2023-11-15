@@ -5,7 +5,12 @@
 package housemate.entities;
 
 import jakarta.persistence.*;
-import java.util.Date;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.List;
+import housemate.constants.Enum.TaskStatus;
 
 /**
  *
@@ -13,33 +18,36 @@ import java.util.Date;
  */
 @Entity
 @Table(name = "Task_Report")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TaskReport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "task_report_id")
-    private int id;
+    private int taskReportId;
 
     @Column(name = "task_id")
     private int taskId;
 
-    @Column(name = "task_status")
-    private String taskStatus;
+    @Column(name = "report_status_name")
+    @Enumerated(EnumType.STRING)
+    private TaskStatus taskStatus;
 
     @Column(name = "report_at")
-    private Date reportAt;
+    private LocalDateTime reportAt;
 
     @Column(name = "note", length = 3000)
     private String note;
-
-    public TaskReport(int id, int taskId, String taskStatus, Date reportAt, String note) {
-        this.id = id;
-        this.taskId = taskId;
-        this.taskStatus = taskStatus;
-        this.reportAt = reportAt;
-        this.note = note;
-    }
-
     
+    @Transient
+    private int qtyOver;
+
+    @Transient
+    List<Image> taskReportImages;
+    
+    
+
 }
 
