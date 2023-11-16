@@ -168,15 +168,14 @@ public class UserUsageService {
                     List<PackageServiceItem> listPackageServiceItem = packageServiceItemRepository.findAllSingleServiceIdByPackageServiceId(service.getServiceId());
                     for (PackageServiceItem packageServiceItem : listPackageServiceItem) {
                         Service singleService = serviceRepository.getServiceByServiceId(packageServiceItem.getSingleServiceId());
-                        List<Image> images = imageRepository.findAllByEntityIdAndImageType(singleService.getServiceId(), ImageType.SERVICE).orElse(List.of());
-                        singleService.setImages(images);
                         listSingleServiceName.add(singleService.getTitleName());
                     }
                 } else {
-                    List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), ImageType.SERVICE).orElse(List.of());
-                    service.setImages(images);
                     listSingleServiceName.add(service.getTitleName());
                 }
+                
+                List<Image> images = imageRepository.findAllByEntityIdAndImageType(service.getServiceId(), ImageType.SERVICE).orElse(List.of());
+                service.setImages(images);
                 myPurchasedResponse.setOrderItemId(orderItem.getOrderItemId());
                 myPurchasedResponse.setEndDate(orderItem.getExpireDate());
                 myPurchasedResponse.setStartDate(orderItem.getCreateDate());
