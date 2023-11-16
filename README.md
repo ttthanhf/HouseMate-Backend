@@ -1,7 +1,7 @@
 # HouseMate - Student House Membership Cart - Backend
 
 <div align="center">
-    <img src="https://housemate.site/assets/logo-7f02d06f.svg" alt="HouseMate" width="100" height="100" />
+    <img src="./.github/images/housemate.svg" alt="HouseMate" width="100" height="100" />
     <p><a href="https://housemate.site">HouseMate</a> is a web application that provides service for student apartments.</p>
 </div>
 <br>
