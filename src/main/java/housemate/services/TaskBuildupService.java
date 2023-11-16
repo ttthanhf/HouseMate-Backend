@@ -736,7 +736,7 @@ public class TaskBuildupService {
                         taskBuidServ.createAndSendNotification(
                                 task,
                                 notiTitleForTaskStatus,
-                                "Trừ " + MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK.getNum() + " do trễ hẹn báo cáo trạng thái \"Đã đến\"",
+                                "Trừ " + MINUS_POINTS_FOR_NOT_COMPLETE_REPORT_TASK + " do trễ hẹn báo cáo trạng thái \"Đã đến\"",
                                 String.valueOf(task.getSchedule().getStaffId()));
 
                         log.info("Task {} minus score for not report Arrived - Sent at {}", task.getTaskId(),
